@@ -414,6 +414,7 @@ let fileLoading=false;
 async function browseDir(path){
  if(fileLoading)return;
  fileLoading=true;
+ try{path=decodeURIComponent(path)}catch{}
  const el=document.getElementById('filesBrowser');
  const errEl=document.getElementById('filesErr');
  errEl.style.display='none';
@@ -422,6 +423,8 @@ async function browseDir(path){
  if(res&&res.result){
   filePath=path||'';
   renderFiles(res.result);
+ }else if(res===null){
+  el.innerHTML='<div class="loading">No response - is the client running?</div>';
  }
  fileLoading=false;
 }
@@ -432,11 +435,11 @@ function renderFiles(json){
  try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
  if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}
  let html='<div class="path"><span>'+esc(filePath||'This PC')+'</span>';
- if(filePath)html+='<button class="btn btn-ghost btn-sm" data-nav="root">Root</button>';
+ if(filePath)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\'\')">Root</button>';
  if(filePath){
   const p=filePath.replace(/\\+$/,'');
   const idx=p.lastIndexOf('\\');
-  if(idx>0)html+='<button class="btn btn-ghost btn-sm" data-nav="up" data-path="'+encAttr(p.substr(0,idx+1))+'">Up</button>';
+  if(idx>0)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>';
  }
  html+='</div>';
  entries.forEach(e=>{
@@ -445,29 +448,18 @@ function renderFiles(json){
   const sz=e.s||0;
   const dt=e.m||'';
   const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
-  html+='<div class="entry'+(isDir?' dir':'')+'" data-path="'+encAttr(filePath+nm+'\\')+'">';
+  html+='<div class="entry'+(isDir?' dir':'')+'" onclick="'+(isDir?"browseDir('"+uenc(filePath+nm+'\\')+"')":'')+'">';
   html+='<div class="ico '+(isDir?'folder':'file')+'">'+(isDir?'[D]':'[F]')+'</div>';
   html+='<div class="nm">'+esc(nm)+'</div>';
   html+=isDir?'<div class="sz"></div>':'<div class="sz">'+szStr+'</div>';
   html+='<div class="dt">'+esc(dt)+'</div>';
   html+='</div>';
  });
- if(!el._listener){
-  el.addEventListener('click',function(e){
-   const entry=e.target.closest('.entry.dir');
-   if(entry&&entry.dataset.path){browseDir(entry.dataset.path);return}
-   const nav=e.target.closest('[data-nav]');
-   if(!nav)return;
-   if(nav.dataset.nav==='root')browseDir('');
-   else if(nav.dataset.nav==='up'&&nav.dataset.path)browseDir(nav.dataset.path);
-  });
-  el._listener=true;
- }
  el.innerHTML=html;
 }
 
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function encAttr(t){return t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function uenc(t){return encodeURIComponent(t).replace(/'/g,'%27')}
 
 // Processes tab
 async function loadProcesses(){
