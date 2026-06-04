@@ -105,11 +105,17 @@ const computer=params.get('name')||'';
 const urlAuth=params.get('auth')||'';
 
 if(sessionStorage.getItem('auth')===PASS){
- // already authed
+ unlock();
 }else if(urlAuth===PASS){
  sessionStorage.setItem('auth',urlAuth);
+ unlock();
 }else{
  window.location='index.html';
+}
+
+function unlock(){
+ document.getElementById('lockscreen').style.display='none';
+ document.getElementById('app').style.display='';
 }
 
 document.getElementById('name').textContent=computer||'Unknown';
