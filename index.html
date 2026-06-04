@@ -114,7 +114,7 @@ async function load(){
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 
 function openClient(name){
-  window.open('client.html?name='+encodeURIComponent(name)+'&auth='+encodeURIComponent(PASS),'_blank');
+  window.open('client.html?name='+encodeURIComponent(name),'_blank');
 }
 function downloadClient(){
   window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
