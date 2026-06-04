@@ -72,7 +72,7 @@ async function load(){
     list.innerHTML=names.map(n=>{
       const x=latest[n];
       const age=Date.now()-new Date(x.created_at).getTime();
-      const online=age<30000;
+      const online=age<60000;
       return '<div class="client"><div class="dot '+(online?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n||'unknown')+'</div><div class="meta">IP: '+esc(x.ip||'?')+' | '+new Date(x.created_at).toLocaleString()+(online?' <span style="color:#3fb950">● Online</span>':' <span style="color:#484f58">● Offline</span>')+'</div></div><div class="actions"><button class="btn btn-blue" onclick="openClient(\''+n+'\')">Open</button><button class="btn btn-red" onclick="removeClient(\''+n+'\')">Remove</button></div></div>';
     }).join('');
   }catch{}

