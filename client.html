@@ -145,7 +145,7 @@ async function sendAndWait(type,payload,el,errId){
   if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
   el.innerHTML='<div class="loading">Waiting for response...</div>';
   for(let i=0;i<60;i++){
-   await new Promise(r=>setTimeout(r,1000));
+   await new Promise(r=>setTimeout(r,200));
    try{
     const r=await fetch(SB+'/rest/v1/commands?id=eq.'+cmdId,H);
     if(!r.ok)continue;
@@ -202,7 +202,7 @@ async function takeWebcam(){
 async function startScreen(){
  document.getElementById('screenStartBtn').style.display='none';
  document.getElementById('screenStopBtn').style.display='';
- screenInterval=setInterval(pollScreen,800);
+  screenInterval=setInterval(pollScreen,250);
  frameCount=0;
  fpsTime=Date.now();
 }

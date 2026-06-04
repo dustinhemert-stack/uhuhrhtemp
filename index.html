@@ -52,6 +52,7 @@ const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/jso
 let latest={};
 
 load();
+setInterval(load,5000);
 
 async function load(){
   try{

