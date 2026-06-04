@@ -84,13 +84,7 @@ function openClient(name){
   window.open('client.html?name='+encodeURIComponent(name),'_blank');
 }
 function downloadClient(){
-  const a=document.createElement('a');
-  a.href='https://github.com/dustinhemert-stack/uhuhrhtemp/releases/latest/download/ping_app.exe';
-  a.download='ping_app.exe';
-  a.click();
-  if(!a.href||a.href.includes('releases/latest/download')){
-    alert('Download from: https://github.com/dustinhemert-stack/uhuhrhtemp/releases\nOr build from source: compile main.cpp with g++');
-  }
+  window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
 }
 
 async function removeClient(name){
