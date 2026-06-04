@@ -53,7 +53,7 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
 const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
 const H={headers:{apikey:KEY,Authorization:'Bearer '+KEY}};
-const PH={headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'}};
+const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
 let latest={};
 
 async function load(){
