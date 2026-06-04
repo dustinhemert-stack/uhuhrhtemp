@@ -16,14 +16,10 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 .btn-red{background:#da3633;color:#fff}.btn-red:hover{background:#f85149}
 .btn-gray{background:#21262d;color:#c9d1d9;border:1px solid #30363d}.btn-gray:hover{background:#30363d}
 .main{padding:1.5rem 2rem}
-.stats{display:flex;gap:1rem;margin-bottom:1.5rem}
-.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.8rem 1.2rem;min-width:130px}
-.stat .num{font-size:1.6rem;font-weight:bold;color:#58a6ff}
-.stat .lbl{color:#8b949e;font-size:.75rem;margin-top:.1rem}
 .client{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.8rem 1.2rem;margin-bottom:.5rem;display:flex;align-items:center;gap:1rem}
-    .client .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-    .client .dot.online{background:#3fb950}
-    .client .dot.offline{background:#484f58}
+.client .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.client .dot.online{background:#3fb950}
+.client .dot.offline{background:#484f58}
 .client .info{flex:1}
 .client .name{font-weight:700;color:#f0f6fc}
 .client .meta{color:#8b949e;font-size:.8rem}
@@ -31,9 +27,27 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 .empty{color:#484f58;text-align:center;padding:3rem;font-size:1rem}
 @keyframes fade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .client{animation:fade .3s ease}
+
+/* Lock screen */
+.lockscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:999}
+.lockbox{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:2rem;text-align:center;max-width:360px;width:90%}
+.lockbox h2{color:#58a6ff;margin-bottom:1.5rem;font-size:1.2rem}
+.lockbox input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.7rem;color:#c9d1d9;font-size:1rem;text-align:center;margin-bottom:1rem}
+.lockbox input:focus{outline:none;border-color:#58a6ff}
+.lockbox .err{color:#f85149;font-size:.85rem;margin-top:.5rem}
+.lockbox .btn{width:100%;padding:.7rem;font-size:1rem}
 </style>
 </head>
 <body>
+<div class="lockscreen" id="lockscreen">
+  <div class="lockbox">
+    <h2>Enter Password</h2>
+    <input type="password" id="pwinput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" autofocus>
+    <button class="btn btn-green" onclick="checkPw()">Unlock</button>
+    <div class="err" id="pwerr"></div>
+  </div>
+</div>
+<div id="app" style="display:none">
 <div class="topbar">
   <h1>Dashboard</h1>
   <div class="right">
@@ -43,25 +57,44 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 </div>
 <div class="main">
   <div class="stats">
-    <div class="stat"><div class="num" id="count">0</div><div class="lbl">Total Pings</div></div>
     <div class="stat"><div class="num" id="clients">0</div><div class="lbl">Online</div></div>
     <div class="stat"><div class="num" id="last">-</div><div class="lbl">Last Ping</div></div>
   </div>
   <div id="list"><div class="empty">No clients yet</div></div>
 </div>
+</div>
 <script>
+const PASS='kaanbanaan';
 const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
 const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
 const H={headers:{apikey:KEY,Authorization:'Bearer '+KEY}};
 const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
 let latest={};
 
+if(sessionStorage.getItem('auth')===PASS){
+ document.getElementById('lockscreen').style.display='none';
+ document.getElementById('app').style.display='';
+ load();
+}
+
+function checkPw(){
+ const v=document.getElementById('pwinput').value;
+ if(v===PASS){
+  sessionStorage.setItem('auth',v);
+  document.getElementById('lockscreen').style.display='none';
+  document.getElementById('app').style.display='';
+  load();
+ }else{
+  document.getElementById('pwerr').textContent='Wrong password';
+ }
+}
+
 async function load(){
   try{
     const r=await fetch(SB+'/rest/v1/pings?order=id.desc&limit=100',H);
+    if(!r.ok)return;
     const p=await r.json();
     if(!Array.isArray(p))return;
-    document.getElementById('count').textContent=p.length;
     latest={};
     p.forEach(x=>{if(!latest[x.computer])latest[x.computer]=x});
     const names=Object.keys(latest);
@@ -95,8 +128,6 @@ async function removeClient(name){
     await load();
   }catch{}
 }
-
-load();
 </script>
 </body>
 </html>

