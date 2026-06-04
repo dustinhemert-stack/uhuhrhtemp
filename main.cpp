@@ -275,7 +275,7 @@ std::string listDir(const std::string& path) {
                 ULONG sn,maxComp,flags;
                 GetVolumeInformationA(d,0,0,&sn,&maxComp,&flags,0,0);
                 if(out.size()>1) out+=",";
-                out+="{\"n\":\"";out+=d[0];out+=":\";\"s\":0,\"d\":true,\"m\":\"Drive ";
+                out+="{\"n\":\"";out+=d[0];out+="\",\"s\":0,\"d\":true,\"m\":\"Drive ";
                 out+=d[0];out+="\"}";
             }
         }
