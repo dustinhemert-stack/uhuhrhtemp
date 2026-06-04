@@ -36,7 +36,16 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
 .ctrl-bar{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
 .ctrl-bar .sep{color:#30363d;margin:0 .3rem}
 .err{color:#f85149;font-size:.85rem;padding:.5rem;background:#161b22;border:1px solid #da3633;border-radius:6px;margin-bottom:.5rem}
-
+.files{background:#161b22;border:1px solid #30363d;border-radius:6px;min-height:300px;max-height:70vh;overflow-y:auto;font-family:monospace;font-size:.85rem}
+.files .path{background:#0d1117;border-bottom:1px solid #30363d;padding:.5rem .8rem;color:#58a6ff;display:flex;align-items:center;gap:.5rem}
+.files .path span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files .entry{padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid #21262d}
+.files .entry:hover{background:#1f6feb20}
+.files .entry .ico{flex-shrink:0;width:1.2rem;text-align:center;color:#8b949e}
+.files .entry.dir .ico{color:#d29922}
+.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files .entry .sz{color:#8b949e;font-size:.75rem;white-space:nowrap}
+.files .entry .dt{color:#484f58;font-size:.75rem;white-space:nowrap}
 
 </style>
 </head>
@@ -52,6 +61,7 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
     <div class="tab active" onclick="switchTab(this,'cmd')">CMD</div>
     <div class="tab" onclick="switchTab(this,'screenshot')">Screenshot</div>
     <div class="tab" onclick="switchTab(this,'screen')">Screen</div>
+    <div class="tab" onclick="switchTab(this,'files')">Files</div>
   </div>
   <div class="panel active" id="panel-cmd">
     <input class="cmd-input" id="cmdInput" placeholder="Type command and press Enter..." onkeydown="if(event.key==='Enter')runCmd()">
@@ -75,6 +85,12 @@ body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',sans-serif;min-heig
       <span id="screenFps" style="color:#8b949e;font-size:.8rem;margin-left:auto"></span>
     </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
+  </div>
+  <div class="panel" id="panel-files">
+    <div class="files" id="filesBrowser">
+      <div class="loading">Click a directory to browse</div>
+    </div>
+    <div id="filesErr" class="err" style="display:none"></div>
   </div>
 </div>
 <script>
@@ -103,6 +119,7 @@ function switchTab(el,name){
  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
  el.classList.add('active');
  document.getElementById('panel-'+name).classList.add('active');
+ if(name==='files'&&!filePath)browseDir('');
 }
 
 async function sendAndWait(type,payload,el,errId){
@@ -296,7 +313,54 @@ function stopScreen(){
  document.getElementById('screenFps').textContent='';
  document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';
  if(mouseOn)toggleMouse();
- if(keyOn)toggleKeyboard();
+  if(keyOn)toggleKeyboard();
+}
+
+let filePath='';
+let fileLoading=false;
+
+async function browseDir(path){
+ if(fileLoading)return;
+ fileLoading=true;
+ const el=document.getElementById('filesBrowser');
+ const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';
+ el.innerHTML='<div class="loading">Loading...</div>';
+ const res=await sendAndWait('file_list',path,el,'filesErr');
+ if(res&&res.result){
+  filePath=path||'';
+  renderFiles(res.result);
+ }
+ fileLoading=false;
+}
+
+function renderFiles(json){
+ const el=document.getElementById('filesBrowser');
+ let entries;
+ try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
+ if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}
+ let html='<div class="path"><span>'+esc(filePath||'This PC')+'</span>';
+ if(filePath)html+='<button class="btn btn-gray" style="padding:.2rem .6rem;font-size:.75rem" onclick="browseDir(\'\')">Root</button>';
+ if(filePath){
+  const p=filePath.replace(/\\+$/,'');
+  const idx=p.lastIndexOf('\\');
+  if(idx>0)html+='<button class="btn btn-gray" style="padding:.2rem .6rem;font-size:.75rem" onclick="browseDir(\''+esc(p.substr(0,idx+1))+'\')">Up</button>';
+ }
+ html+='</div>';
+ entries.forEach(e=>{
+  const nm=e.n||'?';
+  const isDir=e.d===true||e.d==='true';
+  const sz=e.s||0;
+  const dt=e.m||'';
+  const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
+  html+='<div class="entry'+(isDir?' dir':'')+'" onclick="'+(isDir?'browseDir(\''+esc(filePath+nm+'\\')+'\')':'')+'">';
+  html+='<div class="ico">'+(isDir?'&#128193;':'&#128196;')+'</div>';
+  html+='<div class="nm">'+esc(nm)+'</div>';
+  html+=isDir?'<div class="sz"></div>':'<div class="sz">'+szStr+'</div>';
+  html+='<div class="dt">'+esc(dt)+'</div>';
+  html+='</div>';
+ });
+ el.innerHTML=html;
 }
 </script>
 </body>

