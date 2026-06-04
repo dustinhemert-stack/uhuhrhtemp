@@ -421,8 +421,8 @@ DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     int pingCtr=0;
     while(true) {
-        Sleep(200);
-        if(++pingCtr>=150){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
+        Sleep(50);
+        if(++pingCtr>=600){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
         try {
             std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc";
             std::string resp = httpsGet(path);
