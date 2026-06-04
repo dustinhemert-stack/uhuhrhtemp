@@ -486,13 +486,14 @@ function renderProcesses(json){
  entries.forEach(e=>{
   const nm=e.n||'?';
   const pid=e.p||0;
-  html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+esc(nm)+'\')">Kill</button></td></tr>';
+  html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';
  });
  html+='</tbody></table>';
  el.innerHTML=html;
 }
 
 async function killProc(pid,name){
+ try{name=decodeURIComponent(name)}catch{}
  if(!confirm('Kill '+name+' (PID: '+pid+')?'))return;
  const el=document.getElementById('procResult');
  const res=await sendAndWait('kill_process',String(pid),el,'procErr');

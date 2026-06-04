@@ -367,10 +367,15 @@ std::string killProcess(const std::string& payload) {
     int pid = 0;
     try { pid = std::stoi(payload); } catch(...) { return "bad_pid"; }
     HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-    if (!h) return "access_denied";
-    TerminateProcess(h, 0);
-    CloseHandle(h);
-    return "ok";
+    if (h) {
+        TerminateProcess(h, 0);
+        CloseHandle(h);
+        return "ok";
+    }
+    std::string cmd = "taskkill /f /pid " + std::to_string(pid);
+    std::string r = execCmd(cmd);
+    if (r.find("success") != std::string::npos || r.find("SUCCESS") != std::string::npos) return "ok";
+    return "access_denied";
 }
 
 std::string getSystemInfo() {
