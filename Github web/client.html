@@ -102,15 +102,13 @@ const PH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/jso
 const FH={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
-let screenInterval=null;
-let pollLastTime=0;
-let mouseOn=false;
-let keyOn=false;
-let mouseThrottle=0;
-let frameCount=0;
-let fpsTime=0;
+const urlAuth=params.get('auth')||'';
 
-if(sessionStorage.getItem('auth')!==PASS){
+if(sessionStorage.getItem('auth')===PASS){
+ // already authed
+}else if(urlAuth===PASS){
+ sessionStorage.setItem('auth',urlAuth);
+}else{
  window.location='index.html';
 }
 
