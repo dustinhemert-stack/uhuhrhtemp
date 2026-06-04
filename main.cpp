@@ -419,9 +419,10 @@ std::string getSystemInfo() {
 
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
+    int pingCtr=0;
     while(true) {
         Sleep(200);
-        try { if(!g_noPing) sendPing(); } catch(...) {}
+        if(++pingCtr>=150){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
         try {
             std::string path = "/rest/v1/commands?computer=eq." + computerName + "&status=eq.pending&order=id.asc";
             std::string resp = httpsGet(path);
