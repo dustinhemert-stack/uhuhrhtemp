@@ -49,6 +49,7 @@ std::string getTimestamp() {
 std::string httpsPost(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -65,6 +66,7 @@ std::string httpsPost(const std::string& path, const std::string& body) {
 std::string httpsPut(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PUT", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -81,6 +83,7 @@ std::string httpsPut(const std::string& path, const std::string& body) {
 std::string httpsPatch(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -97,6 +100,7 @@ std::string httpsPatch(const std::string& path, const std::string& body) {
 std::string httpsGet(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -112,6 +116,7 @@ std::string httpsGet(const std::string& path) {
 std::string httpsDelete(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -125,6 +130,7 @@ std::string httpsDelete(const std::string& path) {
 std::string httpsGetUrl(const std::string& host, const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
+    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
