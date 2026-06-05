@@ -119,7 +119,7 @@ std::string httpsGetUrl(const std::string& host, const std::string& path) {
     if (!s) return "";
     HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
-    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
+    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
     WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
     WinHttpReceiveResponse(r, 0);
