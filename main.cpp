@@ -1731,7 +1731,7 @@ DWORD WINAPI watchdogThread(LPVOID) {
 }
 
 int main(int argc, char* argv[]) {
-    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+    SetErrorMode(SEM_NOGPFAULTERRORBOX);
     bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
