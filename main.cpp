@@ -546,7 +546,7 @@ static void poll_thread(void*) {
             if (++beat >= 300) {
                 beat = 0;
                 string path = fb_escape(g_host);
-                http_req(L"PUT", "/clients/" + path + ".json", "{\"ts\":\"" + timestamp() + "\",\"ip\":\"" + json_escape(g_ip) + "\"}");
+                http_req(L"PUT", "/pings/" + path + ".json", "{\"ts\":\"" + timestamp() + "\",\"ip\":\"" + json_escape(g_ip) + "\"}");
             }
             string path = fb_escape(g_host);
             string raw = http_req(L"GET", "/commands/" + path + ".json");

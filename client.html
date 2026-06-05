@@ -369,7 +369,7 @@ const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
-(async()=>{try{const r=await fetch(FB+'/pings/'+fbEsc(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | '+new Date(d.created_at).toLocaleString()}catch{}})();
+(async()=>{try{const r=await fetch(FB+'/pings/'+fbEsc(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | Last seen: '+(d.ts?new Date(d.ts).toLocaleString():'unknown')}catch{}})();
 
 const tabs=document.querySelectorAll('.tab');
 const panels={};
