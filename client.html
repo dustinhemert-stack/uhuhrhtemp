@@ -300,26 +300,27 @@ async function sendAndWait(type,payload,el,errId){
  const errEl=document.getElementById(errId);
  if(errEl)errEl.style.display='none';
  el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
+ const cmdId='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+ const base=FB+'/commands/'+encodeURIComponent(computer);
  try{
-  const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
+  const r=await fetch(base+'/'+cmdId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
   if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(errEl){errEl.textContent='Server returned '+r.status;errEl.style.display='block';}return null;}
-  const data=await r.json();
-  const cmdId=data&&data.name;
-  if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
   el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting for response...</div>';
-  for(let i=0;i<30;i++){
-   await new Promise(r=>setTimeout(r,100));
+  for(let i=0;i<50;i++){
+   if(i)await new Promise(r=>setTimeout(r,100));
    try{
-    const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'/'+cmdId+'.json');
-    if(!r.ok)continue;
-    const row=await r.json();
-    if(row&&row.status==='done'){
+    const r2=await fetch(base+'.json');
+    if(!r2.ok)continue;
+    const all=await r2.json();
+    if(all&&all[cmdId]&&all[cmdId].status==='done'){
+     const row=all[cmdId];
+     fetch(base+'/'+cmdId+'.json',{method:'DELETE'}).catch(()=>{});
      if(row.result==='exec_err'&&errEl){errEl.textContent='Execution error on client';errEl.style.display='block';}
      return row;
     }
    }catch{}
   }
-  el.innerHTML='<div class="loading">Timeout — no response within 3s</div>';
+  el.innerHTML='<div class="loading">Timeout — no response within 5s</div>';
   if(errEl){errEl.textContent='Client did not respond';errEl.style.display='block';}
   return null;
  }catch(e){el.innerHTML='<div class="loading">Error</div>';if(errEl){errEl.textContent=e.message||'unknown';errEl.style.display='block';}return null;}
