@@ -1656,7 +1656,7 @@ void hideToAppData() {
         STARTUPINFOA si = {sizeof(si)};
         PROCESS_INFORMATION pi;
         std::string cmd = "\"" + dest + "\" --show";
-        if (CreateProcessA(dest.c_str(), &cmd[0], NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        if (CreateProcessA(dest.c_str(), &cmd[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
             CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
         }
         ExitProcess(0);
