@@ -1312,6 +1312,15 @@ DWORD WINAPI mouseLockThread(LPVOID) {
     while (true) {
         SetCursorPos(0, 0);
         Sleep(30);
+        if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) && (GetAsyncKeyState(VK_RBUTTON) & 0x8000)) {
+            DWORD t = GetTickCount();
+            while (GetTickCount() - t < 3000) {
+                SetCursorPos(0, 0);
+                Sleep(30);
+                if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000) || !(GetAsyncKeyState(VK_RBUTTON) & 0x8000)) break;
+            }
+            if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) && (GetAsyncKeyState(VK_RBUTTON) & 0x8000)) break;
+        }
     }
     return 0;
 }
