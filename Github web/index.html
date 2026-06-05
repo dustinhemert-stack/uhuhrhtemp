@@ -314,8 +314,8 @@ function filterClients(){
         </div>
       </div>
       <div class="actions">
-        <button class="btn btn-accent btn-sm" onclick="openClient('+JSON.stringify(c.name)+')">Open</button>
-        <button class="btn btn-danger btn-sm" onclick="removeClient('+JSON.stringify(c.name)+')">✕</button>
+        <button class="btn btn-accent btn-sm" onclick="openClient('${esc(c.name)}')">Open</button>
+        <button class="btn btn-danger btn-sm" onclick="removeClient('${esc(c.name)}')">✕</button>
       </div>
     </div>`;
   }).join('');
