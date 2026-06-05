@@ -105,9 +105,8 @@ std::string httpsGet(const std::string& path) {
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
-    if (!WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0) || !WinHttpReceiveResponse(r, 0)) {
-        WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "";
-    }
+    WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
+    WinHttpReceiveResponse(r, 0);
     std::string out; DWORD n; char buf[256];
     while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
@@ -122,9 +121,8 @@ std::string httpsDelete(const std::string& path) {
     if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
-    if (!WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0) || !WinHttpReceiveResponse(r, 0)) {
-        WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err";
-    }
+    WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
+    WinHttpReceiveResponse(r, 0);
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
     return "";
 }
