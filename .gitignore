@@ -1,4 +1,2 @@
-*.o
-*.obj
-*.log
-input.txt
+node_modules/
+data/

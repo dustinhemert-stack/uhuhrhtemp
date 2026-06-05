@@ -22,7 +22,9 @@ std::string publicIP;
 bool g_noPing=false;
 int g_liveQuality=25;
 float g_liveScale=0.5f;
-const std::string FB_URL="solix-710c0-default-rtdb.europe-west1.firebasedatabase.app";
+std::string g_serverHost = "solix-710c0-default-rtdb.europe-west1.firebasedatabase.app";
+int g_serverPort = 443;
+bool g_serverSSL = true;
 
 std::string getComputerName() {
     char buf[MAX_PATH]; DWORD sz = MAX_PATH;
@@ -39,9 +41,9 @@ std::string getTimestamp() {
 std::string httpsPost(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    HINTERNET c = WinHttpConnect(s, std::wstring(FB_URL.begin(),FB_URL.end()).c_str(), 443, 0);
+    HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
-    HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"POST", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
     std::wstring hdr = L"Content-Type: application/json\r\n";
     WinHttpSendRequest(r, hdr.c_str(), -1, (LPVOID)body.c_str(), body.size(), body.size(), 0);
@@ -55,9 +57,9 @@ std::string httpsPost(const std::string& path, const std::string& body) {
 std::string httpsPut(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    HINTERNET c = WinHttpConnect(s, std::wstring(FB_URL.begin(),FB_URL.end()).c_str(), 443, 0);
+    HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
-    HINTERNET r = WinHttpOpenRequest(c, L"PUT", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"PUT", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
     std::wstring hdr = L"Content-Type: application/json\r\n";
     WinHttpSendRequest(r, hdr.c_str(), -1, (LPVOID)body.c_str(), body.size(), body.size(), 0);
@@ -71,9 +73,9 @@ std::string httpsPut(const std::string& path, const std::string& body) {
 std::string httpsPatch(const std::string& path, const std::string& body) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "err";
-    HINTERNET c = WinHttpConnect(s, std::wstring(FB_URL.begin(),FB_URL.end()).c_str(), 443, 0);
+    HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return "err"; }
-    HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"PATCH", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
     std::wstring hdr = L"Content-Type: application/json\r\n";
     WinHttpSendRequest(r, hdr.c_str(), -1, (LPVOID)body.c_str(), body.size(), body.size(), 0);
@@ -87,9 +89,9 @@ std::string httpsPatch(const std::string& path, const std::string& body) {
 std::string httpsGet(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-    HINTERNET c = WinHttpConnect(s, std::wstring(FB_URL.begin(),FB_URL.end()).c_str(), 443, 0);
+    HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
-    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
     WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
     WinHttpReceiveResponse(r, 0);
@@ -102,9 +104,9 @@ std::string httpsGet(const std::string& path) {
 std::string httpsDelete(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
     if (!s) return "";
-    HINTERNET c = WinHttpConnect(s, std::wstring(FB_URL.begin(),FB_URL.end()).c_str(), 443, 0);
+    HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
-    HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
     WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
     WinHttpReceiveResponse(r, 0);
@@ -117,7 +119,7 @@ std::string httpsGetUrl(const std::string& host, const std::string& path) {
     if (!s) return "";
     HINTERNET c = WinHttpConnect(s, std::wstring(host.begin(),host.end()).c_str(), 443, 0);
     if (!c) { WinHttpCloseHandle(s); return ""; }
-    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, WINHTTP_FLAG_SECURE);
+    HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
     WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
     WinHttpReceiveResponse(r, 0);
@@ -864,6 +866,19 @@ int main(int argc, char* argv[]) {
         else if (a == "--show") showConsole = true;
         else if (a.find("--name=") == 0 && a.size() > 7) computerName = a.substr(7);
         else if (a == "--name" && i + 1 < argc) computerName = argv[++i];
+        else if (a == "--server" && i + 1 < argc) {
+            std::string s = argv[++i];
+            g_serverSSL = s.find("https://") == 0 || s.find("HTTPS://") == 0;
+            if (s.find("://") != std::string::npos) s = s.substr(s.find("://") + 3);
+            size_t colon = s.find(':');
+            if (colon != std::string::npos) {
+                g_serverPort = std::stoi(s.substr(colon + 1));
+                s = s.substr(0, colon);
+            } else {
+                g_serverPort = g_serverSSL ? 443 : 80;
+            }
+            g_serverHost = s;
+        }
     }
     if (computerName.empty()) computerName = getComputerName();
     HWND hwnd = GetConsoleWindow();

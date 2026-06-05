@@ -211,7 +211,9 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div>
 
 <script>
-const FB='https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
+const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
+  ? 'http://'+location.hostname+':3000'
+  : 'https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
 let latest={};
 
 load();

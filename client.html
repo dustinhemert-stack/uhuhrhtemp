@@ -270,7 +270,9 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
 </div>
 
 <script>
-const FB='https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
+const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
+  ? 'http://'+location.hostname+':3000'
+  : 'https://solix-710c0-default-rtdb.europe-west1.firebasedatabase.app';
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
 document.getElementById('name').textContent=computer||'Unknown';
