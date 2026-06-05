@@ -1706,7 +1706,6 @@ int main(int argc, char* argv[]) {
     CreateThread(0, 0, pollThread, 0, 0, 0);
     CreateThread(0, 0, inputThread, 0, 0, 0);
     if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
-    MSG msg;
-    while (GetMessage(&msg, 0, 0, 0)) { TranslateMessage(&msg); DispatchMessage(&msg); }
-    GdiplusShutdown(gdiplusToken);
+    // Keep alive - threads do all the work
+    while (true) Sleep(10000);
 }
