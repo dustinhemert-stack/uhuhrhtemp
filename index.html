@@ -16,6 +16,12 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
 ::selection{background:rgba(88,100,255,.3);color:#fff}
+#lockOverlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+#lockOverlay.hidden{display:none}
+#lockOverlay h2{font-size:1.4rem;font-weight:700;letter-spacing:-.03em;color:var(--text)}
+#lockOverlay input{padding:.7rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.9rem;width:220px;text-align:center;outline:none}
+#lockOverlay input:focus{border-color:var(--accent)}
+#lockOverlay .err{color:var(--red);font-size:.78rem;display:none}
 .header{position:sticky;top:0;z-index:100;background:rgba(9,11,18,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:60px;gap:1rem}
 .header .logo{display:flex;align-items:center;gap:.7rem;font-size:1.05rem;font-weight:800;color:#f0f4fc;letter-spacing:-.03em}
 .header .logo .icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),#8250df);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;box-shadow:0 4px 14px rgba(88,100,255,.3)}
@@ -124,7 +130,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </style>
 </head>
 <body>
-<div class="header">
+  <div id="lockOverlay">
+    <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),#8250df);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 14px rgba(88,100,255,.3)">🔒</div>
+    <h2>Access Restricted</h2>
+    <input id="lockPass" type="password" placeholder="Enter password" autofocus onkeydown="if(event.key==='Enter')unlock()">
+    <div class="err" id="lockErr">Incorrect password</div>
+  </div>
+  <div class="header">
   <div class="logo"><div class="icon">⌘</div><span>Command Center</span></div>
   <div class="nav">
     <a class="active" onclick="switchPage('dashboard',this)">Dashboard</a>
@@ -671,6 +683,13 @@ function updateBuildCmd(){
 function copyBuildCmd(){
   const t=document.getElementById('buildCmdText').textContent;
   navigator.clipboard.writeText(t).then(()=>{document.querySelector('.install-cmd .cp').textContent='Copied!';setTimeout(()=>document.querySelector('.install-cmd .cp').textContent='Copy',2000);toast('Command copied')});
+}
+
+// Lock screen
+function unlock(){
+  const v=document.getElementById('lockPass').value;
+  if(v==='67lover'){document.getElementById('lockOverlay').classList.add('hidden');document.getElementById('lockErr').style.display='none'}
+  else document.getElementById('lockErr').style.display='block';
 }
 
 // Keyboard shortcuts
