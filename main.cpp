@@ -341,8 +341,15 @@ std::string extractJson(const std::string& json, const std::string& key) {
     if (valStart == std::string::npos) return "";
     if (json[valStart] == '"') {
         valStart++;
-        auto valEnd = json.find("\"", valStart);
-        if (valEnd == std::string::npos) return "";
+        auto valEnd = valStart;
+        while (valEnd < json.size()) {
+            valEnd = json.find("\"", valEnd);
+            if (valEnd == std::string::npos) return "";
+            int bc = 0;
+            for (int i = (int)valEnd - 1; i >= (int)valStart && json[i] == '\\'; i--) bc++;
+            if (bc % 2 == 0) break;
+            valEnd++;
+        }
         return json.substr(valStart, valEnd - valStart);
     }
     auto valEnd = json.find_first_of(",} \t\n\r", valStart);
