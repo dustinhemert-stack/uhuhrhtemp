@@ -132,6 +132,9 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="stat-card"><div class="num" id="lastPing">-</div><div class="lbl">Last Ping</div></div>
     <div class="stat-card"><div class="num" id="activeToday">0</div><div class="lbl">Active Today</div></div>
   </div>
+  <div style="text-align:right;margin-bottom:.5rem">
+    <button class="btn btn-danger btn-sm" onclick="removeAllClients()">Remove All</button>
+  </div>
   <div id="clientList"></div>
 </div>
 
@@ -253,6 +256,24 @@ function downloadClient(){window.location.href='https://github.com/dustinhemert-
 async function removeClient(name){
  if(!confirm('Remove '+name+' and all its data?'))return;
  try{await fetch(FB+'/pings/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+encodeURIComponent(name)+'.json',{method:'DELETE'});await load();}catch{}
+}
+async function removeAllClients(){
+ if(!confirm('Remove ALL clients and their data? This cannot be undone.'))return;
+ const el=document.getElementById('clientList');const orig=el.innerHTML;
+ el.innerHTML='<div class="loading">Removing all...</div>';
+ try{
+  const r=await fetch(FB+'/pings.json');
+  if(!r.ok)return;
+  const d=await r.json();
+  if(!d||typeof d!=='object')return;
+  const names=Object.keys(d);
+  for(const n of names){
+   await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+   await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+   await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+  }
+  await load();
+ }catch{el.innerHTML=orig}
 }
 function buildArgs(){
  const n=document.getElementById('clientName').value.trim();const s=document.getElementById('startupToggle').checked;
