@@ -313,7 +313,7 @@ const computer=params.get('name')||'';
 document.getElementById('name').textContent=computer||'Unknown';
 document.title=computer||'Client';
 
-(async()=>{try{const r=await fetch(FB+'/pings/'+encodeURIComponent(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | '+new Date(d.created_at).toLocaleString()}catch{}})();
+(async()=>{try{const r=await fetch(FB+'/pings/'+fbEsc(computer)+'.json');if(!r.ok)return;const d=await r.json();if(d)document.getElementById('meta').textContent='IP: '+(d.ip||'?')+' | '+new Date(d.created_at).toLocaleString()}catch{}})();
 
 // === Tab System ===
 const tabs=document.querySelectorAll('.tab');
@@ -346,7 +346,7 @@ async function saw(type,payload,el,errId){
   const ee=document.getElementById(errId);if(ee)ee.style.display='none';
   el.innerHTML='<div class="loading"><span class="sp"></span>Sending...</div>';
   const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
-  const base=FB+'/commands/'+encodeURIComponent(computer);
+  const base=FB+'/commands/'+fbEsc(computer);
   try{
     const r=await fetch(base+'/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({computer,type,payload:payload||'',status:'pending'})});
     if(!r.ok){el.innerHTML='<div class="loading">HTTP '+r.status+'</div>';if(ee){ee.textContent='Server '+r.status;ee.style.display='block'}return null}
@@ -359,6 +359,7 @@ async function saw(type,payload,el,errId){
   }catch(e){el.innerHTML='<div class="loading">Error</div>';if(ee){ee.textContent=e.message||'err';ee.style.display='block'}return null}
 }
 
+function fbEsc(s){return String(s).replace(/[\/\.\#\$\[\]]/g,'_')}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function uenc(s){return encodeURIComponent(s).replace(/'/g,'%27')}
 
@@ -384,7 +385,7 @@ async function startLive(){
 async function pollLive(){
   if(!liveOn)return;
   try{
-    const r=await fetch(FB+'/live/'+encodeURIComponent(computer)+'.json?_='+Date.now(),{cache:'no-store'});
+    const r=await fetch(FB+'/live/'+fbEsc(computer)+'.json?_='+Date.now(),{cache:'no-store'});
     if(r.ok){const row=await r.json();if(row&&row.r){
       const t=new Date(row.t).getTime();const el=document.getElementById('liveOut');
       if(Date.now()-t<30000){
@@ -399,10 +400,10 @@ async function pollLive(){
   setTimeout(pollLive,100)
 }
 function stopLive(){liveOn=false;document.getElementById('liveStart').style.display='';document.getElementById('liveStop').style.display='none';document.getElementById('fps').textContent='0 fps';document.getElementById('liveOut').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)tgMouse();if(keyOn)tgKey()}
-async function sendLiveCfg(){const q=document.getElementById('liveQ').value;try{await fetch(FB+'/commands/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})})}catch{}}
+async function sendLiveCfg(){const q=document.getElementById('liveQ').value;try{await fetch(FB+'/commands/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})})}catch{}}
 function setupCanvas(){const img=document.getElementById('liveImg');const c=document.getElementById('liveCanvas');if(!img||!c)return;const rz=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px'};img.onload=rz;setTimeout(rz,100)}
 function getSC(e){const c=document.getElementById('liveCanvas');const img=document.getElementById('liveImg');if(!c||!img)return null;const r=c.getBoundingClientRect();const s=parseFloat(document.getElementById('liveS').value)||1;return{x:Math.round((e.clientX-r.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-r.top)*img.naturalHeight/c.height/s)}}
-async function sf(type,payload){try{await fetch(FB+'/input/'+encodeURIComponent(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})})}catch{}}
+async function sf(type,payload){try{await fetch(FB+'/input/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})})}catch{}}
 let mouseOn=false,keyOn=false,mt=0;
 function tgMouse(){mouseOn=!mouseOn;const b=document.getElementById('mouseBtn');b.textContent=mouseOn?'ON':'OFF';b.classList.toggle('active-on',mouseOn);setupME()}
 function tgKey(){keyOn=!keyOn;const b=document.getElementById('keyBtn');b.textContent=keyOn?'ON':'OFF';b.classList.toggle('active-on',keyOn)}

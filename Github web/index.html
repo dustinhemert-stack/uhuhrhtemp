@@ -321,12 +321,13 @@ function filterClients(){
   }).join('');
 }
 
+function fbEsc(s){return String(s).replace(/[\/\.\#\$\[\]]/g,'_')}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function openClient(n){window.open('client.html?name='+encodeURIComponent(n),'_blank')}
 function downloadClient(){window.location.href='https://github.com/dustinhemert-stack/uhuhrhtemp/raw/main/ping_app.exe'}
 async function removeClient(n){
   if(!confirm('Remove '+n+' and all its data?'))return;
-  try{await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});toast('Removed '+n);load()}catch{}
+  try{await fetch(FB+'/pings/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'DELETE'});await fetch(FB+'/live/'+fbEsc(n)+'.json',{method:'DELETE'});toast('Removed '+n);load()}catch{}
 }
 async function removeAllClients(){
   if(!confirm('Remove ALL clients and their data?'))return;
@@ -334,9 +335,9 @@ async function removeAllClients(){
   try{
     const r=await fetch(FB+'/pings.json');if(!r.ok)return;const d=await r.json();
     if(d&&typeof d==='object')for(const n of Object.keys(d)){
-      await fetch(FB+'/pings/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
-      await fetch(FB+'/commands/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
-      await fetch(FB+'/live/'+encodeURIComponent(n)+'.json',{method:'DELETE'});
+      await fetch(FB+'/pings/'+fbEsc(n)+'.json',{method:'DELETE'});
+      await fetch(FB+'/commands/'+fbEsc(n)+'.json',{method:'DELETE'});
+      await fetch(FB+'/live/'+fbEsc(n)+'.json',{method:'DELETE'});
     }
     toast('All clients removed');load()
   }catch{}
