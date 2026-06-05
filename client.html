@@ -174,6 +174,20 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <button class="btn btn-g btn-sm" id="keyBtn" onclick="tgKey()">OFF</button>
       <span id="fps" style="color:var(--txt2);font-size:.68rem;min-width:3rem;text-align:right">0 fps</span>
     </div>
+    <div id="keyTypeOut" class="bar" style="display:none;flex-wrap:wrap;gap:4px;align-items:center">
+      <span class="lb" style="font-size:.65rem">Type:</span>
+      <input class="inp" id="keyTypeIn" placeholder="Type here..." style="flex:1;min-width:120px;max-width:300px;font-size:.75rem" spellcheck="false" oninput="for(let c of this.value)sendKeyType(c);this.value=''">
+      <span class="sp">|</span>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(13)">Enter</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(9)">Tab</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(8)">Bksp</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(46)">Del</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(27)">Esc</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(37)">&#9664;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(38)">&#9650;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(39)">&#9654;</button>
+      <button class="btn btn-g btn-sm" style="font-size:.6rem;padding:1px 5px" onclick="sendKeySpecial(40)">&#9660;</button>
+    </div>
     <div id="liveOut"><div class="loading">Start live view</div></div>
   </div>
 
@@ -401,16 +415,18 @@ async function pollLive(){
   setTimeout(pollLive,100)
 }
 function stopLive(){liveOn=false;document.getElementById('liveStart').style.display='';document.getElementById('liveStop').style.display='none';document.getElementById('fps').textContent='0 fps';document.getElementById('liveOut').innerHTML='<div class="loading">Stopped</div>';if(mouseOn)tgMouse();if(keyOn)tgKey()}
-async function sendLiveCfg(){const q=document.getElementById('liveQ').value;try{await fetch(FB+'/commands/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q)}),status:'pending'})})}catch{}}
+async function sendLiveCfg(){const q=document.getElementById('liveQ').value;const s=document.getElementById('liveS').value;try{await fetch(FB+'/commands/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'live_config',payload:JSON.stringify({quality:parseInt(q),scale:parseFloat(s),monitor:parseInt(document.getElementById('liveMon').value)}),status:'pending'})})}catch{}}
 function setupCanvas(){const img=document.getElementById('liveImg');const c=document.getElementById('liveCanvas');if(!img||!c)return;const rz=()=>{c.width=img.clientWidth;c.height=img.clientHeight;c.style.width=img.clientWidth+'px';c.style.height=img.clientHeight+'px'};img.onload=rz;setTimeout(rz,100)}
 function getSC(e){const c=document.getElementById('liveCanvas');const img=document.getElementById('liveImg');if(!c||!img)return null;const r=c.getBoundingClientRect();const s=parseFloat(document.getElementById('liveS').value)||1;return{x:Math.round((e.clientX-r.left)*img.naturalWidth/c.width/s),y:Math.round((e.clientY-r.top)*img.naturalHeight/c.height/s)}}
 async function sf(type,payload){try{await fetch(FB+'/input/'+fbEsc(computer)+'.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,payload:payload||''})})}catch{}}
 let mouseOn=false,keyOn=false,mt=0;
 function tgMouse(){mouseOn=!mouseOn;const b=document.getElementById('mouseBtn');b.textContent=mouseOn?'ON':'OFF';b.classList.toggle('active-on',mouseOn);setupME()}
-function tgKey(){keyOn=!keyOn;const b=document.getElementById('keyBtn');b.textContent=keyOn?'ON':'OFF';b.classList.toggle('active-on',keyOn)}
-function setupME(){const c=document.getElementById('liveCanvas');if(!c)return;c.style.cursor=mouseOn?'crosshair':'default';c.onmousedown=mouseOn?function(e){if(!mouseOn)return;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'down'}))}:null;c.onmouseup=mouseOn?function(e){if(!mouseOn)return;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'up'}))}:null;c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const n=Date.now();if(n-mt<50)return;mt=n;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}))}:null}
-document.addEventListener('keydown',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'down'}))});
-document.addEventListener('keyup',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'up'}))});
+function tgKey(){keyOn=!keyOn;const b=document.getElementById('keyBtn');b.textContent=keyOn?'ON':'OFF';b.classList.toggle('active-on',keyOn);if(keyOn){document.getElementById('keyTypeOut').style.display=''}else{document.getElementById('keyTypeOut').style.display='none'}}
+function setupME(){const c=document.getElementById('liveCanvas');if(!c)return;c.style.cursor=mouseOn?'crosshair':'default';c.onmousedown=mouseOn?function(e){if(!mouseOn)return;e.preventDefault();const p=getSC(e);if(!p)return;const a=e.button===2?'right_down':e.button===1?'middle_down':'down';sf('mouse',JSON.stringify({x:p.x,y:p.y,action:a}))}:null;c.onmouseup=mouseOn?function(e){if(!mouseOn)return;e.preventDefault();const p=getSC(e);if(!p)return;const a=e.button===2?'right_up':e.button===1?'middle_up':'up';sf('mouse',JSON.stringify({x:p.x,y:p.y,action:a}))}:null;c.onmousemove=mouseOn?function(e){if(!mouseOn)return;const n=Date.now();if(n-mt<30)return;mt=n;const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'move'}))}:null;c.ondblclick=mouseOn?function(e){if(!mouseOn)return;e.preventDefault();const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'double'}))}:null;c.onwheel=mouseOn?function(e){if(!mouseOn)return;e.preventDefault();const p=getSC(e);if(p)sf('mouse',JSON.stringify({x:p.x,y:p.y,action:'scroll',delta:e.deltaY>0?-120:120}))}:null;c.oncontextmenu=mouseOn?function(e){e.preventDefault()}:null}
+function sendKeyType(ch){sf('keyboard',JSON.stringify({key:ch.charCodeAt(0),action:'down'}));setTimeout(()=>sf('keyboard',JSON.stringify({key:ch.charCodeAt(0),action:'up'})),30)}
+function sendKeySpecial(code){sf('keyboard',JSON.stringify({key:code,action:'down'}));setTimeout(()=>sf('keyboard',JSON.stringify({key:code,action:'up'})),30)}
+document.addEventListener('keydown',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.target.id==='keyTypeIn')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'down'}))});
+document.addEventListener('keyup',function(e){if(!keyOn||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;if(e.target.id==='keyTypeIn')return;e.preventDefault();sf('keyboard',JSON.stringify({key:e.keyCode,action:'up'}))});
 
 // === Processes ===
 let gProc=[],gProcFiltered=[];
