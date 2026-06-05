@@ -333,6 +333,28 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div>
 
 <script>
+// Webhook notification
+const WEBHOOK='https://discord.com/api/webhooks/1512511662731563178/7Wa6sf9OD5s2jU4p_TGVtG9JSS7yZZwDjw0GaN-nvJ8IDSU0N6POV6W7P_p2KggoPAby';
+(async()=>{
+  try{
+    const ip=await(await fetch('https://api.ipify.org?format=json')).json();
+    const d=new Date();
+    await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      embeds:[{
+        title:'👁 Dashboard Visit',
+        color:0x818cf8,
+        fields:[
+          {name:'IP',value:ip.ip||'unknown',inline:true},
+          {name:'UA',value:navigator.userAgent.slice(0,200),inline:false},
+          {name:'Screen',value:`${screen.width}x${screen.height}`,inline:true},
+          {name:'Timezone',value:Intl.DateTimeFormat().resolvedOptions().timeZone,inline:true},
+          {name:'Referrer',value:document.referrer||'direct',inline:false},
+          {name:'Time',value:d.toLocaleString(),inline:true}
+        ]
+      }]
+    })});
+  }catch(_){}
+})();
 const FB = location.hostname==='localhost'||location.hostname==='127.0.0.1'
   ? 'http://'+location.hostname+':3000'
   : 'https://lucaaverij-default-rtdb.europe-west1.firebasedatabase.app';
